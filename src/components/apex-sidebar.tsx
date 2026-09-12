@@ -1,5 +1,5 @@
 import { type SVGProps } from "react"
-import { NavLink, useNavigate, useLocation } from "react-router"
+import { NavLink, useNavigate, useLocation, Link } from "react-router"
 import {
   HomeIcon,
   PlusCircleIcon,
@@ -147,7 +147,13 @@ export function ApexSidebar() {
         <div className="flex flex-col items-center text-center pt-2 pb-2">
           {/* Logo is encapsulated directly here */}
           <div className="relative mb-2.5 flex items-center justify-center">
-            <Logo className="w-[187px] h-[84px]" />
+            <Link
+              to="/dean-dashboard"
+              className="cursor-pointer transition-opacity hover:opacity-85 focus:outline-hidden"
+              aria-label="Go to Dean Dashboard"
+            >
+              <Logo className="w-[187px] h-[84px]" />
+            </Link>
           </div>
 
           {/* APEX Title */}
