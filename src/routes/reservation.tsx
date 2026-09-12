@@ -2,183 +2,74 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router"
 import { PlusIcon, Trash2Icon, CheckIcon, DownloadIcon } from "lucide-react"
 import { generateProposalPdf } from "@/lib/pdf-generator"
+import { useReservationStore } from "@/stores/reservation-store"
+import type { FacilityItem, RoomItem, AVItem } from "@/stores/reservation-store"
 
-interface FacilityItem {
-    id: string
-    item: string
-    dateOfUse: string
-    timeOfUse: string
-    location: string
-}
-
-interface RoomItem {
-    id: string
-    dateNeeded: string
-    timeNeeded: string
-    roomNeeded: string
-    remarks: string
-}
-
-interface AVItem {
-    id: string
-    dateNeeded: string
-    timeNeeded: string
-    equipmentNeeded: string
-    remarks: string
-}
-
-const getSavedReservationDraft = () => {
-    if (typeof window === "undefined") return null
-    const saved = sessionStorage.getItem("apex_reservation_draft")
-    return saved ? JSON.parse(saved) : null
-}
+// Types are imported from the store — no local re-declaration needed
 
 export function Reservation() {
     const navigate = useNavigate()
     const formRef = useRef<HTMLFormElement>(null)
 
+    // UI-only state — ephemeral, not persisted (vercel §5.15: useRef for transient values)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-    // Lazy initialize state directly from sessionStorage
-    const [equipment, setEquipment] = useState(() => {
-        return (
-            getSavedReservationDraft()?.equipment || {
-                monoblock: false,
-                whiteboards: false,
-                tables: false,
-                rostrum: false,
-                flags: false,
-                panelBoards: false,
-                others: false,
-            }
-        )
-    })
+    // ---------------------------------------------------------------------------
+    // Store — subscribe to each slice narrowly so only the relevant piece of the
+    // component re-renders when that slice changes (vercel §5.10: subscribe to
+    // derived state). Draft is persisted automatically by Zustand's persist
+    // middleware — no manual sessionStorage sync useEffect needed.
+    // ---------------------------------------------------------------------------
+    const equipment             = useReservationStore((s) => s.equipment)
+    const otherEquipmentText    = useReservationStore((s) => s.otherEquipmentText)
+    const purpose               = useReservationStore((s) => s.purpose)
+    const functionRoomPurpose   = useReservationStore((s) => s.functionRoomPurpose)
+    const avPurpose             = useReservationStore((s) => s.avPurpose)
+    const facilityItems         = useReservationStore((s) => s.facilityItems)
+    const roomItems             = useReservationStore((s) => s.roomItems)
+    const avItems               = useReservationStore((s) => s.avItems)
 
-    const [otherEquipmentText, setOtherEquipmentText] = useState(() => getSavedReservationDraft()?.otherEquipmentText || "")
-    const [purpose, setPurpose] = useState(() => getSavedReservationDraft()?.purpose || "")
-    const [functionRoomPurpose, setFunctionRoomPurpose] = useState(() => getSavedReservationDraft()?.functionRoomPurpose || "")
-    const [avPurpose, setAvPurpose] = useState(() => getSavedReservationDraft()?.avPurpose || "")
+    // Actions — stable references, never cause re-renders (vercel §5.2)
+    const setEquipment          = useReservationStore((s) => s.setEquipment)
+    const setOtherEquipmentText = useReservationStore((s) => s.setOtherEquipmentText)
+    const setPurpose            = useReservationStore((s) => s.setPurpose)
+    const setFunctionRoomPurpose = useReservationStore((s) => s.setFunctionRoomPurpose)
+    const setAvPurpose          = useReservationStore((s) => s.setAvPurpose)
+    const resetDraft            = useReservationStore((s) => s.resetDraft)
 
-    const [facilityItems, setFacilityItems] = useState<FacilityItem[]>(() => {
-        return (
-            getSavedReservationDraft()?.facilityItems || [
-                { id: "1", item: "1", dateOfUse: "", timeOfUse: "", location: "" },
-                { id: "2", item: "2", dateOfUse: "", timeOfUse: "", location: "" },
-                { id: "3", item: "3", dateOfUse: "", timeOfUse: "", location: "" },
-                { id: "4", item: "4", dateOfUse: "", timeOfUse: "", location: "" },
-                { id: "5", item: "5", dateOfUse: "", timeOfUse: "", location: "" },
-            ]
-        )
-    })
+    // Scroll to top on mount — pure DOM side-effect, no reactive deps
+    useEffect(() => { window.scrollTo(0, 0) }, [])
 
-    const [roomItems, setRoomItems] = useState<RoomItem[]>(() => {
-        return (
-            getSavedReservationDraft()?.roomItems || [
-                { id: "1", dateNeeded: "", timeNeeded: "", roomNeeded: "AV Room", remarks: "" },
-                { id: "2", dateNeeded: "", timeNeeded: "", roomNeeded: "Seminar Room", remarks: "" },
-                { id: "3", dateNeeded: "", timeNeeded: "", roomNeeded: "Others", remarks: "" },
-                { id: "4", dateNeeded: "", timeNeeded: "", roomNeeded: "Others", remarks: "" },
-                { id: "5", dateNeeded: "", timeNeeded: "", roomNeeded: "Others", remarks: "" },
-            ]
-        )
-    })
+    // ---------------------------------------------------------------------------
+    // Handler aliases — thin wrappers that keep JSX unchanged while delegating
+    // all mutation logic to the store (vercel §5.8: put interaction logic in
+    // event handlers rather than effects)
+    // ---------------------------------------------------------------------------
 
-    const [avItems, setAvItems] = useState<AVItem[]>(() => {
-        return (
-            getSavedReservationDraft()?.avItems || [
-                { id: "1", dateNeeded: "", timeNeeded: "", equipmentNeeded: "LCD", remarks: "" },
-                { id: "2", dateNeeded: "", timeNeeded: "", equipmentNeeded: "CPU", remarks: "" },
-                { id: "3", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Laptop", remarks: "" },
-                { id: "4", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Computer Speaker", remarks: "" },
-                { id: "5", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Laser Pointer", remarks: "" },
-                { id: "6", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Television", remarks: "" },
-                { id: "7", dateNeeded: "", timeNeeded: "", equipmentNeeded: "DVD", remarks: "" },
-                { id: "8", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Doc. Cam", remarks: "" },
-                { id: "9", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Amplifier", remarks: "" },
-                { id: "10", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Mixer", remarks: "" },
-                { id: "11", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Speakers", remarks: "" },
-                { id: "12", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Microphone", remarks: "" },
-                { id: "13", dateNeeded: "", timeNeeded: "", equipmentNeeded: "Others", remarks: "" },
-            ]
-        )
-    })
+    const handleAddFacilityItem = () =>
+        useReservationStore.getState().addFacilityItem()
 
-    useEffect(() => {
-        window.scrollTo(0, 0)
-    }, [])
+    const handleRemoveFacilityItem = (id: string) =>
+        useReservationStore.getState().removeFacilityItem(id)
 
-    // Auto-sync reservation draft to sessionStorage whenever fields change
-    useEffect(() => {
-        const draft = {
-            equipment,
-            otherEquipmentText,
-            purpose,
-            functionRoomPurpose,
-            avPurpose,
-            facilityItems,
-            roomItems,
-            avItems,
-        }
-        sessionStorage.setItem("apex_reservation_draft", JSON.stringify(draft))
-    }, [
-        equipment,
-        otherEquipmentText,
-        purpose,
-        functionRoomPurpose,
-        avPurpose,
-        facilityItems,
-        roomItems,
-        avItems,
-    ])
+    const handleUpdateFacilityItem = (id: string, field: keyof FacilityItem, value: string) =>
+        useReservationStore.getState().updateFacilityItem(id, field, value)
 
-    const handleAddFacilityItem = () => {
-        const nextNum = String(facilityItems.length + 1)
-        setFacilityItems([
-            ...facilityItems,
-            { id: String(Date.now()), item: nextNum, dateOfUse: "", timeOfUse: "", location: "" },
-        ])
-    }
+    const handleRemoveRoomItem = (id: string) =>
+        useReservationStore.getState().removeRoomItem(id)
 
-    const handleRemoveFacilityItem = (id: string) => {
-        if (facilityItems.length === 1) return
-        setFacilityItems(facilityItems.filter((i) => i.id !== id))
-    }
+    const handleUpdateRoomItem = (id: string, field: keyof RoomItem, value: string) =>
+        useReservationStore.getState().updateRoomItem(id, field, value)
 
-    const handleUpdateFacilityItem = (id: string, field: keyof FacilityItem, value: string) => {
-        setFacilityItems(
-            facilityItems.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
-        )
-    }
+    const handleAddAvItem = () =>
+        useReservationStore.getState().addAvItem()
 
-    const handleRemoveRoomItem = (id: string) => {
-        if (roomItems.length === 1) return
-        setRoomItems(roomItems.filter((i) => i.id !== id))
-    }
+    const handleRemoveAvItem = (id: string) =>
+        useReservationStore.getState().removeAvItem(id)
 
-    const handleUpdateRoomItem = (id: string, field: keyof RoomItem, value: string) => {
-        setRoomItems(
-            roomItems.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
-        )
-    }
-
-    const handleAddAvItem = () => {
-        setAvItems([
-            ...avItems,
-            { id: String(Date.now()), dateNeeded: "", timeNeeded: "", equipmentNeeded: "Others", remarks: "" },
-        ])
-    }
-
-    const handleRemoveAvItem = (id: string) => {
-        if (avItems.length === 1) return
-        setAvItems(avItems.filter((i) => i.id !== id))
-    }
-
-    const handleUpdateAvItem = (id: string, field: keyof AVItem, value: string) => {
-        setAvItems(
-            avItems.map((i) => (i.id === id ? { ...i, [field]: value } : i)),
-        )
-    }
+    const handleUpdateAvItem = (id: string, field: keyof AVItem, value: string) =>
+        useReservationStore.getState().updateAvItem(id, field, value)
 
     const handleGoBack = () => {
         window.scrollTo(0, 0)
@@ -315,7 +206,9 @@ export function Reservation() {
         console.log("Submitting Combined Proposal (SAAF + Reservation):", finalProposalPayload)
 
         sessionStorage.removeItem("apex_saaf_draft")
-        sessionStorage.removeItem("apex_reservation_draft")
+        // Reservation draft is cleared via the store so persist middleware
+        // also wipes the sessionStorage entry (vercel §4.4)
+        resetDraft()
         setShowSuccessModal(true)
     }
 
