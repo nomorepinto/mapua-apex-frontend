@@ -210,8 +210,8 @@ export function ApexSidebar() {
           <NavLink
             to="/submission"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isSubmissionActive
-                ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+              ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
+              : "text-white/90 hover:text-white hover:bg-white/10"
               }`}
           >
             <PlusCircleIcon
@@ -258,10 +258,10 @@ export function ApexSidebar() {
       <div className="pt-4 border-t border-red-900/60">
         <div className="bg-[#6b0000]/90 border border-red-900/50 rounded-xl p-3.5 shadow-sm">
           <p className="text-sm font-semibold text-white tracking-wide">
-            {name || "Dr. Helen Carter"}
+            {name || "Jedrick Darren Ocenar"}
           </p>
           <p className="text-xs font-medium text-[#FBC02D] mt-0.5">
-            Office of the Dean
+            AWS-SBG Arcus President
           </p>
         </div>
       </div>

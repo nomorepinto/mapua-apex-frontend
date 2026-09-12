@@ -1,12 +1,7 @@
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { ActionFunctionArgs } from "react-router"
-import { Form, useActionData, useNavigation, useNavigate } from "react-router"
-import {
-    PlusIcon,
-    Trash2Icon,
-    CheckCircle2Icon,
-    AlertCircleIcon,
-} from "lucide-react"
+import { useNavigation, useNavigate, useFetcher } from "react-router"
+import { PlusIcon, Trash2Icon, CheckIcon, DownloadIcon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -18,6 +13,7 @@ import {
     SelectContent,
     SelectItem,
 } from "@/components/ui/select"
+import { generateProposalPdf } from "@/lib/pdf-generator"
 
 export type SubmissionActionData = {
     success?: boolean
@@ -30,7 +26,7 @@ export async function action({
 }: ActionFunctionArgs): Promise<SubmissionActionData> {
     const formData = await request.formData()
     const data = Object.fromEntries(formData.entries())
-    console.log("Activity Proposal Submitted:", data)
+    console.log("Activity Proposal Submitted (Submission Only):", data)
 
     if (!formData.get("activityType")) {
         return {
@@ -41,7 +37,7 @@ export async function action({
 
     return {
         success: true,
-        message: "Your Student Activity Application has been submitted successfully!",
+        message: "Activity Application Submitted!",
     }
 }
 
@@ -67,59 +63,176 @@ interface BudgetItem {
     id: string
     item: string
     unit: string
-    quantity: number | string
-    pricePerUnit: number | string
+    quantity: string
+    pricePerUnit: string
+}
+
+const getSavedSaafDraft = () => {
+    if (typeof window === "undefined") return null
+    const saved = sessionStorage.getItem("apex_saaf_draft")
+    return saved ? JSON.parse(saved) : null
 }
 
 export function Submission() {
     const navigate = useNavigate()
-    const actionData = useActionData<typeof action>()
     const navigation = useNavigation()
-    const isSubmitting = navigation.state === "submitting"
+    const fetcher = useFetcher<SubmissionActionData>()
+    const isSubmitting = navigation.state === "submitting" || fetcher.state === "submitting"
 
-    // Activity Classification state
-    const [activityType, setActivityType] = useState<string>("co-curricular")
+    const formRef = useRef<HTMLFormElement>(null)
 
-    // Proponents state
-    const [proponents, setProponents] = useState<Proponent[]>([
-        {
-            id: "1",
-            position: "",
-            firstName: "",
-            middleName: "",
-            lastName: "",
-            suffix: "",
-            studentNumber: "",
-            programAndYear: "",
-            dateOfSubmission: "",
-            department: "",
-            positionOfApplicant: "",
-            orgOrCourseSection: "",
-            contactNumber: "",
-            emailAddress: "",
-            facebookLink: "",
-        },
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
+
+    // Lazy initialize state directly from sessionStorage
+    const [activityType, setActivityType] = useState<string>(() => getSavedSaafDraft()?.activityType || "co-curricular")
+    const [totalOrgMembers, setTotalOrgMembers] = useState(() => getSavedSaafDraft()?.totalOrgMembers || "")
+    const [expectedParticipants, setExpectedParticipants] = useState(() => getSavedSaafDraft()?.expectedParticipants || "")
+    const [individualContribution, setIndividualContribution] = useState(() => getSavedSaafDraft()?.individualContribution || "")
+    const [proposedBudget, setProposedBudget] = useState(() => getSavedSaafDraft()?.proposedBudget || "")
+    const [dayOfEvent, setDayOfEvent] = useState(() => getSavedSaafDraft()?.dayOfEvent || "")
+    const [departmentValues, setDepartmentValues] = useState<Record<string, string>>(() => getSavedSaafDraft()?.departmentValues || {})
+
+    const [activityTitle, setActivityTitle] = useState(() => getSavedSaafDraft()?.activityTitle || "")
+    const [activityDescription, setActivityDescription] = useState(() => getSavedSaafDraft()?.activityDescription || "")
+    const [activityObjectives, setActivityObjectives] = useState(() => getSavedSaafDraft()?.activityObjectives || "")
+    const [activityVenue, setActivityVenue] = useState(() => getSavedSaafDraft()?.activityVenue || "")
+    const [dateOfEvent, setDateOfEvent] = useState(() => getSavedSaafDraft()?.dateOfEvent || "")
+    const [timeOfEvent, setTimeOfEvent] = useState(() => getSavedSaafDraft()?.timeOfEvent || "")
+
+    const [mission1, setMission1] = useState(() => getSavedSaafDraft()?.mission1 ?? false)
+    const [mission2, setMission2] = useState(() => getSavedSaafDraft()?.mission2 ?? false)
+    const [mission3, setMission3] = useState(() => getSavedSaafDraft()?.mission3 ?? false)
+    const [coreValuesExplanation, setCoreValuesExplanation] = useState(() => getSavedSaafDraft()?.coreValuesExplanation || "")
+    const [peoExplanation, setPeoExplanation] = useState(() => getSavedSaafDraft()?.peoExplanation || "")
+    const [sdgExplanation, setSdgExplanation] = useState(() => getSavedSaafDraft()?.sdgExplanation || "")
+
+    const [proponents, setProponents] = useState<Proponent[]>(() => {
+        return (
+            getSavedSaafDraft()?.proponents || [
+                {
+                    id: "1",
+                    position: "",
+                    firstName: "",
+                    middleName: "",
+                    lastName: "",
+                    suffix: "",
+                    studentNumber: "",
+                    programAndYear: "",
+                    dateOfSubmission: "",
+                    department: "",
+                    positionOfApplicant: "",
+                    orgOrCourseSection: "",
+                    contactNumber: "",
+                    emailAddress: "",
+                    facebookLink: "",
+                },
+            ]
+        )
+    })
+
+    const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => {
+        return (
+            getSavedSaafDraft()?.budgetItems || [
+                { id: "1", item: "1", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "2", item: "2", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "3", item: "3", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "4", item: "4", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "5", item: "5", unit: "1", quantity: "1", pricePerUnit: "0" },
+            ]
+        )
+    })
+
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [])
+
+    // Auto-sync entire SAAF state to sessionStorage
+    useEffect(() => {
+        const draft = {
+            activityType,
+            totalOrgMembers,
+            expectedParticipants,
+            individualContribution,
+            proposedBudget,
+            dayOfEvent,
+            departmentValues,
+            activityTitle,
+            activityDescription,
+            activityObjectives,
+            activityVenue,
+            dateOfEvent,
+            timeOfEvent,
+            mission1,
+            mission2,
+            mission3,
+            coreValuesExplanation,
+            peoExplanation,
+            sdgExplanation,
+            proponents,
+            budgetItems,
+        }
+        sessionStorage.setItem("apex_saaf_draft", JSON.stringify(draft))
+    }, [
+        activityType,
+        totalOrgMembers,
+        expectedParticipants,
+        individualContribution,
+        proposedBudget,
+        dayOfEvent,
+        departmentValues,
+        activityTitle,
+        activityDescription,
+        activityObjectives,
+        activityVenue,
+        dateOfEvent,
+        timeOfEvent,
+        mission1,
+        mission2,
+        mission3,
+        coreValuesExplanation,
+        peoExplanation,
+        sdgExplanation,
+        proponents,
+        budgetItems,
     ])
 
-    // Budget proposal items state
-    const [budgetItems, setBudgetItems] = useState<BudgetItem[]>([
-        { id: "1", item: "1", unit: "1", quantity: "1", pricePerUnit: "1" },
-        { id: "2", item: "2", unit: "1", quantity: "1", pricePerUnit: "1" },
-        { id: "3", item: "3", unit: "1", quantity: "1", pricePerUnit: "1" },
-        { id: "4", item: "4", unit: "1", quantity: "1", pricePerUnit: "1" },
-        { id: "5", item: "5", unit: "1", quantity: "1", pricePerUnit: "1" },
-    ])
+    useEffect(() => {
+        if (fetcher.data?.success) {
+            sessionStorage.removeItem("apex_saaf_draft")
+            sessionStorage.removeItem("apex_reservation_draft")
+            setShowConfirmModal(false)
+            setShowSuccessModal(true)
+        }
+    }, [fetcher.data])
 
-    // Mission checkboxes
-    const [mission1, setMission1] = useState(false)
-    const [mission2, setMission2] = useState(false)
-    const [mission3, setMission3] = useState(false)
+    const blockNonIntegerKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (
+            ["e", "E", "+", "-", ".", ","].includes(e.key) &&
+            !e.ctrlKey &&
+            !e.metaKey
+        ) {
+            e.preventDefault()
+        }
+    }
 
-    // Day of event select
-    const [dayOfEvent, setDayOfEvent] = useState("")
-    const [departmentValues, setDepartmentValues] = useState<Record<string, string>>({})
+    const blockNonDecimalKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (["e", "E", "+", "-"].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault()
+        }
+        if (e.key === "." && e.currentTarget.value.includes(".")) {
+            e.preventDefault()
+        }
+    }
 
-    // Add proponent handler
+    const sanitizeIntegerInput = (val: string) => val.replace(/\D/g, "")
+
+    const sanitizeDecimalInput = (val: string) => {
+        const clean = val.replace(/[^0-9.]/g, "")
+        const parts = clean.split(".")
+        return parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : clean
+    }
+
     const handleAddProponent = () => {
         const newId = String(proponents.length + 1)
         setProponents([
@@ -149,7 +262,16 @@ export function Submission() {
         setProponents(proponents.filter((p) => p.id !== id))
     }
 
-    // Budget calculations
+    const handleUpdateProponent = (
+        id: string,
+        field: keyof Proponent,
+        value: string,
+    ) => {
+        setProponents(
+            proponents.map((p) => (p.id === id ? { ...p, [field]: value } : p)),
+        )
+    }
+
     const calculateRowTotal = (qty: number | string, price: number | string) => {
         const q = Number(qty) || 0
         const p = Number(price) || 0
@@ -169,7 +291,7 @@ export function Submission() {
                 item: nextItemNum,
                 unit: "1",
                 quantity: "1",
-                pricePerUnit: "1",
+                pricePerUnit: "0",
             },
         ])
     }
@@ -184,38 +306,88 @@ export function Submission() {
         field: keyof BudgetItem,
         value: string,
     ) => {
+        let sanitized = value
+        if (field === "unit" || field === "quantity") {
+            sanitized = sanitizeIntegerInput(value)
+        } else if (field === "pricePerUnit") {
+            sanitized = sanitizeDecimalInput(value)
+        }
         setBudgetItems(
             budgetItems.map((item) => {
                 if (item.id === id) {
-                    return { ...item, [field]: value }
+                    return { ...item, [field]: sanitized }
                 }
                 return item
             }),
         )
     }
 
+    const handleGoToReservation = () => {
+        if (formRef.current) {
+            if (!formRef.current.reportValidity()) {
+                return
+            }
+        }
+        navigate("/reservation")
+    }
+
+    const handleInitiateSubmit = (e: React.MouseEvent) => {
+        e.preventDefault()
+        if (formRef.current && formRef.current.reportValidity()) {
+            setShowConfirmModal(true)
+        }
+    }
+
+    const handleConfirmProceed = () => {
+        if (formRef.current) {
+            fetcher.submit(formRef.current)
+        }
+    }
+
+    const handleSavePdf = () => {
+        generateProposalPdf({
+            activityType,
+            totalOrgMembers,
+            activityTitle,
+            activityDescription,
+            activityObjectives,
+            activityVenue,
+            dateOfEvent,
+            dayOfEvent,
+            timeOfEvent,
+            expectedParticipants,
+            individualContribution,
+            proposedBudget,
+            mission1,
+            mission2,
+            mission3,
+            coreValuesExplanation,
+            peoExplanation,
+            sdgExplanation,
+            proponents: proponents.map((p) => ({
+                ...p,
+                department: departmentValues[p.id] || p.department,
+            })),
+            budgetItems,
+        })
+    }
+
     return (
-        <div className="w-full min-h-full bg-[#F3F4F6] text-neutral-900 py-8 px-4 sm:px-8 lg:px-12">
+        <div className="w-full min-h-full bg-[#F3F4F6] text-neutral-900 py-8 px-4 sm:px-8 lg:px-12 relative">
+            <style>{`
+        .no-spinner::-webkit-outer-spin-button,
+        .no-spinner::-webkit-inner-spin-button {
+          -webkit-appearance: none;
+          margin: 0;
+        }
+        .no-spinner {
+          -moz-appearance: textfield;
+          appearance: textfield;
+        }
+      `}</style>
+
             <div className="max-w-6xl mx-auto">
-                {/* Success / Feedback Alert */}
-                {actionData?.success && (
-                    <div className="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 flex items-center gap-3 shadow-sm">
-                        <CheckCircle2Icon className="w-5 h-5 text-emerald-600 shrink-0" />
-                        <p className="font-medium text-sm">{actionData.message}</p>
-                    </div>
-                )}
-
-                {actionData?.errors && (
-                    <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-center gap-3 shadow-sm">
-                        <AlertCircleIcon className="w-5 h-5 text-red-600 shrink-0" />
-                        <p className="font-medium text-sm">
-                            Please check the required fields before submitting.
-                        </p>
-                    </div>
-                )}
-
-                <Form method="post" className="space-y-10">
-                    {/* Header Section */}
+                <fetcher.Form ref={formRef} method="post" className="space-y-10">
                     <div className="border-b border-neutral-200 pb-5">
                         <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
                             Student Activity Application Form
@@ -225,7 +397,6 @@ export function Submission() {
                         </p>
                     </div>
 
-                    {/* Activity Classification & Org Members */}
                     <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
                         <div className="md:col-span-8 space-y-3">
                             <label className="block text-sm font-semibold text-neutral-800">
@@ -264,23 +435,27 @@ export function Submission() {
                                 <span className="text-red-500 font-bold">*</span>
                             </label>
                             <Input
+                                type="text"
+                                inputMode="numeric"
+                                pattern="[0-9]*"
                                 name="totalOrgMembers"
                                 placeholder="0"
+                                value={totalOrgMembers}
+                                onKeyDown={blockNonIntegerKeys}
+                                onChange={(e) => setTotalOrgMembers(sanitizeIntegerInput(e.target.value))}
                                 style={{ color: "#171717" }}
-                                className="bg-white border-neutral-300 rounded-lg h-10 !text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-red-800/20"
+                                className="bg-white border-neutral-300 rounded-lg h-10 !text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-red-800/20 no-spinner"
                                 required
                             />
                         </div>
                     </div>
 
-                    {/* Section 1: Proponents */}
                     <div className="space-y-8">
                         {proponents.map((proponent, index) => (
                             <div
                                 key={proponent.id}
                                 className="bg-white/60 p-6 rounded-2xl border border-neutral-200/80 shadow-xs space-y-6"
                             >
-                                {/* Proponent Title with Position Header */}
                                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-3">
                                     <div className="flex items-center gap-3">
                                         <span className="font-bold text-base text-neutral-900 uppercase tracking-wider">
@@ -290,7 +465,8 @@ export function Submission() {
                                             type="text"
                                             name={`proponent_${index}_positionTitle`}
                                             placeholder="Position"
-                                            defaultValue={proponent.position}
+                                            value={proponent.position}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "position", e.target.value)}
                                             style={{ color: "#171717" }}
                                             className="bg-neutral-100/90 text-sm px-3 py-1 rounded-md !text-neutral-900 border border-neutral-200 placeholder:text-neutral-400 focus:outline-none focus:ring-1 focus:ring-red-700"
                                         />
@@ -309,7 +485,6 @@ export function Submission() {
                                     )}
                                 </div>
 
-                                {/* Row 1: Name fields */}
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-12 gap-4">
                                     <div className="md:col-span-4 space-y-1.5">
                                         <label className="block text-xs font-medium text-neutral-700">
@@ -317,6 +492,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_firstName`}
+                                            value={proponent.firstName}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "firstName", e.target.value)}
                                             placeholder="First Name"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -329,6 +506,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_middleName`}
+                                            value={proponent.middleName}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "middleName", e.target.value)}
                                             placeholder="Middle Name"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -340,6 +519,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_lastName`}
+                                            value={proponent.lastName}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "lastName", e.target.value)}
                                             placeholder="Last Name"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -352,6 +533,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_suffix`}
+                                            value={proponent.suffix}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "suffix", e.target.value)}
                                             placeholder="Jr."
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -359,15 +542,25 @@ export function Submission() {
                                     </div>
                                 </div>
 
-                                {/* Row 2: Student Number, Program and Year, Date */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-medium text-neutral-700">
                                             Student Number <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            type="text"
+                                            inputMode="numeric"
                                             name={`proponent_${index}_studentNumber`}
-                                            placeholder="202X-XXXXX"
+                                            placeholder="202XXXXXXX"
+                                            value={proponent.studentNumber}
+                                            onKeyDown={blockNonIntegerKeys}
+                                            onChange={(e) =>
+                                                handleUpdateProponent(
+                                                    proponent.id,
+                                                    "studentNumber",
+                                                    sanitizeIntegerInput(e.target.value),
+                                                )
+                                            }
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
                                             required
@@ -379,6 +572,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_programAndYear`}
+                                            value={proponent.programAndYear}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "programAndYear", e.target.value)}
                                             placeholder="BSCS - 3rd Year"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -392,6 +587,8 @@ export function Submission() {
                                         <Input
                                             type="date"
                                             name={`proponent_${index}_dateOfSubmission`}
+                                            value={proponent.dateOfSubmission}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "dateOfSubmission", e.target.value)}
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 px-3 !text-neutral-900 cursor-pointer"
                                             required
@@ -399,7 +596,6 @@ export function Submission() {
                                     </div>
                                 </div>
 
-                                {/* Row 3: Department, Position, Name of Org */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-medium text-neutral-700">
@@ -486,6 +682,7 @@ export function Submission() {
                                             type="hidden"
                                             name={`proponent_${index}_department`}
                                             value={departmentValues[proponent.id] ?? ""}
+                                            required
                                         />
                                     </div>
 
@@ -495,6 +692,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_positionOfApplicant`}
+                                            value={proponent.positionOfApplicant}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "positionOfApplicant", e.target.value)}
                                             placeholder="President / Project Lead"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -509,6 +708,8 @@ export function Submission() {
                                         </label>
                                         <Input
                                             name={`proponent_${index}_orgOrCourseSection`}
+                                            value={proponent.orgOrCourseSection}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "orgOrCourseSection", e.target.value)}
                                             placeholder="Organization Name"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -517,15 +718,25 @@ export function Submission() {
                                     </div>
                                 </div>
 
-                                {/* Row 4: Contact Number, Email Address, Facebook Link */}
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                     <div className="space-y-1.5">
                                         <label className="block text-xs font-medium text-neutral-700">
                                             Contact Number <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            type="text"
+                                            inputMode="numeric"
                                             name={`proponent_${index}_contactNumber`}
                                             placeholder="09XXXXXXXXX"
+                                            value={proponent.contactNumber}
+                                            onKeyDown={blockNonIntegerKeys}
+                                            onChange={(e) =>
+                                                handleUpdateProponent(
+                                                    proponent.id,
+                                                    "contactNumber",
+                                                    sanitizeIntegerInput(e.target.value),
+                                                )
+                                            }
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
                                             required
@@ -537,7 +748,11 @@ export function Submission() {
                                         </label>
                                         <Input
                                             type="email"
+                                            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+                                            title="Please enter a valid email address with an '@' and domain (e.g., student@mymail.mapua.edu.ph)"
                                             name={`proponent_${index}_emailAddress`}
+                                            value={proponent.emailAddress}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "emailAddress", e.target.value)}
                                             placeholder="student@mymail.mapua.edu.ph"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -549,7 +764,10 @@ export function Submission() {
                                             Facebook Link <span className="text-red-500">*</span>
                                         </label>
                                         <Input
+                                            type="url"
                                             name={`proponent_${index}_facebookLink`}
+                                            value={proponent.facebookLink}
+                                            onChange={(e) => handleUpdateProponent(proponent.id, "facebookLink", e.target.value)}
                                             placeholder="https://facebook.com/username"
                                             style={{ color: "#171717" }}
                                             className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
@@ -560,7 +778,6 @@ export function Submission() {
                             </div>
                         ))}
 
-                        {/* Add Proponent Button */}
                         <button
                             type="button"
                             onClick={handleAddProponent}
@@ -571,7 +788,6 @@ export function Submission() {
                         </button>
                     </div>
 
-                    {/* Section 2: Details of Activity */}
                     <div className="space-y-6 pt-4">
                         <div className="border-b border-neutral-200 pb-2">
                             <h2 className="text-lg font-bold text-neutral-900 tracking-wide uppercase">
@@ -580,7 +796,6 @@ export function Submission() {
                         </div>
 
                         <div className="space-y-5">
-                            {/* Title and Nature */}
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-semibold text-neutral-800">
                                     Title and Nature of Activity applied for{" "}
@@ -588,6 +803,8 @@ export function Submission() {
                                 </label>
                                 <Input
                                     name="activityTitle"
+                                    value={activityTitle}
+                                    onChange={(e) => setActivityTitle(e.target.value)}
                                     placeholder="i.e. Seminar, Field Trip, Plant Visit, Outing, Socials, Assembly, Meeting, etc."
                                     style={{ color: "#171717" }}
                                     className="bg-white border-neutral-300 rounded-lg h-10 text-sm !text-neutral-900 placeholder:text-neutral-400"
@@ -595,13 +812,14 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* Description */}
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-semibold text-neutral-800">
                                     Description <span className="text-red-500">*</span>
                                 </label>
                                 <Textarea
                                     name="activityDescription"
+                                    value={activityDescription}
+                                    onChange={(e) => setActivityDescription(e.target.value)}
                                     placeholder="Provide a comprehensive summary of the activity..."
                                     rows={4}
                                     style={{ color: "#171717" }}
@@ -610,13 +828,14 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* Objectives */}
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-semibold text-neutral-800">
                                     Objectives of the Activity <span className="text-red-500">*</span>
                                 </label>
                                 <Textarea
                                     name="activityObjectives"
+                                    value={activityObjectives}
+                                    onChange={(e) => setActivityObjectives(e.target.value)}
                                     placeholder="State the primary targets and outcomes..."
                                     rows={4}
                                     style={{ color: "#171717" }}
@@ -625,13 +844,14 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* Venue */}
                             <div className="space-y-1.5">
                                 <label className="block text-xs font-semibold text-neutral-800">
                                     Venue <span className="text-red-500">*</span>
                                 </label>
                                 <Input
                                     name="activityVenue"
+                                    value={activityVenue}
+                                    onChange={(e) => setActivityVenue(e.target.value)}
                                     placeholder="Write the complete room number or address for off-campus activity"
                                     style={{ color: "#171717" }}
                                     className="bg-white border-neutral-300 rounded-lg h-10 text-sm !text-neutral-900 placeholder:text-neutral-400"
@@ -639,7 +859,6 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* Date, Day, Time */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="block text-xs font-semibold text-neutral-800">
@@ -648,6 +867,8 @@ export function Submission() {
                                     <Input
                                         type="date"
                                         name="dateOfEvent"
+                                        value={dateOfEvent}
+                                        onChange={(e) => setDateOfEvent(e.target.value)}
                                         style={{ color: "#171717" }}
                                         className="bg-white border-neutral-300 rounded-lg h-9.5 px-3 !text-neutral-900 cursor-pointer"
                                         required
@@ -697,7 +918,7 @@ export function Submission() {
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <input type="hidden" name="dayOfEvent" value={dayOfEvent} />
+                                    <input type="hidden" name="dayOfEvent" value={dayOfEvent} required />
                                 </div>
 
                                 <div className="space-y-1.5">
@@ -707,6 +928,8 @@ export function Submission() {
                                     <Input
                                         type="time"
                                         name="timeOfEvent"
+                                        value={timeOfEvent}
+                                        onChange={(e) => setTimeOfEvent(e.target.value)}
                                         style={{ color: "#171717" }}
                                         className="bg-white border-neutral-300 rounded-lg h-9.5 px-3 !text-neutral-900 cursor-pointer"
                                         required
@@ -714,7 +937,6 @@ export function Submission() {
                                 </div>
                             </div>
 
-                            {/* Expected Participants, Contribution, Budget */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 <div className="space-y-1.5">
                                     <label className="block text-xs font-semibold text-neutral-800">
@@ -722,11 +944,18 @@ export function Submission() {
                                         <span className="text-red-500">*</span>
                                     </label>
                                     <Input
-                                        type="number"
+                                        type="text"
+                                        inputMode="numeric"
+                                        pattern="[0-9]*"
                                         name="expectedParticipants"
                                         placeholder="0"
+                                        value={expectedParticipants}
+                                        onKeyDown={blockNonIntegerKeys}
+                                        onChange={(e) =>
+                                            setExpectedParticipants(sanitizeIntegerInput(e.target.value))
+                                        }
                                         style={{ color: "#171717" }}
-                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
+                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400 no-spinner text-center"
                                         required
                                     />
                                 </div>
@@ -736,10 +965,17 @@ export function Submission() {
                                         <span className="text-red-500">*</span>
                                     </label>
                                     <Input
+                                        type="text"
+                                        inputMode="decimal"
                                         name="individualContribution"
-                                        placeholder="PHP 0.00"
+                                        placeholder="0.00"
+                                        value={individualContribution}
+                                        onKeyDown={blockNonDecimalKeys}
+                                        onChange={(e) =>
+                                            setIndividualContribution(sanitizeDecimalInput(e.target.value))
+                                        }
                                         style={{ color: "#171717" }}
-                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
+                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400 no-spinner text-center"
                                         required
                                     />
                                 </div>
@@ -749,10 +985,17 @@ export function Submission() {
                                         <span className="text-red-500">*</span>
                                     </label>
                                     <Input
+                                        type="text"
+                                        inputMode="decimal"
                                         name="proposedBudget"
-                                        placeholder="PHP 0.00"
+                                        placeholder="0.00"
+                                        value={proposedBudget}
+                                        onKeyDown={blockNonDecimalKeys}
+                                        onChange={(e) =>
+                                            setProposedBudget(sanitizeDecimalInput(e.target.value))
+                                        }
                                         style={{ color: "#171717" }}
-                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400"
+                                        className="bg-white border-neutral-300 rounded-lg h-9.5 !text-neutral-900 placeholder:text-neutral-400 no-spinner text-center"
                                         required
                                     />
                                 </div>
@@ -760,7 +1003,6 @@ export function Submission() {
                         </div>
                     </div>
 
-                    {/* Section 3: Alignment with Vision, Mission and Formation Goals */}
                     <div className="space-y-6 pt-4">
                         <div className="border-b border-neutral-200 pb-2">
                             <h2 className="text-base font-bold text-neutral-900 tracking-wide uppercase">
@@ -831,7 +1073,6 @@ export function Submission() {
                                 </label>
                             </div>
 
-                            {/* Mapua Core Values */}
                             <div className="space-y-1.5 pt-3">
                                 <label className="block text-sm font-semibold text-neutral-900">
                                     Enumerate and briefly explain the applicable Mapua Core Values
@@ -843,6 +1084,8 @@ export function Submission() {
                                 </p>
                                 <Textarea
                                     name="coreValuesExplanation"
+                                    value={coreValuesExplanation}
+                                    onChange={(e) => setCoreValuesExplanation(e.target.value)}
                                     placeholder="Discuss how the activity fosters these core values..."
                                     rows={4}
                                     style={{ color: "#171717" }}
@@ -851,7 +1094,6 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* PEO / PO */}
                             <div className="space-y-1.5 pt-2">
                                 <label className="block text-sm font-semibold text-neutral-900">
                                     If and when applicable, enumerate the Program Educational
@@ -860,6 +1102,8 @@ export function Submission() {
                                 </label>
                                 <Textarea
                                     name="peoExplanation"
+                                    value={peoExplanation}
+                                    onChange={(e) => setPeoExplanation(e.target.value)}
                                     placeholder="Indicate which academic objectives are satisfied..."
                                     rows={4}
                                     style={{ color: "#171717" }}
@@ -868,7 +1112,6 @@ export function Submission() {
                                 />
                             </div>
 
-                            {/* UN SDGs */}
                             <div className="space-y-1.5 pt-2">
                                 <label className="block text-sm font-semibold text-neutral-900">
                                     Include the United Nation Sustainability Goals and How is the
@@ -877,6 +1120,8 @@ export function Submission() {
                                 </label>
                                 <Textarea
                                     name="sdgExplanation"
+                                    value={sdgExplanation}
+                                    onChange={(e) => setSdgExplanation(e.target.value)}
                                     placeholder="Specify targeted SDGs and your audit methodology..."
                                     rows={4}
                                     style={{ color: "#171717" }}
@@ -887,7 +1132,6 @@ export function Submission() {
                         </div>
                     </div>
 
-                    {/* Section 4: Detailed Budget Proposal */}
                     <div className="space-y-4 pt-4">
                         <div>
                             <h2 className="text-lg font-bold text-neutral-900">
@@ -898,7 +1142,6 @@ export function Submission() {
                             </p>
                         </div>
 
-                        {/* Table */}
                         <div className="bg-white border border-neutral-300 rounded-xl overflow-hidden shadow-2xs">
                             <div className="overflow-x-auto">
                                 <table className="w-full text-sm text-left border-collapse">
@@ -913,10 +1156,10 @@ export function Submission() {
                                             <th className="py-3 px-4 border-r border-neutral-300 text-center w-32">
                                                 Quantity
                                             </th>
-                                            <th className="py-3 px-4 border-r border-neutral-300 text-center w-36">
-                                                Price per Unit
+                                            <th className="py-3 px-4 border-r border-neutral-300 text-center w-44">
+                                                Price per Unit (₱)
                                             </th>
-                                            <th className="py-3 px-4 text-center w-36">Total</th>
+                                            <th className="py-3 px-4 text-center w-40">Total (₱)</th>
                                             {budgetItems.length > 1 && (
                                                 <th className="py-3 px-2 w-12 text-center"></th>
                                             )}
@@ -946,12 +1189,16 @@ export function Submission() {
                                                             className="w-full text-center bg-transparent py-1 px-2 !text-neutral-900 focus:outline-none focus:bg-white rounded border border-transparent focus:border-neutral-300"
                                                         />
                                                     </td>
+
                                                     <td className="p-2 border-r border-neutral-300">
                                                         <input
-                                                            type="text"
+                                                            type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            inputMode="numeric"
                                                             name={`budgetItem_${index}_unit`}
                                                             value={item.unit}
-                                                            style={{ color: "#171717" }}
+                                                            onKeyDown={blockNonIntegerKeys}
                                                             onChange={(e) =>
                                                                 handleUpdateBudgetItem(
                                                                     item.id,
@@ -959,15 +1206,20 @@ export function Submission() {
                                                                     e.target.value,
                                                                 )
                                                             }
+                                                            style={{ color: "#171717" }}
                                                             className="w-full text-center bg-transparent py-1 px-2 !text-neutral-900 focus:outline-none focus:bg-white rounded border border-transparent focus:border-neutral-300"
                                                         />
                                                     </td>
+
                                                     <td className="p-2 border-r border-neutral-300">
                                                         <input
                                                             type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            inputMode="numeric"
                                                             name={`budgetItem_${index}_quantity`}
                                                             value={item.quantity}
-                                                            style={{ color: "#171717" }}
+                                                            onKeyDown={blockNonIntegerKeys}
                                                             onChange={(e) =>
                                                                 handleUpdateBudgetItem(
                                                                     item.id,
@@ -975,28 +1227,44 @@ export function Submission() {
                                                                     e.target.value,
                                                                 )
                                                             }
-                                                            className="w-full text-center bg-transparent py-1 px-2 !text-neutral-900 focus:outline-none focus:bg-white rounded border border-transparent focus:border-neutral-300"
-                                                        />
-                                                    </td>
-                                                    <td className="p-2 border-r border-neutral-300">
-                                                        <input
-                                                            type="number"
-                                                            name={`budgetItem_${index}_pricePerUnit`}
-                                                            value={item.pricePerUnit}
                                                             style={{ color: "#171717" }}
-                                                            onChange={(e) =>
-                                                                handleUpdateBudgetItem(
-                                                                    item.id,
-                                                                    "pricePerUnit",
-                                                                    e.target.value,
-                                                                )
-                                                            }
                                                             className="w-full text-center bg-transparent py-1 px-2 !text-neutral-900 focus:outline-none focus:bg-white rounded border border-transparent focus:border-neutral-300"
                                                         />
                                                     </td>
-                                                    <td className="p-2 text-center font-medium !text-neutral-900">
-                                                        {rowTotal.toLocaleString()}
+
+                                                    <td className="p-2 border-r border-neutral-300">
+                                                        <div className="flex items-center justify-center gap-1">
+                                                            <span className="text-neutral-500 font-semibold select-none">
+                                                                ₱
+                                                            </span>
+                                                            <input
+                                                                type="number"
+                                                                min="0"
+                                                                step="1"
+                                                                inputMode="decimal"
+                                                                name={`budgetItem_${index}_pricePerUnit`}
+                                                                value={item.pricePerUnit}
+                                                                onKeyDown={blockNonDecimalKeys}
+                                                                onChange={(e) =>
+                                                                    handleUpdateBudgetItem(
+                                                                        item.id,
+                                                                        "pricePerUnit",
+                                                                        e.target.value,
+                                                                    )
+                                                                }
+                                                                style={{ color: "#171717" }}
+                                                                className="w-28 text-center bg-transparent py-1 px-1 !text-neutral-900 focus:outline-none focus:bg-white rounded border border-transparent focus:border-neutral-300"
+                                                            />
+                                                        </div>
                                                     </td>
+
+                                                    <td className="p-2 text-center font-medium !text-neutral-900">
+                                                        ₱{rowTotal.toLocaleString(undefined, {
+                                                            minimumFractionDigits: 2,
+                                                            maximumFractionDigits: 2,
+                                                        })}
+                                                    </td>
+
                                                     {budgetItems.length > 1 && (
                                                         <td className="p-1 text-center">
                                                             <button
@@ -1011,7 +1279,7 @@ export function Submission() {
                                                 </tr>
                                             )
                                         })}
-                                        {/* Grand Total Row */}
+
                                         <tr className="bg-neutral-50/90 font-semibold text-neutral-800 border-t border-neutral-300">
                                             <td
                                                 colSpan={4}
@@ -1020,7 +1288,10 @@ export function Submission() {
                                                 Grand Total
                                             </td>
                                             <td className="py-3 px-4 text-center font-bold !text-neutral-900">
-                                                {grandTotal.toLocaleString()}
+                                                ₱{grandTotal.toLocaleString(undefined, {
+                                                    minimumFractionDigits: 2,
+                                                    maximumFractionDigits: 2,
+                                                })}
                                             </td>
                                             {budgetItems.length > 1 && <td></td>}
                                         </tr>
@@ -1029,7 +1300,6 @@ export function Submission() {
                             </div>
                         </div>
 
-                        {/* Add more item button */}
                         <button
                             type="button"
                             onClick={handleAddBudgetItem}
@@ -1040,7 +1310,6 @@ export function Submission() {
                         </button>
                     </div>
 
-                    {/* Section 5: Venue Reservation & Submit */}
                     <div className="pt-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 border-t border-neutral-200">
                         <div className="space-y-2">
                             <p className="text-sm font-bold text-neutral-800">
@@ -1049,16 +1318,25 @@ export function Submission() {
                             </p>
                             <button
                                 type="button"
-                                onClick={() => navigate("/reservation")}
+                                onClick={handleGoToReservation}
                                 className="bg-[#242424] hover:bg-black text-white text-xs font-medium px-5 py-2.5 rounded-full shadow-xs transition-colors cursor-pointer"
                             >
                                 Click here to reserve a venue
                             </button>
                         </div>
 
-                        <div className="w-full sm:w-auto flex justify-end">
+                        <div className="w-full sm:w-auto flex items-center justify-end gap-3">
+                            <button
+                                type="button"
+                                onClick={handleSavePdf}
+                                className="bg-white border border-neutral-300 hover:bg-neutral-50 text-neutral-800 text-xs font-semibold px-4 py-2.5 rounded-lg shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer h-10"
+                            >
+                                <DownloadIcon className="w-3.5 h-3.5" />
+                                Save as PDF
+                            </button>
                             <Button
-                                type="submit"
+                                type="button"
+                                onClick={handleInitiateSubmit}
                                 disabled={isSubmitting}
                                 className="bg-[#0B6623] hover:bg-[#084D1A] text-white font-semibold text-sm px-10 py-2.5 rounded-lg shadow-sm transition-all cursor-pointer min-w-36 h-10"
                             >
@@ -1066,8 +1344,88 @@ export function Submission() {
                             </Button>
                         </div>
                     </div>
-                </Form>
+                </fetcher.Form>
             </div>
+
+            {showConfirmModal && (
+                <div
+                    onClick={() => setShowConfirmModal(false)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white w-[560px] min-h-[200px] rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between animate-in zoom-in-95 duration-150"
+                    >
+                        <div className="bg-[#333333] px-6 py-4 text-center">
+                            <h3 className="text-white text-base sm:text-lg font-bold tracking-normal">
+                                Are you sure you want to submit?
+                            </h3>
+                        </div>
+
+                        <div className="px-8 py-5 text-center flex-1 flex flex-col justify-center space-y-5">
+                            <p className="text-sm text-neutral-700 leading-relaxed font-normal">
+                                This action will submit your student activity form with the data you
+                                have inputted.{" "}
+                                <strong className="font-bold text-neutral-900">
+                                    This action cannot be undone.
+                                </strong>
+                            </p>
+
+                            <div className="flex items-center justify-center gap-4 pt-1">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmModal(false)}
+                                    className="w-40 py-2.5 px-4 bg-white hover:bg-neutral-50 text-neutral-800 text-sm font-medium rounded-xl border border-neutral-300 shadow-sm transition-all cursor-pointer"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleConfirmProceed}
+                                    disabled={isSubmitting}
+                                    className="w-40 py-2.5 px-4 bg-[#4E9B26] hover:bg-[#438721] text-white text-sm font-semibold rounded-xl shadow-sm transition-all cursor-pointer"
+                                >
+                                    {isSubmitting ? "Submitting..." : "Proceed"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {showSuccessModal && (
+                <div
+                    onClick={() => setShowSuccessModal(false)}
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 animate-in fade-in duration-200"
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white w-[380px] min-h-[190px] rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between animate-in zoom-in-95 duration-150"
+                    >
+                        <div className="bg-[#333333] py-6 flex items-center justify-center">
+                            <div className="w-14 h-14 rounded-full bg-[#52A41C] flex items-center justify-center shadow-md">
+                                <CheckIcon className="w-8 h-8 text-white stroke-[3.5]" />
+                            </div>
+                        </div>
+
+                        <div className="px-6 py-4 text-center space-y-3">
+                            <h3 className="text-base font-bold text-neutral-900">
+                                Activity Application Submitted!
+                            </h3>
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setShowSuccessModal(false)
+                                    window.location.reload()
+                                }}
+                                className="w-full py-2 bg-neutral-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition-all cursor-pointer"
+                            >
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }
