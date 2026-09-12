@@ -65,7 +65,11 @@ export function Login() {
             </Field>
           </CardPanel>
           <CardFooter>
-            <Button disabled={isSubmitting} loading={isSubmitting} type="submit">
+            <Button
+              disabled={isSubmitting}
+              loading={isSubmitting}
+              type="submit"
+            >
               Sign in
             </Button>
           </CardFooter>

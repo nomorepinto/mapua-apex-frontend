@@ -33,19 +33,51 @@ function formatAuditTimestamp(iso: string): string {
   })
 }
 
-const AUDIT_ACTION_CONFIG: Record<AuditLogEntry["action"], { label: string; icon: typeof CheckCircleIcon; color: string }> = {
-  submission_created: { label: "Submission Created", icon: PlusIcon, color: "text-blue-600 bg-blue-50 border-blue-200" },
-  submission_approved: { label: "Approved", icon: CheckCircleIcon, color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
-  submission_denied: { label: "Denied / Returned", icon: AlertTriangleIcon, color: "text-red-600 bg-red-50 border-red-200" },
-  account_updated: { label: "Account Updated", icon: PencilIcon, color: "text-violet-600 bg-violet-50 border-violet-200" },
-  announcement_created: { label: "Announcement", icon: FileTextIcon, color: "text-amber-600 bg-amber-50 border-amber-200" },
-  status_changed: { label: "Status Changed", icon: ClockIcon, color: "text-orange-600 bg-orange-50 border-orange-200" },
+const AUDIT_ACTION_CONFIG: Record<
+  AuditLogEntry["action"],
+  { label: string; icon: typeof CheckCircleIcon; color: string }
+> = {
+  submission_created: {
+    label: "Submission Created",
+    icon: PlusIcon,
+    color: "text-blue-600 bg-blue-50 border-blue-200",
+  },
+  submission_approved: {
+    label: "Approved",
+    icon: CheckCircleIcon,
+    color: "text-emerald-600 bg-emerald-50 border-emerald-200",
+  },
+  submission_denied: {
+    label: "Denied / Returned",
+    icon: AlertTriangleIcon,
+    color: "text-red-600 bg-red-50 border-red-200",
+  },
+  account_updated: {
+    label: "Account Updated",
+    icon: PencilIcon,
+    color: "text-violet-600 bg-violet-50 border-violet-200",
+  },
+  announcement_created: {
+    label: "Announcement",
+    icon: FileTextIcon,
+    color: "text-amber-600 bg-amber-50 border-amber-200",
+  },
+  status_changed: {
+    label: "Status Changed",
+    icon: ClockIcon,
+    color: "text-orange-600 bg-orange-50 border-orange-200",
+  },
 }
 
-function exportAuditLogCsv(logs: AuditLogEntry[], orgNameMap: Map<string, string>) {
+function exportAuditLogCsv(
+  logs: AuditLogEntry[],
+  orgNameMap: Map<string, string>
+) {
   const header = "Timestamp,Action,Actor,Organization,Description"
   const rows = logs.map((log) => {
-    const orgName = log.orgId ? orgNameMap.get(log.orgId) ?? log.orgId : "System"
+    const orgName = log.orgId
+      ? (orgNameMap.get(log.orgId) ?? log.orgId)
+      : "System"
     const escaped = (s: string) => `"${s.replace(/"/g, '""')}"`
     return [
       escaped(formatAuditTimestamp(log.timestamp)),
@@ -79,7 +111,7 @@ function StatusBadge({ status }: { status: OrgStatus }) {
 
   return (
     <span
-      className={`text-xs px-2.5 py-1 rounded-full border font-semibold whitespace-nowrap ${colorMap[status]}`}
+      className={`rounded-full border px-2.5 py-1 text-xs font-semibold whitespace-nowrap ${colorMap[status]}`}
     >
       {status}
     </span>
@@ -126,24 +158,27 @@ function AnnouncementModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-[797px] mx-4 overflow-hidden">
+      <div className="relative mx-4 w-full max-w-[797px] overflow-hidden rounded-2xl bg-white shadow-xl">
         {/* ── Dark Header ─────────────────────────────────────────── */}
-        <div className="bg-[#2D2D2D] px-6 py-5 space-y-2">
+        <div className="space-y-2 bg-[#2D2D2D] px-6 py-5">
           <h3 className="text-lg font-bold text-white">
             {isEdit ? "Edit Announcement" : "Announcement"}
           </h3>
-          <p className="text-sm text-[#FBC02D] font-medium">
+          <p className="text-sm font-medium text-[#FBC02D]">
             Reflected: From Office of the Student Affairs and Alumni Relations
           </p>
-          <span className="inline-block text-xs font-semibold text-white bg-red-600 px-2.5 py-1 rounded">
+          <span className="inline-block rounded bg-red-600 px-2.5 py-1 text-xs font-semibold text-white">
             This will reflect to all Organizations and Student Council Dashboard
           </span>
         </div>
 
         {/* ── Form Body ───────────────────────────────────────────── */}
-        <div className="px-6 py-5 space-y-4">
+        <div className="space-y-4 px-6 py-5">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-neutral-900">
               {isEdit ? "Edit Title" : "Create Title"}{" "}
@@ -167,23 +202,23 @@ function AnnouncementModal({
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               rows={5}
-              className="rounded-lg border-neutral-300 focus:border-red-800 focus:ring-red-800/20 resize-y [&_textarea]:!text-neutral-900 [&_textarea]:placeholder:!text-neutral-400"
+              className="resize-y rounded-lg border-neutral-300 focus:border-red-800 focus:ring-red-800/20 [&_textarea]:!text-neutral-900 [&_textarea]:placeholder:!text-neutral-400"
             />
           </div>
         </div>
 
         {/* ── Footer Buttons (stacked, right-aligned) ─────────────── */}
-        <div className="px-6 pb-5 flex flex-col items-end gap-2">
+        <div className="flex flex-col items-end gap-2 px-6 pb-5">
           <Button
             onClick={handleSubmit}
             disabled={!title.trim() || !message.trim()}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            className="cursor-pointer rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isEdit ? "Save Announcement" : "Post Announcement"}
           </Button>
           <Button
             onClick={onClose}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-5 py-2 rounded-lg shadow-sm transition-all cursor-pointer text-sm"
+            className="cursor-pointer rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700"
           >
             Cancel Action
           </Button>
@@ -210,18 +245,23 @@ function AuditLogModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
-      <div className="relative bg-white rounded-2xl border border-neutral-200 shadow-xl w-full max-w-2xl mx-4 overflow-hidden max-h-[80vh] flex flex-col">
-        <div className="px-6 pt-5 pb-4 border-b border-neutral-200 shrink-0">
+      <div className="relative mx-4 flex max-h-[80vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-xl">
+        <div className="shrink-0 border-b border-neutral-200 px-6 pt-5 pb-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-neutral-100 border border-neutral-200">
-                <ScrollTextIcon className="w-4 h-4 text-neutral-700" />
+              <div className="rounded-xl border border-neutral-200 bg-neutral-100 p-2">
+                <ScrollTextIcon className="h-4 w-4 text-neutral-700" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-neutral-900">Audit Logs</h3>
-                <p className="text-xs text-neutral-500 mt-0.5">
+                <h3 className="text-lg font-bold text-neutral-900">
+                  Audit Logs
+                </h3>
+                <p className="mt-0.5 text-xs text-neutral-500">
                   {orgName} — Activity history
                 </p>
               </div>
@@ -229,17 +269,17 @@ function AuditLogModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-neutral-100 text-neutral-500 hover:text-neutral-700 transition-colors cursor-pointer"
+              className="cursor-pointer rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
             >
-              <XIcon className="w-4 h-4" />
+              <XIcon className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        <div className="overflow-y-auto flex-1 px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           {logs.length === 0 ? (
-            <div className="text-center py-12">
-              <ScrollTextIcon className="w-8 h-8 text-neutral-300 mx-auto mb-3" />
+            <div className="py-12 text-center">
+              <ScrollTextIcon className="mx-auto mb-3 h-8 w-8 text-neutral-300" />
               <p className="text-sm text-neutral-500">
                 No audit log entries for this organization.
               </p>
@@ -252,20 +292,28 @@ function AuditLogModal({
                 return (
                   <div
                     key={log.id}
-                    className="flex gap-3 p-3 rounded-xl border border-neutral-100 hover:border-neutral-200 hover:bg-neutral-50/50 transition-colors"
+                    className="flex gap-3 rounded-xl border border-neutral-100 p-3 transition-colors hover:border-neutral-200 hover:bg-neutral-50/50"
                   >
-                    <div className={`p-2 rounded-lg border shrink-0 h-fit ${config.color}`}>
-                      <Icon className="w-3.5 h-3.5" />
+                    <div
+                      className={`h-fit shrink-0 rounded-lg border p-2 ${config.color}`}
+                    >
+                      <Icon className="h-3.5 w-3.5" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-xs font-semibold text-neutral-900">{config.label}</span>
-                        <span className="text-[11px] text-neutral-400 font-medium whitespace-nowrap">
+                        <span className="text-xs font-semibold text-neutral-900">
+                          {config.label}
+                        </span>
+                        <span className="text-[11px] font-medium whitespace-nowrap text-neutral-400">
                           {formatAuditTimestamp(log.timestamp)}
                         </span>
                       </div>
-                      <p className="text-xs text-neutral-600 mt-0.5">{log.description}</p>
-                      <p className="text-[11px] text-neutral-400 mt-1">by {log.actor}</p>
+                      <p className="mt-0.5 text-xs text-neutral-600">
+                        {log.description}
+                      </p>
+                      <p className="mt-1 text-[11px] text-neutral-400">
+                        by {log.actor}
+                      </p>
                     </div>
                   </div>
                 )
@@ -274,10 +322,10 @@ function AuditLogModal({
           )}
         </div>
 
-        <div className="px-6 py-4 border-t border-neutral-200 shrink-0 flex justify-end">
+        <div className="flex shrink-0 justify-end border-t border-neutral-200 px-6 py-4">
           <Button
             onClick={onClose}
-            className="bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer border border-neutral-200"
+            className="cursor-pointer rounded-xl border border-neutral-200 bg-neutral-100 px-5 py-2.5 font-semibold text-neutral-700 transition-all hover:bg-neutral-200"
           >
             Close
           </Button>
@@ -302,8 +350,12 @@ export function AdminOsaPanel() {
 
   // ── Local UI state (modal visibility, not business data) ──
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
-  const [announcementModalMode, setAnnouncementModalMode] = useState<"create" | "edit">("create")
-  const [editingAnnouncementId, setEditingAnnouncementId] = useState<string | null>(null)
+  const [announcementModalMode, setAnnouncementModalMode] = useState<
+    "create" | "edit"
+  >("create")
+  const [editingAnnouncementId, setEditingAnnouncementId] = useState<
+    string | null
+  >(null)
   const [editInitialTitle, setEditInitialTitle] = useState("")
   const [editInitialMessage, setEditInitialMessage] = useState("")
 
@@ -338,7 +390,12 @@ export function AdminOsaPanel() {
       }
       setShowAnnouncementModal(false)
     },
-    [announcementModalMode, editingAnnouncementId, updateAnnouncement, createAnnouncement],
+    [
+      announcementModalMode,
+      editingAnnouncementId,
+      updateAnnouncement,
+      createAnnouncement,
+    ]
   )
 
   const handleOpenAuditLog = useCallback((orgId: string, orgName: string) => {
@@ -347,7 +404,9 @@ export function AdminOsaPanel() {
     setShowAuditLogModal(true)
   }, [])
 
-  const filteredAuditLogs = auditLogOrgId ? getAuditLogsForOrg(auditLogOrgId) : []
+  const filteredAuditLogs = auditLogOrgId
+    ? getAuditLogsForOrg(auditLogOrgId)
+    : []
 
   const handleExportAuditLog = useCallback(() => {
     const orgNameMap = new Map(orgViews.map((o) => [o.id, o.name]))
@@ -381,16 +440,43 @@ export function AdminOsaPanel() {
     },
   ]
 
+  const reviewStatCards = [
+    {
+      label: "Pending Review",
+      value: "07",
+      badge: "Action Required",
+      badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
+    },
+    {
+      label: "Total Approved",
+      value: "42",
+      badge: "Authorized",
+      badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    },
+    {
+      label: "Returned for Revision",
+      value: "04",
+      badge: "Needs Edits",
+      badgeColor: "bg-red-100 text-red-800 border-red-300",
+    },
+    {
+      label: "Total Reviewed",
+      value: "53",
+      badge: "Term Cumulative",
+      badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-300",
+    },
+  ]
+
   return (
-    <div className="w-full min-h-full bg-[#F3F4F6] text-neutral-900 py-8 px-4 sm:px-8 lg:px-12">
-      <div className="max-w-6xl mx-auto space-y-8">
+    <div className="min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-6xl space-y-8">
         {/* ── Page Header ────────────────────────────────────────────── */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5">
+        <div className="flex flex-col justify-between gap-4 border-b border-neutral-200 pb-5 sm:flex-row sm:items-center">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
+            <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
               Admin Panel — Office of Student Affairs
             </h1>
-            <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-normal">
+            <p className="mt-1 text-xs font-normal text-neutral-500 sm:text-sm">
               Global administration console for student organizations, activity
               audit logs, and status triggers.
             </p>
@@ -398,53 +484,62 @@ export function AdminOsaPanel() {
 
           <Button
             onClick={handleExportAuditLog}
-            className="bg-[#800000] hover:bg-[#660000] text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer h-10"
+            className="flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#800000] px-5 py-2.5 font-semibold text-white shadow-sm transition-all hover:bg-[#660000]"
           >
-            <DownloadIcon className="w-4 h-4" />
+            <DownloadIcon className="h-4 w-4" />
             <span>Export System Audit Log</span>
           </Button>
         </div>
 
         {/* ── Registered Student Organization Accounts ────────────── */}
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xs overflow-hidden">
-          <div className="p-6 border-b border-neutral-200">
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xs">
+          <div className="border-b border-neutral-200 p-6">
             <h2 className="text-lg font-bold text-neutral-900">
               Registered Student Organization Accounts
             </h2>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-6">Organization Name</th>
-                  <th className="py-3.5 px-6">Adviser</th>
-                  <th className="py-3.5 px-6">Representative</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
+                <tr className="border-b border-neutral-200 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-600 uppercase">
+                  <th className="px-6 py-3.5">Organization Name</th>
+                  <th className="px-6 py-3.5">Adviser</th>
+                  <th className="px-6 py-3.5">Representative</th>
+                  <th className="px-6 py-3.5">Status</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-150">
+              <tbody className="divide-neutral-150 divide-y">
                 {orgViews.map((org) => (
-                  <tr key={org.id} className="hover:bg-neutral-50/70 transition-colors">
-                    <td className="py-4 px-6 font-semibold text-neutral-900">{org.name}</td>
-                    <td className="py-4 px-6 text-neutral-700 text-xs">{org.adviser}</td>
-                    <td className="py-4 px-6 text-neutral-700 text-xs">{org.representative}</td>
-                    <td className="py-4 px-6">
+                  <tr
+                    key={org.id}
+                    className="transition-colors hover:bg-neutral-50/70"
+                  >
+                    <td className="px-6 py-4 font-semibold text-neutral-900">
+                      {org.name}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-neutral-700">
+                      {org.adviser}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-neutral-700">
+                      {org.representative}
+                    </td>
+                    <td className="px-6 py-4">
                       <StatusBadge status={org.status} />
                     </td>
-                    <td className="py-4 px-6">
+                    <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
-                          className="text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="cursor-pointer rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900"
                         >
                           Manage Account
                         </button>
                         <button
                           type="button"
                           onClick={() => handleOpenAuditLog(org.id, org.name)}
-                          className="text-xs font-medium text-neutral-600 hover:text-neutral-900 bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="cursor-pointer rounded-lg border border-neutral-200 bg-neutral-100 px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-200 hover:text-neutral-900"
                         >
                           Audit Logs
                         </button>
@@ -459,73 +554,114 @@ export function AdminOsaPanel() {
 
         {/* ── Institution-wide Metrics & Performance ──────────────── */}
         <div>
-          <h2 className="text-lg font-bold text-neutral-900 mb-4">
+          <h2 className="mb-4 text-lg font-bold text-neutral-900">
             Institution-wide Metrics & Performance
           </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
             {statCards.map((stat, i) => {
               const Icon = stat.icon
               return (
                 <div
                   key={i}
-                  className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-2xs space-y-3"
+                  className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-2xs"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
+                    <span className="text-xs font-semibold tracking-wider text-neutral-500 uppercase">
                       {stat.label}
                     </span>
-                    <div className={`p-2 rounded-xl border ${stat.color}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`rounded-xl border p-2 ${stat.color}`}>
+                      <Icon className="h-4 w-4" />
                     </div>
                   </div>
                   <div>
-                    <span className="text-2xl font-extrabold text-neutral-900">{stat.value}</span>
-                    <p className={`text-xs mt-1 font-medium ${stat.changeColor}`}>{stat.change}</p>
+                    <span className="text-2xl font-extrabold text-neutral-900">
+                      {stat.value}
+                    </span>
+                    <p
+                      className={`mt-1 text-xs font-medium ${stat.changeColor}`}
+                    >
+                      {stat.change}
+                    </p>
                   </div>
                 </div>
               )
             })}
           </div>
+          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+            {reviewStatCards.map((stat, i) => (
+              <div
+                key={i}
+                className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-5 shadow-2xs"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-neutral-600">
+                    {stat.label}
+                  </span>
+                  <span
+                    className={`rounded border px-2 py-0.5 text-[10px] font-semibold ${stat.badgeColor}`}
+                  >
+                    {stat.badge}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-2xl font-extrabold text-neutral-900 sm:text-3xl">
+                    {stat.value}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* ── Current Announcements ───────────────────────────────── */}
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xs overflow-hidden">
-          <div className="p-6 border-b border-neutral-200">
-            <h2 className="text-lg font-bold text-neutral-900">Current Announcements</h2>
+        <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xs">
+          <div className="border-b border-neutral-200 p-6">
+            <h2 className="text-lg font-bold text-neutral-900">
+              Current Announcements
+            </h2>
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
+            <table className="w-full border-collapse text-left text-sm">
               <thead>
-                <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-6">Title</th>
-                  <th className="py-3.5 px-6">Date</th>
-                  <th className="py-3.5 px-6">Time</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
+                <tr className="border-b border-neutral-200 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-600 uppercase">
+                  <th className="px-6 py-3.5">Title</th>
+                  <th className="px-6 py-3.5">Date</th>
+                  <th className="px-6 py-3.5">Time</th>
+                  <th className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-150">
+              <tbody className="divide-neutral-150 divide-y">
                 {announcements.map((announcement) => (
-                  <tr key={announcement.id} className="hover:bg-neutral-50/70 transition-colors">
-                    <td className="py-4 px-6 font-semibold text-neutral-900">{announcement.title}</td>
-                    <td className="py-4 px-6 text-neutral-700 text-xs">{announcement.date}</td>
-                    <td className="py-4 px-6 text-neutral-700 text-xs">{announcement.time}</td>
-                    <td className="py-4 px-6">
+                  <tr
+                    key={announcement.id}
+                    className="transition-colors hover:bg-neutral-50/70"
+                  >
+                    <td className="px-6 py-4 font-semibold text-neutral-900">
+                      {announcement.title}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-neutral-700">
+                      {announcement.date}
+                    </td>
+                    <td className="px-6 py-4 text-xs text-neutral-700">
+                      {announcement.time}
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <button
                           type="button"
                           onClick={() => handleOpenEditModal(announcement)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald-700"
                         >
-                          <PencilIcon className="w-3 h-3" />
+                          <PencilIcon className="h-3 w-3" />
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => deleteAnnouncement(announcement.id)}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-white bg-red-600 hover:bg-red-700 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
+                          className="inline-flex cursor-pointer items-center gap-1 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-red-700"
                         >
-                          <Trash2Icon className="w-3 h-3" />
+                          <Trash2Icon className="h-3 w-3" />
                           Delete
                         </button>
                       </div>
@@ -536,12 +672,12 @@ export function AdminOsaPanel() {
             </table>
           </div>
 
-          <div className="p-6 border-t border-neutral-200">
+          <div className="border-t border-neutral-200 p-6">
             <Button
               onClick={handleOpenCreateModal}
-              className="bg-[#800000] hover:bg-[#660000] text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer h-10"
+              className="flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#800000] px-5 py-2.5 font-semibold text-white shadow-sm transition-all hover:bg-[#660000]"
             >
-              <PlusIcon className="w-4 h-4" />
+              <PlusIcon className="h-4 w-4" />
               <span>Create Announcement</span>
             </Button>
           </div>

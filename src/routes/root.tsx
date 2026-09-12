@@ -1,14 +1,17 @@
-import { Outlet } from "react-router"
-import { ApexSidebar } from "@/components/apex-sidebar"
+import { Outlet, useLocation } from "react-router"
+import { ApexSidebar, AdminSidebar } from "@/components/apex-sidebar"
 
 export function Root() {
+  const location = useLocation()
+  const isAdmin = location.pathname.startsWith("/admin")
+
   return (
     <div className="flex min-h-screen w-full bg-[#F3F4F6]">
       {/* Persistent Left Sidebar */}
-      <ApexSidebar />
+      {isAdmin ? <AdminSidebar /> : <ApexSidebar />}
 
       {/* Main Page Content */}
-      <main className="flex-1 min-w-0 min-h-screen overflow-y-auto">
+      <main className="min-h-screen min-w-0 flex-1 overflow-y-auto">
         <Outlet />
       </main>
     </div>

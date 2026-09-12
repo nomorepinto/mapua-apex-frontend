@@ -1,15 +1,11 @@
 import { type SVGProps } from "react"
 import { NavLink, useNavigate, useLocation, Link } from "react-router"
-import {
-  HomeIcon,
-  PlusCircleIcon,
-  UsersIcon,
-  LogOutIcon,
-} from "lucide-react"
+import { HomeIcon, PlusCircleIcon, UsersIcon, LogOutIcon } from "lucide-react"
 
 import { useSessionStore } from "@/stores/session-store"
+export { AdminSidebar } from "./admin-sidebar"
 
-interface LogoProps extends SVGProps<SVGSVGElement> { }
+interface LogoProps extends SVGProps<SVGSVGElement> {}
 
 export const Logo = (props: LogoProps) => {
   return (
@@ -141,10 +137,10 @@ export function ApexSidebar() {
     location.pathname === "/submission" || location.pathname === "/reservation"
 
   return (
-    <aside className="w-64 shrink-0 bg-[#990000] text-white flex flex-col justify-between p-4 min-h-screen sticky top-0 h-screen select-none shadow-xl z-20">
+    <aside className="sticky top-0 z-20 flex h-screen min-h-screen w-64 shrink-0 flex-col justify-between bg-[#990000] p-4 text-white shadow-xl select-none">
       {/* Top Brand Section */}
       <div className="space-y-6">
-        <div className="flex flex-col items-center text-center pt-2 pb-2">
+        <div className="flex flex-col items-center pt-2 pb-2 text-center">
           {/* Logo is encapsulated directly here */}
           <div className="relative mb-2.5 flex items-center justify-center">
             <Link
@@ -152,13 +148,13 @@ export function ApexSidebar() {
               className="cursor-pointer transition-opacity hover:opacity-85 focus:outline-hidden"
               aria-label="Go to Dean Dashboard"
             >
-              <Logo className="w-[187px] h-[84px]" />
+              <Logo className="h-[84px] w-[187px]" />
             </Link>
           </div>
 
           {/* APEX Title */}
           <h2
-            className="uppercase font-audiowide text-white"
+            className="font-audiowide text-white uppercase"
             style={{
               fontSize: "24px",
               letterSpacing: "17px",
@@ -195,17 +191,19 @@ export function ApexSidebar() {
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
-                ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-                : "text-white/90 hover:text-white hover:bg-neutral-200/20"
+              `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-white font-bold text-neutral-900 shadow-md shadow-black/10"
+                  : "text-white/90 hover:bg-neutral-200/20 hover:text-white"
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <HomeIcon
-                  className={`w-4.5 h-4.5 ${isActive ? "text-red-800" : "text-white/80"
-                    }`}
+                  className={`h-4.5 w-4.5 ${
+                    isActive ? "text-red-800" : "text-white/80"
+                  }`}
                 />
                 <span>Dashboard</span>
               </>
@@ -215,14 +213,16 @@ export function ApexSidebar() {
           {/* Submission (matches both /submission and /reservation) */}
           <NavLink
             to="/submission"
-            className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isSubmissionActive
-              ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-              : "text-white/90 hover:text-white hover:bg-neutral-200/20"
-              }`}
+            className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
+              isSubmissionActive
+                ? "bg-white font-bold text-neutral-900 shadow-md shadow-black/10"
+                : "text-white/90 hover:bg-neutral-200/20 hover:text-white"
+            }`}
           >
             <PlusCircleIcon
-              className={`w-4.5 h-4.5 ${isSubmissionActive ? "text-red-800" : "text-white/80"
-                }`}
+              className={`h-4.5 w-4.5 ${
+                isSubmissionActive ? "text-red-800" : "text-white/80"
+              }`}
             />
             <span>Submission</span>
           </NavLink>
@@ -231,17 +231,19 @@ export function ApexSidebar() {
           <NavLink
             to="/about"
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
-                ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-                : "text-white/90 hover:text-white hover:bg-neutral-200/20"
+              `flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
+                isActive
+                  ? "bg-white font-bold text-neutral-900 shadow-md shadow-black/10"
+                  : "text-white/90 hover:bg-neutral-200/20 hover:text-white"
               }`
             }
           >
             {({ isActive }) => (
               <>
                 <UsersIcon
-                  className={`w-4.5 h-4.5 ${isActive ? "text-red-800" : "text-white/80"
-                    }`}
+                  className={`h-4.5 w-4.5 ${
+                    isActive ? "text-red-800" : "text-white/80"
+                  }`}
                 />
                 <span>About the Devs</span>
               </>
@@ -252,21 +254,21 @@ export function ApexSidebar() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-neutral-200/20 transition-all cursor-pointer text-left"
+            className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-neutral-200/20 hover:text-white"
           >
-            <LogOutIcon className="w-4.5 h-4.5 text-white/80" />
+            <LogOutIcon className="h-4.5 w-4.5 text-white/80" />
             <span>Sign Out</span>
           </button>
         </nav>
       </div>
 
       {/* Bottom User Card */}
-      <div className="pt-4 border-t border-red-900/60">
-        <div className="bg-[#6b0000]/90 border border-red-900/50 rounded-xl p-3.5 shadow-sm">
-          <p className="text-sm font-semibold text-white tracking-wide">
+      <div className="border-t border-red-900/60 pt-4">
+        <div className="rounded-xl border border-red-900/50 bg-[#6b0000]/90 p-3.5 shadow-sm">
+          <p className="text-sm font-semibold tracking-wide text-white">
             {name || "Jedrick Darren Ocenar"}
           </p>
-          <p className="text-xs font-medium text-[#FBC02D] mt-0.5">
+          <p className="mt-0.5 text-xs font-medium text-[#FBC02D]">
             AWS-SBG Arcus President
           </p>
         </div>
