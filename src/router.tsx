@@ -6,6 +6,7 @@ import { Submission, action as submissionAction } from "@/routes/submission"
 import { Reservation } from "@/routes/reservation"
 import { About } from "@/routes/about"
 import { Login, action as loginAction } from "@/routes/login"
+import { AdminOsaPanel } from "@/routes/admin-osa-panel"
 
 export const router = createBrowserRouter([
   {
@@ -41,6 +42,10 @@ export const router = createBrowserRouter([
         path: "login",
         Component: Login,
         action: loginAction,
+      },
+      {
+        path: "admin-osa-panel",
+        Component: AdminOsaPanel,
       },
     ],
   },
