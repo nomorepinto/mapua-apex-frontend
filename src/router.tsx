@@ -1,9 +1,11 @@
-import { createBrowserRouter } from "react-router"
+import { createBrowserRouter, Navigate } from "react-router"
 
-import { Dashboard } from "@/routes/dashboard"
-import { Home, loader as homeLoader } from "@/routes/home"
-import { Login, action as loginAction } from "@/routes/login"
 import { Root } from "@/routes/root"
+import { Dashboard } from "@/routes/dashboard"
+import { Submission, action as submissionAction } from "@/routes/submission"
+import { Reservation } from "@/routes/reservation"
+import { About } from "@/routes/about"
+import { Login, action as loginAction } from "@/routes/login"
 
 export const router = createBrowserRouter([
   {
@@ -12,8 +14,24 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: Home,
-        loader: homeLoader,
+        Component: () => <Navigate to="/dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        Component: Dashboard,
+      },
+      {
+        path: "submission",
+        Component: Submission,
+        action: submissionAction,
+      },
+      {
+        path: "reservation",
+        Component: Reservation,
+      },
+      {
+        path: "about",
+        Component: About,
       },
       {
         path: "dashboard",
