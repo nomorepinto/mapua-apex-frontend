@@ -22,6 +22,14 @@ export function Root() {
           </Button>
           <Button
             className="aria-[current=page]:bg-accent"
+            render={<NavLink to="/dashboard" />}
+            size="sm"
+            variant="ghost"
+          >
+            Dashboard
+          </Button>
+          <Button
+            className="aria-[current=page]:bg-accent"
             render={<NavLink to="/login" />}
             size="sm"
             variant="ghost"
