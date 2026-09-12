@@ -66,29 +66,40 @@ export function DialogPopup({
   children,
   showCloseButton = true,
   bottomStickOnMobile = true,
+  fullScreen = false,
   closeProps,
   portalProps,
+  viewportProps,
   ...props
 }: DialogPrimitive.Popup.Props & {
   showCloseButton?: boolean;
   bottomStickOnMobile?: boolean;
+  fullScreen?: boolean;
   closeProps?: DialogPrimitive.Close.Props;
   portalProps?: DialogPrimitive.Portal.Props;
+  viewportProps?: DialogPrimitive.Viewport.Props;
 }): React.ReactElement {
   return (
     <DialogPortal {...portalProps}>
-      <DialogBackdrop />
+      <DialogBackdrop className={cn(fullScreen && "hidden")} />
       <DialogViewport
+        {...viewportProps}
         className={cn(
           bottomStickOnMobile &&
+            !fullScreen &&
             "max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12",
+          fullScreen && "p-0 grid-rows-1 justify-items-stretch",
+          viewportProps?.className,
         )}
       >
         <DialogPrimitive.Popup
           className={cn(
             "relative row-start-2 flex max-h-full min-h-0 w-full min-w-0 max-w-lg origin-center flex-col rounded-2xl border bg-popover not-dark:bg-clip-padding text-popover-foreground opacity-[calc(1-var(--nested-dialogs))] shadow-lg/5 outline-none transition-[scale,opacity,translate] duration-200 ease-in-out will-change-transform before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-2xl)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] data-ending-style:opacity-0 data-starting-style:opacity-0 sm:scale-[calc(1-0.1*var(--nested-dialogs))] sm:data-ending-style:scale-98 sm:data-starting-style:scale-98 dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
             bottomStickOnMobile &&
+              !fullScreen &&
               "max-sm:max-w-none max-sm:origin-bottom max-sm:rounded-none max-sm:border-x-0 max-sm:border-t max-sm:border-b-0 max-sm:data-ending-style:translate-y-4 max-sm:data-starting-style:translate-y-4 max-sm:before:hidden max-sm:before:rounded-none",
+            fullScreen &&
+              "row-start-1 fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none border-0 shadow-none before:hidden sm:scale-100 sm:data-ending-style:scale-100 sm:data-starting-style:scale-100",
             className,
           )}
           data-slot="dialog-popup"
@@ -98,7 +109,10 @@ export function DialogPopup({
           {showCloseButton && (
             <DialogPrimitive.Close
               aria-label="Close"
-              className="absolute end-2 top-2"
+              className={cn(
+                "absolute end-2 top-2",
+                fullScreen && "end-6 top-4 z-10",
+              )}
               render={<Button size="icon" variant="ghost" />}
               {...closeProps}
             >

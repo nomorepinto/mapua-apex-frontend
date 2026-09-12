@@ -114,9 +114,9 @@ export function generateProposalPdf(
         styles: { fontSize: 8.5, cellPadding: 1.5 },
         body: [
             [
-                { content: "Activity Classification:", fontStyle: "bold" },
+                { content: "Activity Classification:", styles: { fontStyle: "bold" } },
                 saafData.activityType === "extra-curricular" ? "Extra-curricular Activity" : "Co-curricular Activity",
-                { content: "Total Members:", fontStyle: "bold" },
+                { content: "Total Members:", styles: { fontStyle: "bold" } },
                 String(saafData.totalOrgMembers || "0"),
             ],
         ],
@@ -223,7 +223,7 @@ export function generateProposalPdf(
             theme: "plain",
             styles: { fontSize: 8.5, cellPadding: 1 },
             body: [
-                [{ content: "Equipment Requested:", fontStyle: "bold" }],
+                [{ content: "Equipment Requested:", styles: { fontStyle: "bold" } }],
                 [requestedEquip.length > 0 ? requestedEquip.join("  •  ") : "None requested"],
             ],
         })
