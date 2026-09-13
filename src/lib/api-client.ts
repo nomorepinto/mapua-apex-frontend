@@ -79,10 +79,17 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   const token = getCognitoIdToken()
+  const apiKey =
+    import.meta.env.VITE_API_TOKEN_STUDENT ||
+    import.meta.env.VITE_API_TOKEN_ADMIN ||
+    import.meta.env.VITE_API_TOKEN_SIGNATORY ||
+    "benedict-x-ryan"
 
   const reqHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "X-Api-Key": apiKey,
+    "X-Organization-Id": "org-001",
     ...(headers as Record<string, string>),
   }
 
