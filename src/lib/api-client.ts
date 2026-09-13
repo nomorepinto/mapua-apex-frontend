@@ -28,30 +28,38 @@ export function getCognitoIdToken(): string | null {
   try {
     const authority = import.meta.env.VITE_COGNITO_AUTHORITY
     const clientId = import.meta.env.VITE_COGNITO_CLIENT_ID
+    const storageKey = authority && clientId ? `oidc.user:${authority}:${clientId}` : null
 
-    if (!authority || !clientId) {
-      // Look for any oidc.user key in sessionStorage as fallback
-      for (let i = 0; i < sessionStorage.length; i++) {
-        const key = sessionStorage.key(i)
-        if (key && key.startsWith("oidc.user:")) {
-          const raw = sessionStorage.getItem(key)
-          if (raw) {
-            const parsed = JSON.parse(raw)
-            return parsed.id_token || parsed.access_token || null
+    const storages = [sessionStorage, localStorage]
+
+    for (const storage of storages) {
+      if (storageKey) {
+        const raw = storage.getItem(storageKey)
+        if (raw) {
+          const parsed = JSON.parse(raw)
+          if (parsed.id_token || parsed.access_token) {
+            return parsed.id_token || parsed.access_token
           }
         }
       }
-      return null
+
+      for (let i = 0; i < storage.length; i++) {
+        const key = storage.key(i)
+        if (key && key.startsWith("oidc.user:")) {
+          const raw = storage.getItem(key)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed.id_token || parsed.access_token) {
+              return parsed.id_token || parsed.access_token
+            }
+          }
+        }
+      }
     }
 
-    const storageKey = `oidc.user:${authority}:${clientId}`
-    const raw = sessionStorage.getItem(storageKey)
-    if (!raw) return null
-
-    const parsed = JSON.parse(raw)
-    return parsed.id_token || parsed.access_token || null
+    return null
   } catch (error) {
-    console.warn("Failed to retrieve Cognito token from session storage", error)
+    console.warn("Failed to retrieve Cognito token from storage", error)
     return null
   }
 }
@@ -79,17 +87,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   const token = getCognitoIdToken()
-  const apiKey =
-    import.meta.env.VITE_API_TOKEN_STUDENT ||
-    import.meta.env.VITE_API_TOKEN_ADMIN ||
-    import.meta.env.VITE_API_TOKEN_SIGNATORY ||
-    "benedict-x-ryan"
 
   const reqHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
-    "X-Api-Key": apiKey,
-    "X-Organization-Id": "org-001",
     ...(headers as Record<string, string>),
   }
 

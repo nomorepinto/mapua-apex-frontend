@@ -263,6 +263,7 @@
 
   html {
     @apply font-sans font-mono;
+    color-scheme: only light;
     overflow-x: clip;
   }
 
