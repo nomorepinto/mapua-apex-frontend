@@ -145,7 +145,7 @@ const EMPTY_SESSION: DeanSession = {
 
 export const useDeanDashboardSessionStore = create<DeanDashboardSessionState>()(
     persist(
-        (set, get) => ({
+        (set) => ({
             session: EMPTY_SESSION,
             activities: [],
             stats: computeStats([]),

@@ -33,7 +33,7 @@ const ActivityFilter = memo(function ActivityFilter({
     if (!open) return
     const handler = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setOpen(false)
+        close()
       }
     }
     document.addEventListener("mousedown", handler)

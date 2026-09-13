@@ -32,7 +32,7 @@ export function Home() {
         <CardFooter className="flex-col items-start gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <Badge variant="outline">{name ? `Hello, ${name}` : "Guest"}</Badge>
-            <p className="font-mono text-muted-foreground text-xs">
+            <p className="font-mono text-xs text-muted-foreground">
               {data.loadedAt}
             </p>
           </div>
