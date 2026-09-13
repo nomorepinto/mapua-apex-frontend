@@ -20,7 +20,7 @@ const SIGNATORY_NAV = [
 
 export function SignatoriesLayout() {
   return (
-    <AuthGuard allowedGroups={["Admin", "OSAAR", "CDM_Reviewer", "ORG_Adviser", "Dean"]}>
+    <AuthGuard allowedGroups={["admin", "osaar", "cdm_reviewer", "org_adviser", "dean"]}>
       <div className="flex h-screen w-full overflow-hidden bg-[#F3F4F6]">
         <AppSidebar homeTo="/signatories/dashboard" items={SIGNATORY_NAV} />
         <main className="min-w-0 flex-1 overflow-y-auto">
