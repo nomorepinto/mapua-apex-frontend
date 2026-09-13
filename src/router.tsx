@@ -6,6 +6,8 @@ import { Submission, action as submissionAction } from "@/routes/submission"
 import { Reservation } from "@/routes/reservation"
 import { About } from "@/routes/about"
 import { Login, action as loginAction } from "@/routes/login"
+import { OrgDashboard } from "@/routes/org-dashboard"
+import { DashboardLayout } from "@/components/layout/DashboardLayout"
 import { AdminOsaPanel } from "@/routes/admin-osa-panel"
 
 export const router = createBrowserRouter([
@@ -15,7 +17,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: () => <Navigate to="/dashboard" replace />,
+        Component: () => <Navigate to="/org-dashboard" replace />,
       },
       {
         path: "dashboard",
@@ -34,10 +36,7 @@ export const router = createBrowserRouter([
         path: "about",
         Component: About,
       },
-      {
-        path: "dashboard",
-        Component: Dashboard,
-      },
+
       {
         path: "login",
         Component: Login,
@@ -48,5 +47,15 @@ export const router = createBrowserRouter([
         Component: AdminOsaPanel,
       },
     ],
+  },
+  {
+    path: "/org-dashboard",
+    Component: DashboardLayout,
+    children: [
+      {
+        index: true,
+        Component: OrgDashboard,
+      }
+    ]
   },
 ])

@@ -14,6 +14,7 @@ import {
   SelectItem,
 } from "@/components/ui/select"
 import { generateProposalPdf } from "@/lib/pdf-generator"
+import { useOrgStore } from "@/stores/org-store"
 
 export type SubmissionActionData = {
   success?: boolean
@@ -28,7 +29,19 @@ export async function action({
   const data = Object.fromEntries(formData.entries())
   console.log("Activity Proposal Submitted (Submission Only):", data)
 
-  if (!formData.get("activityType")) {
+    // Push the submission to the shared Zustand store
+    useOrgStore.getState().addSubmission({
+        activity_classification: (data.activityType as string) || "co-curricular",
+        current_signatory: "Adviser", // Initial sign-off step
+        target_date: (data.dateOfEvent as string) || new Date().toISOString().split('T')[0],
+        activity_details: {
+            title: (data.activityTitle as string) || "Untitled Activity",
+            description: (data.activityDescription as string) || "",
+            venue: (data.activityVenue as string) || "",
+            date: (data.dateOfEvent as string) || "",
+        }
+    });
+
     return {
       success: false,
       errors: { activityType: "Please select an activity classification" },
@@ -68,107 +81,192 @@ interface BudgetItem {
 }
 
 const getSavedSaafDraft = () => {
-  if (typeof window === "undefined") return null
-  const saved = sessionStorage.getItem("apex_saaf_draft")
-  return saved ? JSON.parse(saved) : null
+    return useOrgStore.getState().saafDraft || null
 }
 
 export function Submission() {
-  const navigate = useNavigate()
-  const navigation = useNavigation()
-  const fetcher = useFetcher<SubmissionActionData>()
-  const isSubmitting =
-    navigation.state === "submitting" || fetcher.state === "submitting"
+    const navigate = useNavigate()
+    const navigation = useNavigation()
+    const fetcher = useFetcher<SubmissionActionData>()
+    const isSubmitting = navigation.state === "submitting" || fetcher.state === "submitting"
 
-  const formRef = useRef<HTMLFormElement>(null)
+    const formRef = useRef<HTMLFormElement>(null)
 
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
-  const [showSuccessModal, setShowSuccessModal] = useState(false)
+    const [showConfirmModal, setShowConfirmModal] = useState(false)
+    const [showSuccessModal, setShowSuccessModal] = useState(false)
 
-  // Lazy initialize state directly from sessionStorage
-  const [activityType, setActivityType] = useState<string>(
-    () => getSavedSaafDraft()?.activityType || "co-curricular"
-  )
-  const [totalOrgMembers, setTotalOrgMembers] = useState(
-    () => getSavedSaafDraft()?.totalOrgMembers || ""
-  )
-  const [expectedParticipants, setExpectedParticipants] = useState(
-    () => getSavedSaafDraft()?.expectedParticipants || ""
-  )
-  const [individualContribution, setIndividualContribution] = useState(
-    () => getSavedSaafDraft()?.individualContribution || ""
-  )
-  const [proposedBudget, setProposedBudget] = useState(
-    () => getSavedSaafDraft()?.proposedBudget || ""
-  )
-  const [dayOfEvent, setDayOfEvent] = useState(
-    () => getSavedSaafDraft()?.dayOfEvent || ""
-  )
-  const [departmentValues, setDepartmentValues] = useState<
-    Record<string, string>
-  >(() => getSavedSaafDraft()?.departmentValues || {})
+    // Lazy initialize state directly from sessionStorage
+    const [activityType, setActivityType] = useState<string>(() => getSavedSaafDraft()?.activityType || "co-curricular")
+    const [totalOrgMembers, setTotalOrgMembers] = useState(() => getSavedSaafDraft()?.totalOrgMembers || "")
+    const [expectedParticipants, setExpectedParticipants] = useState(() => getSavedSaafDraft()?.expectedParticipants || "")
+    const [individualContribution, setIndividualContribution] = useState(() => getSavedSaafDraft()?.individualContribution || "")
+    const [proposedBudget, setProposedBudget] = useState(() => getSavedSaafDraft()?.proposedBudget || "")
+    const [dayOfEvent, setDayOfEvent] = useState(() => getSavedSaafDraft()?.dayOfEvent || "")
+    const [departmentValues, setDepartmentValues] = useState<Record<string, string>>(() => getSavedSaafDraft()?.departmentValues || {})
 
-  const [activityTitle, setActivityTitle] = useState(
-    () => getSavedSaafDraft()?.activityTitle || ""
-  )
-  const [activityDescription, setActivityDescription] = useState(
-    () => getSavedSaafDraft()?.activityDescription || ""
-  )
-  const [activityObjectives, setActivityObjectives] = useState(
-    () => getSavedSaafDraft()?.activityObjectives || ""
-  )
-  const [activityVenue, setActivityVenue] = useState(
-    () => getSavedSaafDraft()?.activityVenue || ""
-  )
-  const [dateOfEvent, setDateOfEvent] = useState(
-    () => getSavedSaafDraft()?.dateOfEvent || ""
-  )
-  const [timeOfEvent, setTimeOfEvent] = useState(
-    () => getSavedSaafDraft()?.timeOfEvent || ""
-  )
+    const [activityTitle, setActivityTitle] = useState(() => getSavedSaafDraft()?.activityTitle || "")
+    const [activityDescription, setActivityDescription] = useState(() => getSavedSaafDraft()?.activityDescription || "")
+    const [activityObjectives, setActivityObjectives] = useState(() => getSavedSaafDraft()?.activityObjectives || "")
+    const [activityVenue, setActivityVenue] = useState(() => getSavedSaafDraft()?.activityVenue || "")
+    const [dateOfEvent, setDateOfEvent] = useState(() => getSavedSaafDraft()?.dateOfEvent || "")
+    const [timeOfEvent, setTimeOfEvent] = useState(() => getSavedSaafDraft()?.timeOfEvent || "")
 
-  const [mission1, setMission1] = useState(
-    () => getSavedSaafDraft()?.mission1 ?? false
-  )
-  const [mission2, setMission2] = useState(
-    () => getSavedSaafDraft()?.mission2 ?? false
-  )
-  const [mission3, setMission3] = useState(
-    () => getSavedSaafDraft()?.mission3 ?? false
-  )
-  const [coreValuesExplanation, setCoreValuesExplanation] = useState(
-    () => getSavedSaafDraft()?.coreValuesExplanation || ""
-  )
-  const [peoExplanation, setPeoExplanation] = useState(
-    () => getSavedSaafDraft()?.peoExplanation || ""
-  )
-  const [sdgExplanation, setSdgExplanation] = useState(
-    () => getSavedSaafDraft()?.sdgExplanation || ""
-  )
+    const [mission1, setMission1] = useState(() => getSavedSaafDraft()?.mission1 ?? false)
+    const [mission2, setMission2] = useState(() => getSavedSaafDraft()?.mission2 ?? false)
+    const [mission3, setMission3] = useState(() => getSavedSaafDraft()?.mission3 ?? false)
+    const [coreValuesExplanation, setCoreValuesExplanation] = useState(() => getSavedSaafDraft()?.coreValuesExplanation || "")
+    const [peoExplanation, setPeoExplanation] = useState(() => getSavedSaafDraft()?.peoExplanation || "")
+    const [sdgExplanation, setSdgExplanation] = useState(() => getSavedSaafDraft()?.sdgExplanation || "")
 
-  const [proponents, setProponents] = useState<Proponent[]>(() => {
-    return (
-      getSavedSaafDraft()?.proponents || [
-        {
-          id: "1",
-          position: "",
-          firstName: "",
-          middleName: "",
-          lastName: "",
-          suffix: "",
-          studentNumber: "",
-          programAndYear: "",
-          dateOfSubmission: "",
-          department: "",
-          positionOfApplicant: "",
-          orgOrCourseSection: "",
-          contactNumber: "",
-          emailAddress: "",
-          facebookLink: "",
-        },
-      ]
-    )
-  })
+    const [proponents, setProponents] = useState<Proponent[]>(() => {
+        return (
+            getSavedSaafDraft()?.proponents || [
+                {
+                    id: "1",
+                    position: "",
+                    firstName: "",
+                    middleName: "",
+                    lastName: "",
+                    suffix: "",
+                    studentNumber: "",
+                    programAndYear: "",
+                    dateOfSubmission: "",
+                    department: "",
+                    positionOfApplicant: "",
+                    orgOrCourseSection: "",
+                    contactNumber: "",
+                    emailAddress: "",
+                    facebookLink: "",
+                },
+            ]
+        )
+    })
+
+    const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => {
+        return (
+            getSavedSaafDraft()?.budgetItems || [
+                { id: "1", item: "1", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "2", item: "2", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "3", item: "3", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "4", item: "4", unit: "1", quantity: "1", pricePerUnit: "0" },
+                { id: "5", item: "5", unit: "1", quantity: "1", pricePerUnit: "0" },
+            ]
+        )
+    })
+
+    useEffect(() => {
+        window.scrollTo(0, 0)
+    }, [])
+
+    // Auto-sync entire SAAF state to sessionStorage
+    useEffect(() => {
+        const draft = {
+            activityType,
+            totalOrgMembers,
+            expectedParticipants,
+            individualContribution,
+            proposedBudget,
+            dayOfEvent,
+            departmentValues,
+            activityTitle,
+            activityDescription,
+            activityObjectives,
+            activityVenue,
+            dateOfEvent,
+            timeOfEvent,
+            mission1,
+            mission2,
+            mission3,
+            coreValuesExplanation,
+            peoExplanation,
+            sdgExplanation,
+            proponents,
+            budgetItems,
+        }
+        useOrgStore.getState().setSaafDraft(draft)
+    }, [
+        activityType,
+        totalOrgMembers,
+        expectedParticipants,
+        individualContribution,
+        proposedBudget,
+        dayOfEvent,
+        departmentValues,
+        activityTitle,
+        activityDescription,
+        activityObjectives,
+        activityVenue,
+        dateOfEvent,
+        timeOfEvent,
+        mission1,
+        mission2,
+        mission3,
+        coreValuesExplanation,
+        peoExplanation,
+        sdgExplanation,
+        proponents,
+        budgetItems,
+    ])
+
+    useEffect(() => {
+        if (fetcher.data?.success) {
+            useOrgStore.getState().clearSaafDraft()
+            useOrgStore.getState().clearReservationDraft()
+            setShowConfirmModal(false)
+            setShowSuccessModal(true)
+        }
+    }, [fetcher.data])
+
+    const blockNonIntegerKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (
+            ["e", "E", "+", "-", ".", ","].includes(e.key) &&
+            !e.ctrlKey &&
+            !e.metaKey
+        ) {
+            e.preventDefault()
+        }
+    }
+
+    const blockNonDecimalKeys = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (["e", "E", "+", "-"].includes(e.key) && !e.ctrlKey && !e.metaKey) {
+            e.preventDefault()
+        }
+        if (e.key === "." && e.currentTarget.value.includes(".")) {
+            e.preventDefault()
+        }
+    }
+
+    const sanitizeIntegerInput = (val: string) => val.replace(/\D/g, "")
+
+    const sanitizeDecimalInput = (val: string) => {
+        const clean = val.replace(/[^0-9.]/g, "")
+        const parts = clean.split(".")
+        return parts.length > 2 ? `${parts[0]}.${parts.slice(1).join("")}` : clean
+    }
+
+    const handleAddProponent = () => {
+        const newId = String(proponents.length + 1)
+        setProponents([
+            ...proponents,
+            {
+                id: newId,
+                position: "",
+                firstName: "",
+                middleName: "",
+                lastName: "",
+                suffix: "",
+                studentNumber: "",
+                programAndYear: "",
+                dateOfSubmission: "",
+                department: "",
+                positionOfApplicant: "",
+                orgOrCourseSection: "",
+                contactNumber: "",
+                emailAddress: "",
+                facebookLink: "",
+            },
+        ])
+    }
 
   const [budgetItems, setBudgetItems] = useState<BudgetItem[]>(() => {
     return (
