@@ -2,10 +2,11 @@ import { useCallback, useState } from "react"
 
 import { ACTIVITIES } from "@/components/ui/activity.data"
 import type { Activity } from "@/components/ui/activity.types"
-import { useSessionStore } from "@/stores/session-store"
+import { useAuth } from "react-oidc-context"
 
 export function useReviewDashboard() {
-  const name = useSessionStore((state) => state.name)
+  const auth = useAuth()
+  const name = auth.user?.profile?.email || auth.user?.profile?.name || "Guest"
   const [activitiesList, setActivitiesList] = useState<Activity[]>(ACTIVITIES)
   const [selectedDept, setSelectedDept] = useState<string | null>(null)
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null)
