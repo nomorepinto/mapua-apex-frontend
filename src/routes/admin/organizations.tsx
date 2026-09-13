@@ -1,0 +1,379 @@
+import { useMemo, useState } from "react"
+import { Building2Icon, CircleAlertIcon, DownloadIcon, PlusIcon } from "lucide-react"
+
+import { CsvFileField } from "@/components/admin-osa/csv-file-field"
+import { FormPageHeader } from "@/components/forms/form-page-header"
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import {
+  Card,
+  CardAction,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardPanel,
+  CardTitle,
+} from "@/components/ui/card"
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field"
+import { Form } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Separator } from "@/components/ui/separator"
+import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { toastManager } from "@/components/ui/toast"
+import {
+  useBulkCreateOrganizationsMutation,
+  useCreateOrganizationMutation,
+  useOrganizationsQuery,
+} from "@/hooks/use-admin"
+import { downloadCsvTemplate, parseSingleColumnCsv } from "@/lib/parse-csv"
+
+function toastBulkResult(created: number, failed: number, noun: string) {
+  if (created > 0 && failed === 0) {
+    toastManager.add({
+      title: `${noun} added`,
+      description: `Created ${created} ${noun.toLowerCase()}${created === 1 ? "" : "s"}.`,
+      type: "success",
+    })
+    return
+  }
+
+  if (created > 0) {
+    toastManager.add({
+      title: `Partially added ${noun.toLowerCase()}s`,
+      description: `Created ${created}. ${failed} failed.`,
+      type: "warning",
+    })
+    return
+  }
+
+  toastManager.add({
+    title: `Could not add ${noun.toLowerCase()}s`,
+    description: failed > 0 ? `${failed} row${failed === 1 ? "" : "s"} failed.` : "Nothing to import.",
+    type: "error",
+  })
+}
+
+export function AdminOrganizationsPage() {
+  const orgsQuery = useOrganizationsQuery()
+  const createOrg = useCreateOrganizationMutation()
+  const bulkCreate = useBulkCreateOrganizationsMutation()
+
+  const [name, setName] = useState("")
+  const [nameError, setNameError] = useState("")
+  const [csvNames, setCsvNames] = useState<string[]>([])
+  const [csvFileName, setCsvFileName] = useState("")
+  const [csvError, setCsvError] = useState("")
+  const [search, setSearch] = useState("")
+
+  const organizations = orgsQuery.data ?? []
+  const existingNames = useMemo(
+    () => new Set(organizations.map((org) => org.name.trim().toLowerCase())),
+    [organizations]
+  )
+
+  const csvToCreate = csvNames.filter(
+    (orgName) => !existingNames.has(orgName.trim().toLowerCase())
+  )
+  const csvDuplicates = csvNames.filter((orgName) =>
+    existingNames.has(orgName.trim().toLowerCase())
+  )
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase()
+    if (!query) {
+      return organizations
+    }
+    return organizations.filter(
+      (org) =>
+        org.name.toLowerCase().includes(query) ||
+        org.organization_id.toLowerCase().includes(query)
+    )
+  }, [organizations, search])
+
+  async function handleAddOne(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setNameError("Organization name is required.")
+      return
+    }
+    if (existingNames.has(trimmed.toLowerCase())) {
+      setNameError("That organization is already registered.")
+      return
+    }
+
+    try {
+      await createOrg.mutateAsync({ name: trimmed })
+      setName("")
+      setNameError("")
+      toastManager.add({
+        title: "Organization added",
+        description: `${trimmed} is now registered.`,
+        type: "success",
+      })
+    } catch (error) {
+      toastManager.add({
+        title: "Could not add organization",
+        description: error instanceof Error ? error.message : "Request failed.",
+        type: "error",
+      })
+    }
+  }
+
+  async function handleCsvImport() {
+    if (csvToCreate.length === 0) {
+      setCsvError(
+        csvNames.length === 0
+          ? "Choose a CSV with one organization name per row."
+          : "Every name in this file is already registered."
+      )
+      return
+    }
+
+    const result = await bulkCreate.mutateAsync(csvToCreate)
+    toastBulkResult(result.created.length, result.failed.length, "Organization")
+    if (result.created.length > 0) {
+      setCsvNames([])
+      setCsvFileName("")
+      setCsvError("")
+    }
+  }
+
+  return (
+    <div className="min-h-full w-full bg-background px-4 py-8 text-foreground sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-6xl space-y-8">
+        <FormPageHeader
+          subtitle="Register student organizations (ORGANIZATION#uuid). Each record stores a name; IDs are generated by the API."
+          title="Organizations"
+        />
+
+        {orgsQuery.isError ? (
+          <Alert variant="error">
+            <CircleAlertIcon />
+            <AlertTitle>Could not load organizations</AlertTitle>
+            <AlertDescription>
+              {orgsQuery.error instanceof Error
+                ? orgsQuery.error.message
+                : "The admin organizations list failed to load."}
+            </AlertDescription>
+          </Alert>
+        ) : null}
+
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
+          <Card>
+            <CardHeader>
+              <CardTitle>Add organization</CardTitle>
+              <CardDescription>
+                Creates a DynamoDB organization item with <code>name</code>.
+              </CardDescription>
+            </CardHeader>
+            <Form className="contents" onSubmit={handleAddOne}>
+              <CardPanel className="flex flex-col gap-4">
+                <Field>
+                  <FieldLabel htmlFor="organization-name">Name</FieldLabel>
+                  <Input
+                    aria-invalid={nameError ? true : undefined}
+                    autoComplete="off"
+                    id="organization-name"
+                    name="name"
+                    onChange={(event) => {
+                      setName(event.currentTarget.value)
+                      if (nameError) {
+                        setNameError("")
+                      }
+                    }}
+                    placeholder="Mapua Computing Society"
+                    required
+                    type="text"
+                    value={name}
+                  />
+                  <FieldDescription>
+                    Matches <code>ORGANIZATION.name</code> in the schema.
+                  </FieldDescription>
+                  {nameError ? <FieldError>{nameError}</FieldError> : null}
+                </Field>
+              </CardPanel>
+              <CardFooter className="justify-end">
+                <Button loading={createOrg.isPending} type="submit">
+                  <PlusIcon aria-hidden="true" />
+                  Add organization
+                </Button>
+              </CardFooter>
+            </Form>
+            <Separator />
+            <CardHeader>
+              <CardTitle>Import CSV</CardTitle>
+              <CardDescription>
+                One column of organization names. A header row named{" "}
+                <code>name</code> is optional.
+              </CardDescription>
+            </CardHeader>
+            <CardPanel className="flex flex-col gap-4">
+              <CsvFileField
+                description="One organization name per row."
+                error={csvError}
+                fileName={csvFileName}
+                id="organizations-csv"
+                onFile={(file, text) => {
+                  if (!file) {
+                    setCsvNames([])
+                    setCsvFileName("")
+                    setCsvError("")
+                    return
+                  }
+                  const parsed = parseSingleColumnCsv(text)
+                  setCsvFileName(file.name)
+                  setCsvNames(parsed)
+                  setCsvError(
+                    parsed.length === 0
+                      ? "No organization names found in that file."
+                      : ""
+                  )
+                }}
+              />
+              {csvNames.length > 0 ? (
+                <Alert variant="info">
+                  <AlertTitle>
+                    {csvToCreate.length} new
+                    {csvDuplicates.length > 0
+                      ? ` · ${csvDuplicates.length} already registered`
+                      : ""}
+                  </AlertTitle>
+                  <AlertDescription>
+                    {csvToCreate.slice(0, 8).join(", ")}
+                    {csvToCreate.length > 8
+                      ? ` and ${csvToCreate.length - 8} more`
+                      : ""}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+            </CardPanel>
+            <CardFooter className="justify-between gap-2">
+              <Button
+                onClick={() =>
+                  downloadCsvTemplate(
+                    "organizations.csv",
+                    "name\nMapua Computing Society\nIEEE Mapua\n"
+                  )
+                }
+                type="button"
+                variant="ghost"
+              >
+                <DownloadIcon aria-hidden="true" />
+                Template
+              </Button>
+              <Button
+                disabled={csvToCreate.length === 0}
+                loading={bulkCreate.isPending}
+                onClick={handleCsvImport}
+                type="button"
+                variant="outline"
+              >
+                Import {csvToCreate.length > 0 ? csvToCreate.length : ""}{" "}
+                {csvToCreate.length === 1 ? "name" : "names"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="min-w-0">
+            <CardHeader>
+              <CardTitle>Registered organizations</CardTitle>
+              <CardDescription>
+                {orgsQuery.isLoading
+                  ? "Loading…"
+                  : `${organizations.length} organization${
+                      organizations.length === 1 ? "" : "s"
+                    }`}
+              </CardDescription>
+              <CardAction>
+                <Input
+                  aria-label="Search organizations"
+                  className="w-56"
+                  onChange={(event) => setSearch(event.currentTarget.value)}
+                  placeholder="Search name or ID"
+                  type="search"
+                  value={search}
+                />
+              </CardAction>
+            </CardHeader>
+            <CardPanel className="p-0">
+              {orgsQuery.isLoading ? (
+                <div className="space-y-2 px-6 pb-6">
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                  <Skeleton className="h-9 w-full" />
+                </div>
+              ) : organizations.length === 0 ? (
+                <Empty className="py-12">
+                  <EmptyHeader>
+                    <EmptyMedia variant="icon">
+                      <Building2Icon aria-hidden="true" />
+                    </EmptyMedia>
+                    <EmptyTitle>No organizations yet</EmptyTitle>
+                    <EmptyDescription>
+                      Add a name on the left or import a one-column CSV.
+                    </EmptyDescription>
+                  </EmptyHeader>
+                </Empty>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Organization ID</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.length === 0 ? (
+                      <TableRow>
+                        <TableCell className="text-muted-foreground" colSpan={2}>
+                          No organizations match “{search}”.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      filtered.map((org) => (
+                        <TableRow key={org.organization_id}>
+                          <TableCell className="font-medium whitespace-normal">
+                            {org.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">{org.organization_id}</Badge>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardPanel>
+          </Card>
+        </div>
+      </div>
+    </div>
+  )
+}

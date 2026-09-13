@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { apiClient } from "@/lib/api-client"
+import { ApiError, apiClient } from "@/lib/api-client"
 import type {
   ApiSubmission,
   ApiOrganization,
@@ -7,6 +7,16 @@ import type {
   ApiAppeal,
   ApiNotification,
 } from "@/lib/dynamodb-adapters"
+
+function mutationErrorMessage(error: unknown, fallback: string): string {
+  if (error instanceof ApiError) {
+    return error.message
+  }
+  if (error instanceof Error && error.message) {
+    return error.message
+  }
+  return fallback
+}
 
 export const ADMIN_KEYS = {
   submissions: (params?: Record<string, string | undefined>) =>
@@ -89,6 +99,45 @@ export function useCreateOrganizationMutation() {
   })
 }
 
+export type BulkCreateResult<T extends { name: string }> = {
+  created: T[]
+  failed: Array<{ name: string; error: string }>
+}
+
+/**
+ * Create many organizations sequentially (no bulk admin endpoint).
+ */
+export function useBulkCreateOrganizationsMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (names: string[]): Promise<BulkCreateResult<ApiOrganization>> => {
+      const created: ApiOrganization[] = []
+      const failed: Array<{ name: string; error: string }> = []
+
+      for (const name of names) {
+        try {
+          const res = await apiClient.post<{ data: ApiOrganization }>(
+            "/admins/organizations",
+            { name }
+          )
+          created.push(res.data)
+        } catch (error) {
+          failed.push({
+            name,
+            error: mutationErrorMessage(error, "Could not create organization."),
+          })
+        }
+      }
+
+      return { created, failed }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.organizations })
+    },
+  })
+}
+
 /**
  * Fetch all registered signatories
  */
@@ -149,6 +198,46 @@ export function useUpdateSignatoryMutation() {
       return res.data
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.signatories })
+    },
+  })
+}
+
+/**
+ * Create many signatories sequentially (no bulk admin endpoint).
+ */
+export function useBulkCreateSignatoriesMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (
+      payloads: Array<{
+        name: string
+        role: ApiSignatory["role"]
+        organization_id: string
+      }>
+    ): Promise<BulkCreateResult<ApiSignatory>> => {
+      const created: ApiSignatory[] = []
+      const failed: Array<{ name: string; error: string }> = []
+
+      for (const payload of payloads) {
+        try {
+          const res = await apiClient.post<{ data: ApiSignatory }>(
+            "/admins/signatories",
+            payload
+          )
+          created.push(res.data)
+        } catch (error) {
+          failed.push({
+            name: `${payload.name} (${payload.role})`,
+            error: mutationErrorMessage(error, "Could not create signatory."),
+          })
+        }
+      }
+
+      return { created, failed }
+    },
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.signatories })
     },
   })
