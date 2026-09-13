@@ -6,12 +6,12 @@ import AgathaPhoto from "@/assets/Agatha.png"
 import AvielPhoto from "@/assets/Aviel.png"
 import BeaPhoto from "@/assets/Bea.png"
 import BenedictPhoto from "@/assets/Benedict.png"
-import JedrickPhoto from "@/assets/JEDRICK.png"
+import JedrickPhoto from "@/assets/Jedrick.png"
 import JoelPhoto from "@/assets/Joel.png"
 import KarinaPhoto from "@/assets/Karina.png"
 import LunaPhoto from "@/assets/Luna.png"
-import MicoPhoto from "@/assets/MICO.png"
-import NigelPhoto from "@/assets/NIGEL.png"
+import MicoPhoto from "@/assets/Mico.png"
+import NigelPhoto from "@/assets/Nigel.png"
 import NicolePhoto from "@/assets/Nicole.png"
 import RyanPhoto from "@/assets/Ryan.png"
 
@@ -23,18 +23,18 @@ type TeamMember = {
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: "Agatha", role: "Chief People Officer: 26-27", photo: AgathaPhoto, initials: "AG" },
-  { name: "Aviel", role: "Chief External Relations Officer: 26-27", photo: AvielPhoto, initials: "AV" },
-  { name: "Bea", role: "Chief Communications Officer: 26-27", photo: BeaPhoto, initials: "BE" },
-  { name: "Benedict", role: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto, initials: "BN" },
   { name: "Jedrick", role: "Chief Executive Officer: 26-27", photo: JedrickPhoto, initials: "JD" },
-  { name: "Joel", role: "Technology Committee: 26-27", photo: JoelPhoto, initials: "JO" },
-  { name: "Karina", role: "Chief Academic Officer: 26-27", photo: KarinaPhoto, initials: "KA" },
-  { name: "Luna", role: "Organization Mascot: 26-27", photo: LunaPhoto, initials: "LU" },
-  { name: "Mico", role: "Corporate Secretary: 26-27", photo: MicoPhoto, initials: "MI" },
   { name: "Nigel", role: "Chief Operations Officer: 26-27", photo: NigelPhoto, initials: "NI" },
-  { name: "Nicole", role: "Chief Finance Officer: 26-27", photo: NicolePhoto, initials: "NC" },
+  { name: "Mico", role: "Corporate Secretary: 26-27", photo: MicoPhoto, initials: "MI" },
   { name: "Ryan", role: "Chief Technology Officer: 26-27", photo: RyanPhoto, initials: "RY" },
+  { name: "Agatha", role: "Chief People Officer: 26-27", photo: AgathaPhoto, initials: "AG" },
+  { name: "Bea", role: "Chief Communications Officer: 26-27", photo: BeaPhoto, initials: "BE" },
+  { name: "Nicole", role: "Chief Finance Officer: 26-27", photo: NicolePhoto, initials: "NC" },
+  { name: "Karina", role: "Chief Auditing Officer: 26-27", photo: KarinaPhoto, initials: "KA" },
+  { name: "Aviel", role: "Chief External Relations Officer: 26-27", photo: AvielPhoto, initials: "AV" },
+  { name: "Benedict", role: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto, initials: "BN" },
+  { name: "Joel", role: "Technology Committee: 26-27", photo: JoelPhoto, initials: "JO" },
+  { name: "Luna", role: "Organization Mascot: 26-27", photo: LunaPhoto, initials: "LU" },
 ]
 
 function DevCard({ member }: { member: TeamMember }) {
