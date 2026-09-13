@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist, createJSONStorage } from 'zustand/middleware'
 
 export type TaskStatus = 'Pending' | 'In Progress' | 'Completed'
 
@@ -91,6 +92,12 @@ interface OrgState {
   submissions: Submission[];
   addSubmission: (submission: Omit<Submission, 'id' | 'status' | 'statusColor'>) => void;
 
+  // Submissions wizard start
+  eventName: string
+  reserveFacilities: "yes" | "no" | null
+  setSubmissionStart: (eventName: string, reserveFacilities: "yes" | "no") => void
+  clearSubmissionStart: () => void
+
   // SAAF Draft
   saafDraft: Record<string, any> | null;
   setSaafDraft: (draft: Record<string, any>) => void;
@@ -102,7 +109,9 @@ interface OrgState {
   clearReservationDraft: () => void;
 }
 
-export const useOrgStore = create<OrgState>((set, get) => ({
+export const useOrgStore = create<OrgState>()(
+  persist(
+    (set, get) => ({
   // Activity Feed
   activities: [
     { id: "act-1", title: "Proposal APEX-0982 Approved", description: "Your honorarium appeal for the Tech Week Guest Speaker has been approved by the Commissioner.", type: "success", timestamp: new Date(Date.now() - 2 * 60000) },
@@ -461,6 +470,12 @@ export const useOrgStore = create<OrgState>((set, get) => ({
     });
   },
 
+  eventName: "",
+  reserveFacilities: null,
+  setSubmissionStart: (eventName, reserveFacilities) =>
+    set({ eventName, reserveFacilities }),
+  clearSubmissionStart: () => set({ eventName: "", reserveFacilities: null }),
+
   // SAAF Draft
   saafDraft: null,
   setSaafDraft: (draft) => set({ saafDraft: draft }),
@@ -470,4 +485,14 @@ export const useOrgStore = create<OrgState>((set, get) => ({
   reservationDraft: null,
   setReservationDraft: (draft) => set({ reservationDraft: draft }),
   clearReservationDraft: () => set({ reservationDraft: null }),
-}));
+}),
+    {
+      name: "apex-org-wizard",
+      storage: createJSONStorage(() => sessionStorage),
+      partialize: (state) => ({
+        eventName: state.eventName,
+        reserveFacilities: state.reserveFacilities,
+      }),
+    }
+  )
+)

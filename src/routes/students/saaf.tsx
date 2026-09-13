@@ -63,7 +63,8 @@ export function Submission() {
 
           <SubmissionActions
             isSubmitting={form.isSubmitting}
-            onReserveVenue={() => form.handleGoToReservation(formRef.current)}
+            showNextPage={form.reserveFacilities === "yes"}
+            onNextPage={() => form.handleGoToReservation(formRef.current)}
             onSavePdf={form.handleSavePdf}
             onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
           />

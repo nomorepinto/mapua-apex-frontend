@@ -9,6 +9,6 @@ export function useSignOut() {
 
   return useCallback(() => {
     signOut()
-    navigate("/login")
+    navigate("/")
   }, [navigate, signOut])
 }

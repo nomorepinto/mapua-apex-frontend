@@ -30,6 +30,7 @@ export async function action({
   })
   useOrgStore.getState().clearSaafDraft()
   useOrgStore.getState().clearReservationDraft()
+  useOrgStore.getState().clearSubmissionStart()
 
   return {
     success: true,

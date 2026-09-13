@@ -1,3 +1,4 @@
+import { Navigate } from "react-router"
 import { useRef } from "react"
 
 import { AvTable } from "@/components/reservation/av-table"
@@ -9,11 +10,17 @@ import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
+import { useOrgStore } from "@/stores/org-store"
 
 export function Reservation() {
+  const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
   const formRef = useRef<HTMLFormElement>(null)
   const form = useReservationForm()
   const { draft } = form
+
+  if (reserveFacilities !== "yes") {
+    return <Navigate to="/students/submissions/saaf" replace />
+  }
 
   return (
     <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 font-sans text-neutral-900 sm:px-8 lg:px-12">

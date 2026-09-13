@@ -31,6 +31,7 @@ export function useSaafForm() {
   const navigate = useNavigate()
   const navigation = useNavigation()
   const fetcher = useFetcher<SubmissionActionData>()
+  const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
   const isSubmitting =
     navigation.state === "submitting" || fetcher.state === "submitting"
 
@@ -145,7 +146,7 @@ export function useSaafForm() {
   const handleGoToReservation = useCallback(
     (form: HTMLFormElement | null) => {
       if (form && !form.reportValidity()) return
-      navigate("/reservation")
+      navigate("/students/submissions/saaf/reservations")
     },
     [navigate]
   )
@@ -185,6 +186,7 @@ export function useSaafForm() {
     showConfirmModal,
     showSuccessModal,
     grandTotal,
+    reserveFacilities,
     updateField,
     handleAddProponent,
     handleRemoveProponent,

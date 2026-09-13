@@ -5,29 +5,29 @@ import { Button } from "@/components/ui/button"
 
 export function SubmissionActions({
   isSubmitting,
-  onReserveVenue,
+  showNextPage,
+  onNextPage,
   onSavePdf,
   onSubmit,
 }: {
   isSubmitting: boolean
-  onReserveVenue: () => void
+  showNextPage: boolean
+  onNextPage: () => void
   onSavePdf: () => void
   onSubmit: (e: MouseEvent) => void
 }) {
   return (
     <div className="flex flex-col items-start justify-between gap-6 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center">
       <div className="space-y-2">
-        <p className="text-sm font-bold text-neutral-800">
-          Do you have Venue Reservation?{" "}
-          <span className="font-normal text-neutral-500">(optional)</span>
-        </p>
-        <button
-          type="button"
-          onClick={onReserveVenue}
-          className="cursor-pointer rounded-full bg-[#242424] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition-colors hover:bg-black"
-        >
-          Click here to reserve a venue
-        </button>
+        {showNextPage ? (
+          <Button
+            type="button"
+            onClick={onNextPage}
+            className="h-10 cursor-pointer rounded-lg bg-[#242424] px-5 py-2.5 text-sm font-medium text-white shadow-xs hover:bg-black"
+          >
+            Next page
+          </Button>
+        ) : null}
       </div>
 
       <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
