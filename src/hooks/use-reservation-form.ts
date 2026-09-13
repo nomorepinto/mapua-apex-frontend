@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react"
+import { useCallback, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
 
-import { buildCombinedProposalPayload } from "@/components/reservation/build-proposal-payload"
 import { DEFAULT_RESERVATION_DRAFT } from "@/components/reservation/constants"
+
+import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
 import { useScrollToTop } from "@/hooks/use-scroll-to-top"
 import type {
   AVItem,
@@ -11,116 +12,104 @@ import type {
   ReservationDraft,
   RoomItem,
 } from "@/components/reservation/types"
+import { apiClient } from "@/lib/api-client"
+import { buildSaafApiPayload } from "@/lib/dynamodb-adapters"
+import { queryClient } from "@/main"
+import { SUBMISSION_KEYS } from "@/hooks/use-submissions"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
 import { useOrgStore } from "@/stores/org-store"
 
-function getSavedReservationDraft(): ReservationDraft {
-  const saved = useOrgStore.getState().reservationDraft
-  if (!saved) return DEFAULT_RESERVATION_DRAFT
-  return {
-    ...DEFAULT_RESERVATION_DRAFT,
-    ...saved,
-    equipment: {
-      ...DEFAULT_RESERVATION_DRAFT.equipment,
-      ...(saved.equipment ?? {}),
-    },
-  }
-}
-
 export function useReservationForm() {
+
+
   const navigate = useNavigate()
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [draft, setDraft] = useState<ReservationDraft>(getSavedReservationDraft)
+
+  // Directly select draft from Zustand with fallback to default
+  const storedDraft = useOrgStore((state) => state.reservationDraft)
+  const draft: ReservationDraft = storedDraft ?? DEFAULT_RESERVATION_DRAFT
 
   useScrollToTop()
 
-  useEffect(() => {
-    useOrgStore.getState().setReservationDraft(draft)
-  }, [draft])
-
   const updateField = useCallback(
     <K extends keyof ReservationDraft>(key: K, value: ReservationDraft[K]) => {
-      setDraft((prev) => ({ ...prev, [key]: value }))
+      useOrgStore.getState().patchReservationDraft({ [key]: value })
     },
     []
   )
 
   const toggleEquipment = useCallback(
     (key: keyof EquipmentFlags, checked: boolean) => {
-      setDraft((prev) => ({
-        ...prev,
-        equipment: { ...prev.equipment, [key]: checked },
-      }))
+      const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+      useOrgStore.getState().patchReservationDraft({
+        equipment: { ...current.equipment, [key]: checked },
+      })
     },
     []
   )
 
   const handleAddFacilityItem = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    useOrgStore.getState().patchReservationDraft({
       facilityItems: [
-        ...prev.facilityItems,
+        ...current.facilityItems,
         {
           id: String(Date.now()),
-          item: String(prev.facilityItems.length + 1),
+          item: String(current.facilityItems.length + 1),
           dateOfUse: "",
           timeOfUse: "",
           location: "",
         },
       ],
-    }))
+    })
   }, [])
 
   const handleRemoveFacilityItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.facilityItems.length === 1) return prev
-      return {
-        ...prev,
-        facilityItems: prev.facilityItems.filter((i) => i.id !== id),
-      }
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    if (current.facilityItems.length === 1) return
+    useOrgStore.getState().patchReservationDraft({
+      facilityItems: current.facilityItems.filter((i) => i.id !== id),
     })
   }, [])
 
   const handleUpdateFacilityItem = useCallback(
     (id: string, field: keyof FacilityItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        facilityItems: prev.facilityItems.map((i) =>
+      const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+      useOrgStore.getState().patchReservationDraft({
+        facilityItems: current.facilityItems.map((i) =>
           i.id === id ? { ...i, [field]: value } : i
         ),
-      }))
+      })
     },
     []
   )
 
   const handleRemoveRoomItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.roomItems.length === 1) return prev
-      return {
-        ...prev,
-        roomItems: prev.roomItems.filter((i) => i.id !== id),
-      }
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    if (current.roomItems.length === 1) return
+    useOrgStore.getState().patchReservationDraft({
+      roomItems: current.roomItems.filter((i) => i.id !== id),
     })
   }, [])
 
   const handleUpdateRoomItem = useCallback(
     (id: string, field: keyof RoomItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        roomItems: prev.roomItems.map((i) =>
+      const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+      useOrgStore.getState().patchReservationDraft({
+        roomItems: current.roomItems.map((i) =>
           i.id === id ? { ...i, [field]: value } : i
         ),
-      }))
+      })
     },
     []
   )
 
   const handleAddAvItem = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    useOrgStore.getState().patchReservationDraft({
       avItems: [
-        ...prev.avItems,
+        ...current.avItems,
         {
           id: String(Date.now()),
           dateNeeded: "",
@@ -129,27 +118,25 @@ export function useReservationForm() {
           remarks: "",
         },
       ],
-    }))
+    })
   }, [])
 
   const handleRemoveAvItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.avItems.length === 1) return prev
-      return {
-        ...prev,
-        avItems: prev.avItems.filter((i) => i.id !== id),
-      }
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    if (current.avItems.length === 1) return
+    useOrgStore.getState().patchReservationDraft({
+      avItems: current.avItems.filter((i) => i.id !== id),
     })
   }, [])
 
   const handleUpdateAvItem = useCallback(
     (id: string, field: keyof AVItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        avItems: prev.avItems.map((i) =>
+      const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+      useOrgStore.getState().patchReservationDraft({
+        avItems: current.avItems.map((i) =>
           i.id === id ? { ...i, [field]: value } : i
         ),
-      }))
+      })
     },
     []
   )
@@ -169,25 +156,50 @@ export function useReservationForm() {
     []
   )
 
-  const handleConfirmProceed = useCallback(() => {
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+
+  const handleConfirmProceed = useCallback(async () => {
     setShowConfirmModal(false)
-    console.log(
-      "Submitting Combined Proposal (SAAF + Reservation):",
-      buildCombinedProposalPayload(draft)
-    )
-    useOrgStore.getState().clearSaafDraft()
-    useOrgStore.getState().clearReservationDraft()
-    useOrgStore.getState().clearSubmissionStart()
-    setShowSuccessModal(true)
-  }, [draft])
+    const saafDraft = useOrgStore.getState().saafDraft
+    const currentDraft = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+
+    if (!saafDraft) {
+      setSubmitError("SAAF form draft is missing. Please review Step 1.")
+      return
+    }
+
+    try {
+      setIsSubmitting(true)
+      setSubmitError(null)
+      const payload = buildSaafApiPayload(saafDraft, currentDraft)
+      await apiClient.post("/students/submissions", payload)
+
+      useOrgStore.getState().clearSaafDraft()
+      useOrgStore.getState().clearReservationDraft()
+      useOrgStore.getState().clearSubmissionStart()
+
+      queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })
+      setShowSuccessModal(true)
+    } catch (error) {
+      console.error("Submission failed:", error)
+      setSubmitError(
+        error instanceof Error ? error.message : "Failed to submit reservation proposal"
+      )
+    } finally {
+      setIsSubmitting(false)
+    }
+  }, [])
 
   const handleSuccessAction = useCallback(() => {
     setShowSuccessModal(false)
-    navigate("/students/submissions/saaf")
+    navigate("/students/dashboard")
   }, [navigate])
 
+
   const handleSavePdf = useCallback(() => {
-    const saafDraft = useOrgStore.getState().saafDraft || {}
+    const saafDraft = useOrgStore.getState().saafDraft ?? DEFAULT_SAAF_DRAFT
+    const currentDraft = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
     void saveProposalPdf(
       {
         activityType: saafDraft.activityType,
@@ -211,9 +223,9 @@ export function useReservationForm() {
         proponents: saafDraft.proponents || [],
         budgetItems: saafDraft.budgetItems || [],
       },
-      draft
+      currentDraft
     )
-  }, [draft])
+  }, [])
 
   return {
     draft,
@@ -235,5 +247,8 @@ export function useReservationForm() {
     handleSuccessAction,
     handleSavePdf,
     setShowConfirmModal,
+    isSubmitting,
+    submitError,
   }
 }
+

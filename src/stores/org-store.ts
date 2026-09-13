@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import type { SaafDraft } from '@/components/submission/types'
+import type { ReservationDraft } from '@/components/reservation/types'
 
 export type TaskStatus = 'Pending' | 'In Progress' | 'Completed'
 
@@ -99,13 +101,15 @@ interface OrgState {
   clearSubmissionStart: () => void
 
   // SAAF Draft
-  saafDraft: Record<string, any> | null;
-  setSaafDraft: (draft: Record<string, any>) => void;
+  saafDraft: SaafDraft | null;
+  setSaafDraft: (draft: SaafDraft) => void;
+  patchSaafDraft: (patch: Partial<SaafDraft>) => void;
   clearSaafDraft: () => void;
 
   // Reservation Draft
-  reservationDraft: Record<string, any> | null;
-  setReservationDraft: (draft: Record<string, any>) => void;
+  reservationDraft: ReservationDraft | null;
+  setReservationDraft: (draft: ReservationDraft) => void;
+  patchReservationDraft: (patch: Partial<ReservationDraft>) => void;
   clearReservationDraft: () => void;
 }
 
@@ -479,19 +483,29 @@ export const useOrgStore = create<OrgState>()(
   // SAAF Draft
   saafDraft: null,
   setSaafDraft: (draft) => set({ saafDraft: draft }),
+  patchSaafDraft: (patch) =>
+    set((state) => ({
+      saafDraft: { ...(state.saafDraft ?? {}), ...patch } as SaafDraft,
+    })),
   clearSaafDraft: () => set({ saafDraft: null }),
 
   // Reservation Draft
   reservationDraft: null,
   setReservationDraft: (draft) => set({ reservationDraft: draft }),
+  patchReservationDraft: (patch) =>
+    set((state) => ({
+      reservationDraft: { ...(state.reservationDraft ?? {}), ...patch } as ReservationDraft,
+    })),
   clearReservationDraft: () => set({ reservationDraft: null }),
 }),
     {
-      name: "apex-org-wizard",
+      name: "apex_org_wizard_v1",
       storage: createJSONStorage(() => sessionStorage),
       partialize: (state) => ({
         eventName: state.eventName,
         reserveFacilities: state.reserveFacilities,
+        saafDraft: state.saafDraft,
+        reservationDraft: state.reservationDraft,
       }),
     }
   )
