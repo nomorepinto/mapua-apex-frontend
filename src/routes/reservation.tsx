@@ -36,6 +36,7 @@ export function Reservation() {
     const navigate = useNavigate()
     const formRef = useRef<HTMLFormElement>(null)
 
+    // UI-only state — ephemeral, not persisted (vercel §5.15: useRef for transient values)
     const [showConfirmModal, setShowConfirmModal] = useState(false)
     const [showSuccessModal, setShowSuccessModal] = useState(false)
 

@@ -8,6 +8,7 @@ import { About } from "@/routes/about"
 import { Login, action as loginAction } from "@/routes/login"
 import { OrgDashboard } from "@/routes/org-dashboard"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { AdminOsaPanel } from "@/routes/admin-osa-panel"
 
 export const router = createBrowserRouter([
   {
@@ -40,6 +41,10 @@ export const router = createBrowserRouter([
         path: "login",
         Component: Login,
         action: loginAction,
+      },
+      {
+        path: "admin-osa-panel",
+        Component: AdminOsaPanel,
       },
     ],
   },

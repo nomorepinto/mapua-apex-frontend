@@ -1,212 +1,165 @@
-import { Link } from "react-router"
-import {
-  FileTextIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  AlertTriangleIcon,
-  PlusIcon,
-  ArrowRightIcon,
-  CalendarIcon,
-} from "lucide-react"
+import { useState, useCallback, useMemo } from "react"
 
-import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
 import { useSessionStore } from "@/stores/session-store"
+
+import { STATS, ACTIVITIES, DEPARTMENT_ORG_MAP, DEPARTMENTS } from "@/components/ui/activity.data"
+import { StatCard } from "@/components/ui/stat-card"
+import { ActivityRow } from "@/components/ui/activity-row"
+import { ActivityDetailModal } from "@/components/ui/activity-detail-modal"
+import { ActivityFilter } from "@/components/ui/activity-filter"
+import type { Activity } from "@/components/ui/activity.types"
+
+// ─── Signatory Review Dashboard page ──────────────────────────────────────────
+// Faithful implementation of Figma node 11621-9591 & 11849-2751
+// Thin orchestration layer: state, handlers, derived values only.
 
 export function Dashboard() {
   const name = useSessionStore((state) => state.name)
 
-  const stats = [
-    {
-      label: "Pending Proposals",
-      value: "4",
-      change: "+2 this week",
-      icon: ClockIcon,
-      color: "text-amber-600 bg-amber-50 border-amber-200",
-    },
-    {
-      label: "Approved Activities",
-      value: "18",
-      change: "Active academic term",
-      icon: CheckCircleIcon,
-      color: "text-emerald-600 bg-emerald-50 border-emerald-200",
-    },
-    {
-      label: "Needs Revision",
-      value: "1",
-      change: "Action required",
-      icon: AlertTriangleIcon,
-      color: "text-red-600 bg-red-50 border-red-200",
-    },
-    {
-      label: "Total Submissions",
-      value: "23",
-      change: "AY 2026 - 2027",
-      icon: FileTextIcon,
-      color: "text-blue-600 bg-blue-50 border-blue-200",
-    },
-  ]
+  const [activitiesList, setActivitiesList] = useState<Activity[]>(ACTIVITIES)
+  const [selectedDept, setSelectedDept] = useState<string | null>(null)
+  const [selectedOrg, setSelectedOrg] = useState<string | null>(null)
+  const [activeActivity, setActiveActivity] = useState<Activity | null>(null)
 
-  const recentActivities = [
-    {
-      id: "ACT-2026-001",
-      title: "Annual Hackathon & Innovation Expo",
-      org: "Mapua IT Society",
-      date: "Oct 15, 2026",
-      type: "Co-curricular",
-      status: "Approved",
-      statusColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
+  // Cascade: reset org when dept changes (rerender-functional-setstate)
+  const handleDeptSelect = useCallback((dept: string | null) => {
+    setSelectedDept(dept)
+    setSelectedOrg(null)
+  }, [])
+
+  const handleOrgSelect = useCallback((org: string | null) => {
+    setSelectedOrg(org)
+  }, [])
+
+  const handleActivitySelect = useCallback((activity: Activity) => {
+    setActiveActivity(activity)
+  }, [])
+
+  const handleModalClose = useCallback(() => {
+    setActiveActivity(null)
+  }, [])
+
+  const handleModalAction = useCallback(
+    (action: "approve" | "return" | "defer", activityId: string) => {
+      setActivitiesList((prev) =>
+        prev.map((act) => {
+          if (act.id !== activityId) return act
+          if (action === "return") {
+            return { ...act, decision: "Return", status: "Returned" }
+          }
+          if (action === "defer") {
+            return { ...act, decision: "Review" }
+          }
+          return { ...act, decision: "Review", status: "Accepted" }
+        }),
+      )
     },
-    {
-      id: "ACT-2026-002",
-      title: "ECE Robotics Workshop & Seminar",
-      org: "Institute of Electronics Engineers",
-      date: "Oct 22, 2026",
-      type: "Co-curricular",
-      status: "Under Review",
-      statusColor: "bg-amber-100 text-amber-800 border-amber-300",
-    },
-    {
-      id: "ACT-2026-003",
-      title: "Leadership Summit & Team Building",
-      org: "Central Student Council",
-      date: "Nov 05, 2026",
-      type: "Extra-curricular",
-      status: "Under Review",
-      statusColor: "bg-amber-100 text-amber-800 border-amber-300",
-    },
-    {
-      id: "ACT-2026-004",
-      title: "Civil Engineering Site Plant Visit",
-      org: "Philippine Institute of Civil Engineers",
-      date: "Nov 12, 2026",
-      type: "Co-curricular",
-      status: "Pending Dean Approval",
-      statusColor: "bg-blue-100 text-blue-800 border-blue-300",
-    },
-  ]
+    [],
+  )
+
+  const filteredActivities = useMemo(() => {
+    if (!selectedDept && !selectedOrg) return activitiesList
+    return activitiesList.filter((a) => {
+      const deptMatch = !selectedDept || a.department === selectedDept
+      const orgMatch = !selectedOrg || a.org === selectedOrg
+      return deptMatch && orgMatch
+    })
+  }, [activitiesList, selectedDept, selectedOrg])
 
   return (
-    <div className="w-full min-h-full bg-[#F3F4F6] text-neutral-900 py-8 px-4 sm:px-8 lg:px-12">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Welcome Header & Action Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-200 pb-5">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-neutral-900">
-              Welcome back, {name || "Dr. Helen Carter"}
-            </h1>
-            <p className="text-xs sm:text-sm text-neutral-500 mt-1 font-normal">
-              Manage student activity proposals, reviews, and institutional approvals.
-            </p>
-          </div>
-
-          <Link to="/submission">
-            <Button className="bg-[#800000] hover:bg-[#660000] text-white font-semibold px-5 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2 cursor-pointer h-10">
-              <PlusIcon className="w-4 h-4" />
-              <span>New Activity Submission</span>
-            </Button>
-          </Link>
+    <div className="w-full min-h-full bg-[#F5F6F8] text-neutral-900 py-8 px-4 sm:px-8 lg:px-12">
+      <div className="max-w-6xl mx-auto space-y-7">
+        {/* Welcome Header per Figma node 11621-9591 */}
+        <div className="space-y-1">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 font-sans">
+            {name ? `${name} Review Dashboard` : "[ROLE] Review Dashboard"}
+          </h1>
+          <p className="text-xs sm:text-sm text-neutral-500 font-normal">
+            Academic Term: 2026-2027 • Pending institutional approvals for student activities.
+          </p>
         </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {stats.map((stat, i) => {
-            const Icon = stat.icon
-            return (
-              <div
-                key={i}
-                className="bg-white p-5 rounded-2xl border border-neutral-200 shadow-2xs space-y-3"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-neutral-500">
-                    {stat.label}
-                  </span>
-                  <div className={`p-2 rounded-xl border ${stat.color}`}>
-                    <Icon className="w-4 h-4" />
-                  </div>
-                </div>
-                <div className="flex items-baseline justify-between">
-                  <span className="text-2xl font-extrabold text-neutral-900">
-                    {stat.value}
-                  </span>
-                  <span className="text-xs text-neutral-500 font-medium">
-                    {stat.change}
-                  </span>
-                </div>
-              </div>
-            )
-          })}
+        {/* Stats Grid matching Figma (07, 42, 04, 53) */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {STATS.map((stat) => (
+            <StatCard key={stat.label} {...stat} />
+          ))}
         </div>
 
-        {/* Recent Submissions Section */}
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-2xs overflow-hidden">
-          <div className="p-6 border-b border-neutral-200 flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-bold text-neutral-900">
-                Recent Activity Proposals
-              </h2>
-              <p className="text-xs text-neutral-500 mt-0.5">
-                Overview of submitted applications for AY 2026-2027
-              </p>
-            </div>
-            <Link
-              to="/submission"
-              className="text-xs font-semibold text-red-800 hover:text-red-900 flex items-center gap-1 hover:underline"
-            >
-              <span>Submit New</span>
-              <ArrowRightIcon className="w-3.5 h-3.5" />
-            </Link>
-          </div>
+        {/* Unified Filter Bar */}
+        <div className="flex items-center justify-end">
+          <ActivityFilter
+            departments={DEPARTMENTS}
+            departmentOrgMap={DEPARTMENT_ORG_MAP}
+            selectedDept={selectedDept}
+            selectedOrg={selectedOrg}
+            onDeptSelect={handleDeptSelect}
+            onOrgSelect={handleOrgSelect}
+          />
+        </div>
 
+        {/* Activity Table Card matching Figma node 11621-9591 */}
+        <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead>
-                <tr className="bg-neutral-50/80 border-b border-neutral-200 text-neutral-600 text-xs font-semibold uppercase tracking-wider">
-                  <th className="py-3.5 px-6">Proposal ID</th>
-                  <th className="py-3.5 px-6">Activity Title</th>
-                  <th className="py-3.5 px-6">Organization</th>
-                  <th className="py-3.5 px-6">Target Date</th>
-                  <th className="py-3.5 px-6">Type</th>
-                  <th className="py-3.5 px-6">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-150">
-                {recentActivities.map((activity) => (
-                  <tr
-                    key={activity.id}
-                    className="hover:bg-neutral-50/70 transition-colors"
-                  >
-                    <td className="py-4 px-6 font-mono text-xs font-medium text-neutral-600">
-                      {activity.id}
-                    </td>
-                    <td className="py-4 px-6 font-semibold text-neutral-900">
-                      {activity.title}
-                    </td>
-                    <td className="py-4 px-6 text-neutral-700 text-xs">
-                      {activity.org}
-                    </td>
-                    <td className="py-4 px-6 text-neutral-600 text-xs flex items-center gap-1.5 pt-4">
-                      <CalendarIcon className="w-3.5 h-3.5 text-neutral-400" />
-                      <span>{activity.date}</span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-xs px-2.5 py-1 rounded-full bg-neutral-100 text-neutral-700 border border-neutral-200 font-medium">
-                        {activity.type}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`text-xs px-2.5 py-1 rounded-full border font-semibold ${activity.statusColor}`}
-                      >
-                        {activity.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <Table>
+              <TableHeader>
+                <TableRow className="border-b border-neutral-200 text-neutral-500 text-xs font-bold uppercase tracking-wider hover:bg-transparent">
+                  <TableHead className="py-4 px-6 font-bold text-neutral-500">
+                    ORGANIZATION
+                  </TableHead>
+                  <TableHead className="py-4 px-6 font-bold text-neutral-500">
+                    ACTIVITY NAME
+                  </TableHead>
+                  <TableHead className="py-4 px-6 font-bold text-neutral-500">
+                    SUBMITTED
+                  </TableHead>
+                  <TableHead className="py-4 px-6 font-bold text-neutral-500">
+                    PRIORITY
+                  </TableHead>
+                  <TableHead className="py-4 px-6 font-bold text-neutral-500 text-right">
+                    DECISION
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredActivities.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="py-14 text-center text-sm text-neutral-400"
+                    >
+                      No activities match the selected filters.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredActivities.map((activity) => (
+                    <ActivityRow
+                      key={activity.id}
+                      activity={activity}
+                      onSelect={handleActivitySelect}
+                    />
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
         </div>
       </div>
+
+      {/* Review Details Modal from Figma node 11849-2751 */}
+      <ActivityDetailModal
+        activity={activeActivity}
+        onClose={handleModalClose}
+        onAction={handleModalAction}
+      />
     </div>
   )
 }

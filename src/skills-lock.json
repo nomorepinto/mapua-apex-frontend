@@ -1,7 +1,6 @@
 {
   "version": 1,
   "skills": {
-<<<<<<< Updated upstream
     "amazon-dynamodb": {
       "source": "aws/agent-toolkit-for-aws",
       "sourceType": "github",
@@ -14,20 +13,12 @@
       "skillPath": "apps/ui/skills/coss/SKILL.md",
       "computedHash": "4ce6babba954ddd3ee14ff134b1eab68230cd0acd7fcfdbc4277248ed96a6318"
     },
-    "improve-codebase-architecture": {
-      "source": "mattpocock/skills",
-      "sourceType": "github",
-      "skillPath": "skills/engineering/improve-codebase-architecture/SKILL.md",
-      "computedHash": "016f12709bff30a27419e8add978a9be70f5ca1fb6738b3be6793038e0aba631"
-    },
     "react-router-data-mode": {
       "source": "remix-run/agent-skills",
       "sourceType": "github",
       "skillPath": "skills/react-router-data-mode/SKILL.md",
       "computedHash": "cbbe1b1cfa8f6ceae1ab26d26b38c612279c9c272cf956471838796d85659860"
     },
-=======
->>>>>>> Stashed changes
     "vercel-react-best-practices": {
       "source": "vercel-labs/agent-skills",
       "sourceType": "github",
@@ -35,10 +26,10 @@
       "computedHash": "6b526d013e28073246a36f99b529bc43745d30832ecfa8217b359c34f260ca6b"
     },
     "zustand": {
-      "source": "lobehub/lobehub",
+      "source": "vercel-labs/json-render",
       "sourceType": "github",
-      "skillPath": ".agents/skills/zustand/SKILL.md",
-      "computedHash": "663fbdb4f16955398f46456637aca329a9c0d65c3eba1c91bb46811064aec0cb"
+      "skillPath": "skills/zustand/SKILL.md",
+      "computedHash": "ecf89b93e27bb9283f373a65eeda302dac1bf89575ecd53edbaef53dc1a743f8"
     }
   }
 }

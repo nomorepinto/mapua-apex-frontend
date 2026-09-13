@@ -1,5 +1,5 @@
 import { type SVGProps } from "react"
-import { NavLink, useNavigate, useLocation } from "react-router"
+import { NavLink, useNavigate, useLocation, Link } from "react-router"
 import {
   HomeIcon,
   PlusCircleIcon,
@@ -147,7 +147,13 @@ export function ApexSidebar() {
         <div className="flex flex-col items-center text-center pt-2 pb-2">
           {/* Logo is encapsulated directly here */}
           <div className="relative mb-2.5 flex items-center justify-center">
-            <Logo className="w-[187px] h-[84px]" />
+            <Link
+              to="/dean-dashboard"
+              className="cursor-pointer transition-opacity hover:opacity-85 focus:outline-hidden"
+              aria-label="Go to Dean Dashboard"
+            >
+              <Logo className="w-[187px] h-[84px]" />
+            </Link>
           </div>
 
           {/* APEX Title */}
@@ -191,7 +197,7 @@ export function ApexSidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
                 ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+                : "text-white/90 hover:text-white hover:bg-neutral-200/20"
               }`
             }
           >
@@ -211,7 +217,7 @@ export function ApexSidebar() {
             to="/submission"
             className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isSubmissionActive
               ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-              : "text-white/90 hover:text-white hover:bg-white/10"
+              : "text-white/90 hover:text-white hover:bg-neutral-200/20"
               }`}
           >
             <PlusCircleIcon
@@ -227,7 +233,7 @@ export function ApexSidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition-all ${isActive
                 ? "bg-white text-neutral-900 font-bold shadow-md shadow-black/10"
-                : "text-white/90 hover:text-white hover:bg-white/10"
+                : "text-white/90 hover:text-white hover:bg-neutral-200/20"
               }`
             }
           >
@@ -246,7 +252,7 @@ export function ApexSidebar() {
           <button
             type="button"
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-white/10 transition-all cursor-pointer text-left"
+            className="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-white/90 hover:text-white hover:bg-neutral-200/20 transition-all cursor-pointer text-left"
           >
             <LogOutIcon className="w-4.5 h-4.5 text-white/80" />
             <span>Sign Out</span>
