@@ -1,147 +1,25 @@
-import { type SVGProps } from "react"
-import { NavLink, useNavigate, useLocation, Link } from "react-router"
+import { NavLink, useLocation, Link } from "react-router"
 import { HomeIcon, PlusCircleIcon, UsersIcon, LogOutIcon } from "lucide-react"
 
+import { Logo } from "@/components/logo"
+import { useSignOut } from "@/hooks/use-sign-out"
 import { useSessionStore } from "@/stores/session-store"
+
 export { AdminSidebar } from "./admin-sidebar"
-
-interface LogoProps extends SVGProps<SVGSVGElement> {}
-
-export const Logo = (props: LogoProps) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="188"
-      height="85"
-      fill="none"
-      viewBox="0 0 188 85"
-      {...props}
-    >
-      <path
-        fill="#343131"
-        d="M106.809 47.907 128.038 34.2v47.674h-21.229zM32.508 59.27l5.97 1.1v19.49l-5.97 3.051zm105.481-11.362 6.966-4.12v38.088h-6.966z"
-      />
-      <path
-        fill="#343131"
-        d="m156.565 72.835 3.98-2.879v11.919h-3.98zM49.756 61.147l5.971 4.405v11.14l-5.97 1.556z"
-        fillOpacity=".74"
-      />
-      <path
-        fill="#343131"
-        d="M160.546 63.22h6.634v18.655h-6.635zM72.975 26.946h9.951v49.747h-9.95z"
-      />
-      <path
-        fill="#343131"
-        d="M63.024 26.946h9.951v49.747h-9.95zM25.21 59.074h7.297v23.837H25.21z"
-        fillOpacity=".72"
-      />
-      <path
-        fill="#FBC02D"
-        d="m84.917 0 22.887 10.364v73.584l-22.887-7.255zm59.706 44.047h11.278v37.828h-11.278zm-106.145 17.1h11.278v17.1H38.478z"
-        fillOpacity=".74"
-      />
-      <path
-        fill="#FBC02D"
-        d="m167.18 63.22 4.311 2.073v15.546l-4.311 1.036zm-145.95.518h3.98v17.619h-3.98z"
-        fillOpacity=".62"
-      />
-      <path fill="beige" d="M84.917 0h-1.99v76.693h1.99z" />
-      <path
-        fill="beige"
-        d="M0 81.874v-.518h25.48v1.296h6.542l5.889-2.85v-1.555h11.122l5.888-1.555h28.787l7.852 2.591 7.197 2.85 4.907 2.073 11.122-2.332 50.051-.259 4.252-.777h17.992v.518h-17.992l-4.252.777h-50.051l-11.449 2.332-4.908-2.073-7.196-2.85-7.525-2.59H54.921l-5.888 1.554H38.238v1.296l-.328.259-5.888 2.85h-7.197v-.519l-.327-.518-.654-.259h-.982l-1.962.26z"
-      />
-      <path
-        fill="#CEA235"
-        d="m117.423 60.83 10.615-8.492v29.536l-10.615.001z"
-      />
-      <path
-        fill="#98751D"
-        d="m128.038 40.767 9.951-6.567v47.674h-9.951z"
-        fillOpacity=".84"
-      />
-      <path
-        fill="#343131"
-        d="m93.873 19.951 11.278-4.405v68.661l-12.273-4.922z"
-      />
-      <path
-        fill="#CEA235"
-        d="m105.151 15.546 11.278 5.7v60.63l-11.278 2.331z"
-        fillOpacity=".84"
-      />
-      <path
-        fill="beige"
-        d="m105.482 37.31 2.322 4.923-.332 41.7-2.653.533z"
-        fillOpacity=".38"
-      />
-      <path
-        fill="beige"
-        d="m107.473 71.511.663 1.015v11.168l-.663.254zm9.95-10.882.995-.518v21.764h-.995zm9.952-18.961.664-.99-.001 11.66-.663.518z"
-      />
-      <path
-        fill="beige"
-        d="m49.756 61.147.664.518v11.919l-.664-.26z"
-        fillOpacity=".64"
-      />
-      <path fill="beige" d="m155.238 70.427.664.566-.001 10.882h-.663z" />
-      <path
-        fill="beige"
-        d="m155.238 70.427.664.566-.001 10.882h-.663zM25.21 69.956l.663.64v12.315h-.663z"
-      />
-      <path
-        fill="#343131"
-        d="m84.917 13.473 9.287 6.665-.663 59.405-8.624-2.85z"
-        fillOpacity=".5"
-      />
-      <path fill="#CEA235" d="m63.024 61.406 9.952-7.514v22.801h-9.952z" />
-      <path
-        fill="#CEA235"
-        d="m55.727 48.503 7.297-4.456v32.646h-7.297z"
-        fillOpacity=".73"
-      />
-      <path
-        fill="beige"
-        d="m72.312 54.41.664-.518v22.801h-.664zm-9.288 6.996.664-.518v15.805h-.664z"
-      />
-      <path
-        fill="beige"
-        d="m63.024 44.047.664-.46v17.301l-.664.518z"
-        fillOpacity=".6"
-      />
-      <path
-        fill="#343131"
-        d="m55.727 64.667 7.297-3.52v15.546h-7.297z"
-        fillOpacity=".08"
-      />
-      <path
-        fill="#343131"
-        d="m61.034 45.29 1.99-1.243v17.1l-1.99.967z"
-        fillOpacity=".08"
-      />
-    </svg>
-  )
-}
+export { Logo } from "./logo"
 
 export function ApexSidebar() {
-  const navigate = useNavigate()
   const location = useLocation()
   const name = useSessionStore((state) => state.name)
-  const signOut = useSessionStore((state) => state.signOut)
+  const handleSignOut = useSignOut()
 
-  const handleSignOut = () => {
-    signOut()
-    navigate("/login")
-  }
-
-  // Active state holds true for either /submission or /reservation
   const isSubmissionActive =
     location.pathname === "/submission" || location.pathname === "/reservation"
 
   return (
     <aside className="sticky top-0 z-20 flex h-screen min-h-screen w-64 shrink-0 flex-col justify-between bg-[#990000] p-4 text-white shadow-xl select-none">
-      {/* Top Brand Section */}
       <div className="space-y-6">
         <div className="flex flex-col items-center pt-2 pb-2 text-center">
-          {/* Logo is encapsulated directly here */}
           <div className="relative mb-2.5 flex items-center justify-center">
             <Link
               to="/dean-dashboard"
@@ -152,7 +30,6 @@ export function ApexSidebar() {
             </Link>
           </div>
 
-          {/* APEX Title */}
           <h2
             className="font-audiowide text-white uppercase"
             style={{
@@ -166,7 +43,6 @@ export function ApexSidebar() {
             APEX
           </h2>
 
-          {/* Subtitle */}
           <p
             className="font-sans antialiased"
             style={{
@@ -185,9 +61,7 @@ export function ApexSidebar() {
           </p>
         </div>
 
-        {/* Navigation links */}
         <nav className="space-y-1.5 pt-2">
-          {/* Dashboard */}
           <NavLink
             to="/dashboard"
             className={({ isActive }) =>
@@ -210,7 +84,6 @@ export function ApexSidebar() {
             )}
           </NavLink>
 
-          {/* Submission (matches both /submission and /reservation) */}
           <NavLink
             to="/submission"
             className={`flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all ${
@@ -227,7 +100,6 @@ export function ApexSidebar() {
             <span>Submission</span>
           </NavLink>
 
-          {/* About the Devs */}
           <NavLink
             to="/about"
             className={({ isActive }) =>
@@ -250,7 +122,6 @@ export function ApexSidebar() {
             )}
           </NavLink>
 
-          {/* Sign Out */}
           <button
             type="button"
             onClick={handleSignOut}
@@ -262,7 +133,6 @@ export function ApexSidebar() {
         </nav>
       </div>
 
-      {/* Bottom User Card */}
       <div className="border-t border-red-900/60 pt-4">
         <div className="rounded-xl border border-red-900/50 bg-[#6b0000]/90 p-3.5 shadow-sm">
           <p className="text-sm font-semibold tracking-wide text-white">

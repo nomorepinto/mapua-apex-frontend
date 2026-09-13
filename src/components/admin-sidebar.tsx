@@ -1,5 +1,4 @@
-import { useState } from "react"
-import { NavLink, useNavigate } from "react-router"
+import { NavLink } from "react-router"
 import {
   HomeIcon,
   CircleXIcon,
@@ -9,20 +8,16 @@ import {
   XIcon,
 } from "lucide-react"
 
-import { Logo } from "@/components/apex-sidebar"
-import { useSessionStore } from "@/stores/session-store"
+import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
+import { useDisclosure } from "@/hooks/use-disclosure"
+import { useSignOut } from "@/hooks/use-sign-out"
+import { useSessionStore } from "@/stores/session-store"
 
 export function AdminSidebar() {
-  const navigate = useNavigate()
   const name = useSessionStore((state) => state.name)
-  const signOut = useSessionStore((state) => state.signOut)
-  const [showSettingsModal, setShowSettingsModal] = useState(false)
-
-  const handleSignOut = () => {
-    signOut()
-    navigate("/login")
-  }
+  const handleSignOut = useSignOut()
+  const settings = useDisclosure()
 
   return (
     <>
@@ -119,7 +114,7 @@ export function AdminSidebar() {
             {/* Settings */}
             <button
               type="button"
-              onClick={() => setShowSettingsModal(true)}
+              onClick={settings.open}
               className="flex w-full cursor-pointer items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-white/10 hover:text-white"
             >
               <SettingsIcon className="h-4.5 w-4.5 text-white/80" />
@@ -175,11 +170,11 @@ export function AdminSidebar() {
       </aside>
 
       {/* Settings Modal */}
-      {showSettingsModal && (
+      {settings.isOpen ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-            onClick={() => setShowSettingsModal(false)}
+            onClick={settings.close}
           />
           <div className="relative mx-4 w-full max-w-md space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-xl">
             <div className="flex items-center justify-between border-b border-neutral-200 pb-3">
@@ -191,7 +186,7 @@ export function AdminSidebar() {
               </div>
               <button
                 type="button"
-                onClick={() => setShowSettingsModal(false)}
+                onClick={settings.close}
                 className="cursor-pointer rounded-lg p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
               >
                 <XIcon className="h-4 w-4" />
@@ -227,7 +222,7 @@ export function AdminSidebar() {
             </div>
             <div className="flex justify-end pt-2">
               <Button
-                onClick={() => setShowSettingsModal(false)}
+                onClick={settings.close}
                 className="rounded-xl bg-[#800000] px-4 py-2 text-sm font-semibold text-white hover:bg-[#660000]"
               >
                 Close
@@ -235,7 +230,7 @@ export function AdminSidebar() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </>
   )
 }

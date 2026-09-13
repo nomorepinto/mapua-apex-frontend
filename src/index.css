@@ -280,3 +280,14 @@
 .font-audiowide {
   font-family: 'Audiowide', cursive, sans-serif !important;
 }
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}

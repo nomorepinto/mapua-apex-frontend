@@ -1,4 +1,4 @@
-import { memo, useCallback, useState } from "react"
+import { memo } from "react"
 import { CheckCircle2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog"
 import { ReturnProposalModal } from "./return-proposal-modal"
 import type { Activity } from "./activity.types"
+import { useActivityDetail } from "@/hooks/use-activity-detail"
 
 // ─── ActivityDetailModal ──────────────────────────────────────────────────────
 
@@ -26,36 +27,14 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   onClose,
   onAction,
 }: ActivityDetailModalProps) {
-  const [returnModalOpen, setReturnModalOpen] = useState(false)
-
-  const handleOpenChange = useCallback(
-    (open: boolean) => {
-      if (!open) onClose()
-    },
-    [onClose],
-  )
-
-  const handleApprove = useCallback(() => {
-    if (!activity) return
-    onAction?.("approve", activity.id)
-    onClose()
-  }, [activity, onAction, onClose])
-
-  const handleDefer = useCallback(() => {
-    if (!activity) return
-    onAction?.("defer", activity.id)
-    onClose()
-  }, [activity, onAction, onClose])
-
-  const handleReturnSubmit = useCallback(
-    (title: string, message: string) => {
-      if (!activity) return
-      onAction?.("return", activity.id, { title, message })
-      setReturnModalOpen(false)
-      onClose()
-    },
-    [activity, onAction, onClose],
-  )
+  const {
+    returnModalOpen,
+    setReturnModalOpen,
+    handleOpenChange,
+    handleApprove,
+    handleDefer,
+    handleReturnSubmit,
+  } = useActivityDetail({ activity, onClose, onAction })
 
   return (
     <>

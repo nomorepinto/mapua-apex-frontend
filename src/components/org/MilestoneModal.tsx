@@ -1,5 +1,7 @@
-import { CheckCircle, X, Trash2, Plus, Calendar } from "lucide-react"
-import { useState } from "react"
+import { CheckCircle, Trash2, Plus, Calendar } from "lucide-react"
+
+import { useDisclosure } from "@/hooks/use-disclosure"
+import { getAssignedText, useMilestoneStats } from "@/hooks/use-milestone-stats"
 import { useOrgStore } from "@/stores/org-store"
 import type { Task } from "@/stores/org-store"
 import { NewTaskModal } from "./NewTaskModal"
@@ -10,37 +12,26 @@ interface MilestoneModalProps {
 }
 
 export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
-  const { 
-    milestoneTasks, 
-    activeTaskId, 
-    setActiveTaskId, 
-    toggleTaskStatus, 
-    toggleChecklistItem,
-    deleteMilestoneTask,
-    addChecklistItem,
-    updateChecklistItem,
-    removeChecklistItem
-  } = useOrgStore()
+  const milestoneTasks = useOrgStore((state) => state.milestoneTasks)
+  const activeTaskId = useOrgStore((state) => state.activeTaskId)
+  const setActiveTaskId = useOrgStore((state) => state.setActiveTaskId)
+  const toggleTaskStatus = useOrgStore((state) => state.toggleTaskStatus)
+  const toggleChecklistItem = useOrgStore((state) => state.toggleChecklistItem)
+  const deleteMilestoneTask = useOrgStore((state) => state.deleteMilestoneTask)
+  const addChecklistItem = useOrgStore((state) => state.addChecklistItem)
+  const updateChecklistItem = useOrgStore((state) => state.updateChecklistItem)
+  const removeChecklistItem = useOrgStore((state) => state.removeChecklistItem)
+  const newTask = useDisclosure()
+  const {
+    completedTasks,
+    inProgressTasks,
+    pendingTasks,
+    progressPercent,
+    progressColor,
+    strokeDashoffset,
+  } = useMilestoneStats(milestoneTasks)
 
-  const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-
-  if (!isOpen) return null;
-
-  const totalTasks = milestoneTasks.length;
-  const completedTasks = milestoneTasks.filter(t => t.status === 'Completed').length;
-  const inProgressTasks = milestoneTasks.filter(t => t.status === 'In Progress').length;
-  const pendingTasks = milestoneTasks.filter(t => t.status === 'Pending').length;
-  const progressPercent = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
-  const strokeDashoffset = 251.3 - (251.3 * (progressPercent / 100));
-
-  const getProgressColor = (percent: number) => {
-    if (percent === 100) return '#10B981'; // Green
-    if (percent >= 80) return '#EAB308'; // Yellow
-    if (percent >= 60) return '#F59E0B'; // Orange
-    return '#D9291C'; // Red
-  };
-
-  const progressColor = getProgressColor(progressPercent);
+  if (!isOpen) return null
 
   const activeTask = milestoneTasks.find(t => t.id === activeTaskId) || milestoneTasks[0];
 
@@ -72,13 +63,6 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
         <span className="text-xs font-bold text-[#94A3B8]">{index + 1}</span>
       </div>
     )
-  }
-
-  const getAssignedText = (task: Task) => {
-    const owners = new Set(task.checklist.map(c => c.ownerName).filter(Boolean));
-    if (owners.size > 1) return 'Multiple';
-    if (owners.size === 1) return Array.from(owners)[0];
-    return task.responsible;
   }
 
   return (
@@ -175,7 +159,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
               {/* Add Task Button */}
               <div className="mt-6 pt-4 border-t border-neutral-100">
                 <button 
-                  onClick={() => setIsNewTaskOpen(true)}
+                  onClick={newTask.open}
                   className="flex items-center gap-2 text-sm font-semibold text-[#D9291C] hover:text-[#B91C1C] hover:bg-red-50 w-full px-4 py-3 rounded-xl transition-colors"
                 >
                   <Plus className="w-4 h-4" /> Add New Task
@@ -277,7 +261,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
 
       </div>
       
-      <NewTaskModal isOpen={isNewTaskOpen} onClose={() => setIsNewTaskOpen(false)} />
+      <NewTaskModal isOpen={newTask.isOpen} onClose={newTask.close} />
     </div>
   )
 }

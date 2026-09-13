@@ -1,5 +1,4 @@
-import type { ActionFunctionArgs } from "react-router"
-import { Form, redirect, useActionData, useNavigation } from "react-router"
+import { Form, useActionData, useNavigation } from "react-router"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -12,28 +11,10 @@ import {
 } from "@/components/ui/card"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { useSessionStore } from "@/stores/session-store"
-
-type LoginActionData = {
-  error: string
-}
-
-export async function action({
-  request,
-}: ActionFunctionArgs): Promise<Response | LoginActionData> {
-  const formData = await request.formData()
-  const name = String(formData.get("name") ?? "").trim()
-
-  if (name.length === 0) {
-    return { error: "Enter a name to continue." }
-  }
-
-  useSessionStore.getState().signIn(name)
-  return redirect("/")
-}
+import type { LoginAction } from "@/routes/login.action"
 
 export function Login() {
-  const actionData = useActionData<typeof action>()
+  const actionData = useActionData<LoginAction>()
   const navigation = useNavigation()
   const isSubmitting = navigation.state === "submitting"
 

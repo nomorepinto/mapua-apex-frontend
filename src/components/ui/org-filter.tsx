@@ -1,8 +1,7 @@
-import { memo, useCallback, useState } from "react"
+import { memo } from "react"
 import { ChevronDownIcon, UsersIcon, XIcon } from "lucide-react"
-import type React from "react"
 
-// ─── OrgFilter ────────────────────────────────────────────────────────────────
+import { useDropdownFilter } from "@/hooks/use-dropdown-filter"
 
 export interface OrgFilterProps {
   orgs: string[]
@@ -11,17 +10,7 @@ export interface OrgFilterProps {
 }
 
 const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilterProps) {
-  const [open, setOpen] = useState(false)
-  const toggle = useCallback(() => setOpen((o) => !o), [])
-  const clear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      onSelect(null)
-      setOpen(false)
-    },
-    [onSelect],
-  )
-  const close = useCallback(() => setOpen(false), [])
+  const { open, toggle, close, clear, select } = useDropdownFilter(onSelect)
 
   return (
     <div className="relative">
@@ -47,7 +36,7 @@ const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilte
         )}
       </button>
 
-      {open && (
+      {open ? (
         <>
           <div className="fixed inset-0 z-10" onClick={close} />
           <ul
@@ -60,7 +49,7 @@ const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilte
                 key={org}
                 role="option"
                 aria-selected={selected === org}
-                onClick={() => { onSelect(org); setOpen(false) }}
+                onClick={() => select(org)}
                 className={`px-3 py-2 text-xs cursor-pointer transition-colors ${
                   selected === org
                     ? "bg-[#800000]/8 text-[#800000] font-semibold"
@@ -72,7 +61,7 @@ const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilte
             ))}
           </ul>
         </>
-      )}
+      ) : null}
     </div>
   )
 })

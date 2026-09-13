@@ -1,8 +1,7 @@
-import { memo, useCallback, useState } from "react"
+import { memo } from "react"
 import { BuildingIcon, ChevronDownIcon, XIcon } from "lucide-react"
-import type React from "react"
 
-// ─── DepartmentFilter ─────────────────────────────────────────────────────────
+import { useDropdownFilter } from "@/hooks/use-dropdown-filter"
 
 export interface DepartmentFilterProps {
   departments: string[]
@@ -15,17 +14,7 @@ const DepartmentFilter = memo(function DepartmentFilter({
   selected,
   onSelect,
 }: DepartmentFilterProps) {
-  const [open, setOpen] = useState(false)
-  const toggle = useCallback(() => setOpen((o) => !o), [])
-  const clear = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation()
-      onSelect(null)
-      setOpen(false)
-    },
-    [onSelect],
-  )
-  const close = useCallback(() => setOpen(false), [])
+  const { open, toggle, close, clear, select } = useDropdownFilter(onSelect)
 
   return (
     <div className="relative">
@@ -51,7 +40,7 @@ const DepartmentFilter = memo(function DepartmentFilter({
         )}
       </button>
 
-      {open && (
+      {open ? (
         <>
           <div className="fixed inset-0 z-10" onClick={close} />
           <ul
@@ -64,7 +53,7 @@ const DepartmentFilter = memo(function DepartmentFilter({
                 key={dept}
                 role="option"
                 aria-selected={selected === dept}
-                onClick={() => { onSelect(dept); setOpen(false) }}
+                onClick={() => select(dept)}
                 className={`px-3 py-2 text-xs cursor-pointer transition-colors ${
                   selected === dept
                     ? "bg-[#800000]/8 text-[#800000] font-semibold"
@@ -76,7 +65,7 @@ const DepartmentFilter = memo(function DepartmentFilter({
             ))}
           </ul>
         </>
-      )}
+      ) : null}
     </div>
   )
 })

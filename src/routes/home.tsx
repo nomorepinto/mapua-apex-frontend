@@ -9,17 +9,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import type { HomeLoader } from "@/routes/home.loader"
 import { useSessionStore } from "@/stores/session-store"
 
-export async function loader() {
-  return {
-    message: "Home route loaded with a React Router loader.",
-    loadedAt: new Date().toISOString(),
-  }
-}
-
 export function Home() {
-  const data = useLoaderData<typeof loader>()
+  const data = useLoaderData<HomeLoader>()
   const name = useSessionStore((state) => state.name)
 
   return (

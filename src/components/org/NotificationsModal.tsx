@@ -1,4 +1,6 @@
 import { X, Bell, Clock, AlertTriangle, CheckCircle } from "lucide-react"
+
+import { useDeadlineNotifications } from "@/hooks/use-deadline-notifications"
 import { useOrgStore } from "@/stores/org-store"
 
 interface NotificationsModalProps {
@@ -7,27 +9,10 @@ interface NotificationsModalProps {
 }
 
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
-  const { submissions } = useOrgStore()
+  const submissions = useOrgStore((state) => state.submissions)
+  const notifications = useDeadlineNotifications(submissions)
 
   if (!isOpen) return null
-
-  // Process deadlines
-  const today = new Date();
-  // Strip time for accurate day calc
-  today.setHours(0, 0, 0, 0);
-  
-  const notifications = submissions
-    .filter(sub => sub.status === 'Submitted' || sub.status === 'Under Review')
-    .map(sub => {
-      const target = new Date(sub.target_date);
-      target.setHours(0, 0, 0, 0);
-      const diffTime = target.getTime() - today.getTime();
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      
-      return { sub, diffDays };
-    })
-    .filter(n => n.diffDays <= 7) // Only show deadlines within 7 days
-    .sort((a, b) => a.diffDays - b.diffDays);
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-end pr-8 pt-20 pointer-events-none">

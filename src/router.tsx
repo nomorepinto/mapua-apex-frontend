@@ -1,14 +1,11 @@
 import { createBrowserRouter, Navigate } from "react-router"
 
-import { Root } from "@/routes/root"
-import { Dashboard } from "@/routes/dashboard"
-import { Submission, action as submissionAction } from "@/routes/submission"
-import { Reservation } from "@/routes/reservation"
-import { About } from "@/routes/about"
-import { Login, action as loginAction } from "@/routes/login"
-import { OrgDashboard } from "@/routes/org-dashboard"
 import { DashboardLayout } from "@/components/layout/DashboardLayout"
-import { AdminOsaPanel } from "@/routes/admin-osa-panel"
+import { Root } from "@/routes/root"
+
+function RouteFallback() {
+  return <div className="min-h-screen w-full bg-[#F3F4F6]" />
+}
 
 export const router = createBrowserRouter([
   {
@@ -21,30 +18,57 @@ export const router = createBrowserRouter([
       },
       {
         path: "dashboard",
-        Component: Dashboard,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { Dashboard } = await import("@/routes/dashboard")
+          return { Component: Dashboard }
+        },
       },
       {
         path: "submission",
-        Component: Submission,
-        action: submissionAction,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const [{ Submission }, { action }] = await Promise.all([
+            import("@/routes/submission"),
+            import("@/routes/submission.action"),
+          ])
+          return { Component: Submission, action }
+        },
       },
       {
         path: "reservation",
-        Component: Reservation,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { Reservation } = await import("@/routes/reservation")
+          return { Component: Reservation }
+        },
       },
       {
         path: "about",
-        Component: About,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { About } = await import("@/routes/about")
+          return { Component: About }
+        },
       },
-
       {
         path: "login",
-        Component: Login,
-        action: loginAction,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const [{ Login }, { action }] = await Promise.all([
+            import("@/routes/login"),
+            import("@/routes/login.action"),
+          ])
+          return { Component: Login, action }
+        },
       },
       {
         path: "admin-osa-panel",
-        Component: AdminOsaPanel,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { AdminOsaPanel } = await import("@/routes/admin-osa-panel")
+          return { Component: AdminOsaPanel }
+        },
       },
     ],
   },
@@ -54,8 +78,12 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        Component: OrgDashboard,
-      }
-    ]
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { OrgDashboard } = await import("@/routes/org-dashboard")
+          return { Component: OrgDashboard }
+        },
+      },
+    ],
   },
 ])

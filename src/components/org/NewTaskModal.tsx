@@ -1,39 +1,23 @@
-import { useState } from "react"
-import { useOrgStore } from "@/stores/org-store"
+import { useNewTaskForm } from "@/hooks/use-new-task-form"
 
 interface NewTaskModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
-  const { addMilestoneTask } = useOrgStore()
-  
-  const [title, setTitle] = useState("")
-  const [responsible, setResponsible] = useState("")
-  const [dueDate, setDueDate] = useState("")
+  const {
+    title,
+    setTitle,
+    responsible,
+    setResponsible,
+    dueDate,
+    setDueDate,
+    canSubmit,
+    handleSubmit,
+  } = useNewTaskForm(onClose)
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim()) {
-      // Convert standard date string (YYYY-MM-DD) to "Aug 21" format
-      let formattedDate = dueDate;
-      if (dueDate) {
-        const d = new Date(dueDate);
-        if (!isNaN(d.getTime())) {
-          formattedDate = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        }
-      }
-
-      addMilestoneTask(title.trim(), responsible.trim(), formattedDate);
-      setTitle("");
-      setResponsible("");
-      setDueDate("");
-      onClose();
-    }
-  }
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
@@ -51,7 +35,6 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 flex flex-col gap-5">
-          
           <div>
             <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Task Title</label>
             <input 
@@ -96,13 +79,12 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
             </button>
             <button 
               type="submit"
-              disabled={!title.trim()}
+              disabled={!canSubmit}
               className="bg-[#D9291C] text-white px-6 py-2.5 rounded-xl text-sm font-semibold hover:bg-[#B91C1C] transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Add Task
             </button>
           </div>
-
         </form>
       </div>
     </div>

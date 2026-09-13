@@ -1,35 +1,21 @@
-import { useState } from "react"
-import { useOrgStore } from "@/stores/org-store"
+import { useNewEventForm } from "@/hooks/use-new-event-form"
 
 interface NewEventModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  defaultDate?: Date;
+  isOpen: boolean
+  onClose: () => void
+  defaultDate?: Date
 }
 
 export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalProps) {
-  const { addCalendarEvent } = useOrgStore()
-  
-  const [title, setTitle] = useState("")
-  const [date, setDate] = useState(defaultDate ? defaultDate.toISOString().split('T')[0] : "")
+  const { title, setTitle, date, setDate, canSubmit, handleSubmit } =
+    useNewEventForm(defaultDate, onClose)
 
-  if (!isOpen) return null;
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (title.trim() && date) {
-      const eventDate = new Date(date);
-      addCalendarEvent(eventDate, title.trim());
-      setTitle("");
-      onClose();
-    }
-  }
+  if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-sm font-sans">
       <div className="bg-[#F2F2F7] w-full sm:max-w-md h-[90vh] sm:h-auto sm:rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:fade-in sm:zoom-in-95 duration-200 flex flex-col rounded-t-2xl">
         
-        {/* iOS Header */}
         <div className="flex items-center justify-between p-4 bg-white border-b border-neutral-200/60 sticky top-0 z-10">
           <button 
             onClick={onClose}
@@ -41,7 +27,7 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
           <h2 className="text-[17px] font-semibold text-black">New Event</h2>
           <button 
             onClick={handleSubmit}
-            disabled={!title.trim() || !date}
+            disabled={!canSubmit}
             className="text-[17px] font-semibold text-[#D9291C] hover:opacity-70 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
           >
             Add
@@ -49,8 +35,6 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
         </div>
 
         <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
-          
-          {/* Title & Location Block */}
           <div className="bg-white rounded-xl overflow-hidden">
             <input 
               type="text" 
@@ -63,7 +47,6 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
             />
           </div>
 
-          {/* Time Block */}
           <div className="bg-white rounded-xl overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3">
               <span className="text-[17px] text-black">Date</span>
@@ -75,7 +58,6 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
               />
             </div>
           </div>
-
         </div>
       </div>
     </div>

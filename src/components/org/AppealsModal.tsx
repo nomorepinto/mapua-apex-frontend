@@ -1,56 +1,35 @@
-import { X, Search, Filter } from "lucide-react"
-import { useState } from "react"
-import { useOrgStore } from "@/stores/org-store"
+import { X, Search } from "lucide-react"
+
+import {
+  APPEAL_DEPARTMENTS,
+  APPEAL_STATUSES,
+  useAppealsFilter,
+} from "@/hooks/use-appeals-filter"
 
 interface AppealsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen: boolean
+  onClose: () => void
 }
 
 export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
-  const { 
-    appeals, 
-    searchQuery, setSearchQuery, 
-    statusFilter, setStatusFilter, 
-    departmentFilter, setDepartmentFilter 
-  } = useOrgStore()
+  const {
+    searchQuery,
+    statusFilter,
+    departmentFilter,
+    currentPage,
+    totalPages,
+    paginatedAppeals,
+    handlePageChange,
+    handleStatusChange,
+    handleDeptChange,
+    handleSearch,
+  } = useAppealsFilter()
 
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  if (!isOpen) return null
 
-  if (!isOpen) return null;
-
-  const statuses = ['All', 'Approved', 'Under Review', 'Pending', 'Rejected'];
-  const departments = ['All', 'Dean', 'OSAAR', 'Adviser', 'HR', 'IT'];
-
-  // Apply filters
-  const filteredAppeals = appeals.filter(appeal => {
-    const matchesSearch = appeal.id.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          appeal.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || appeal.status === statusFilter;
-    const matchesDept = departmentFilter === 'All' || appeal.department === departmentFilter;
-    
-    return matchesSearch && matchesStatus && matchesDept;
-  });
-
-  // Pagination logic
-  const totalPages = Math.max(1, Math.ceil(filteredAppeals.length / itemsPerPage));
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAppeals = filteredAppeals.slice(startIndex, startIndex + itemsPerPage);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  }
-
-  // Reset page when filters change
-  const handleStatusChange = (s: string) => { setStatusFilter(s); setCurrentPage(1); }
-  const handleDeptChange = (d: string) => { setDepartmentFilter(d); setCurrentPage(1); }
-  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => { setSearchQuery(e.target.value); setCurrentPage(1); }
-
-  const activeBtnClass = "bg-[#D9291C] text-white text-xs font-bold rounded-full";
-  const inactiveBtnClass = "bg-neutral-100 text-[#475569] text-xs font-semibold rounded-full hover:bg-neutral-200 transition-colors";
+  const activeBtnClass = "bg-[#D9291C] text-white text-xs font-bold rounded-full"
+  const inactiveBtnClass =
+    "bg-neutral-100 text-[#475569] text-xs font-semibold rounded-full hover:bg-neutral-200 transition-colors"
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
@@ -83,7 +62,7 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
               <div>
                 <span className="text-xs font-semibold text-[#64748B] mb-2 block">Status:</span>
                 <div className="flex flex-wrap gap-2">
-                  {statuses.map(s => (
+                  {APPEAL_STATUSES.map(s => (
                     <button 
                       key={s} 
                       onClick={() => handleStatusChange(s)}
@@ -98,7 +77,7 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
               <div>
                 <span className="text-xs font-semibold text-[#64748B] mb-2 block">Department:</span>
                 <div className="flex flex-wrap items-center gap-2">
-                  {departments.map(d => (
+                  {APPEAL_DEPARTMENTS.map(d => (
                     <button 
                       key={d}
                       onClick={() => handleDeptChange(d)}
