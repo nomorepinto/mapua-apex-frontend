@@ -14,6 +14,7 @@ import {
     SelectItem,
 } from "@/components/ui/select"
 import { generateProposalPdf } from "@/lib/pdf-generator"
+import { useOrgStore } from "@/stores/org-store"
 
 export type SubmissionActionData = {
     success?: boolean
@@ -34,6 +35,19 @@ export async function action({
             errors: { activityType: "Please select an activity classification" },
         }
     }
+
+    // Push the submission to the shared Zustand store
+    useOrgStore.getState().addSubmission({
+        activity_classification: (data.activityType as string) || "co-curricular",
+        current_signatory: "Adviser", // Initial sign-off step
+        target_date: (data.dateOfEvent as string) || new Date().toISOString().split('T')[0],
+        activity_details: {
+            title: (data.activityTitle as string) || "Untitled Activity",
+            description: (data.activityDescription as string) || "",
+            venue: (data.activityVenue as string) || "",
+            date: (data.dateOfEvent as string) || "",
+        }
+    });
 
     return {
         success: true,
@@ -68,9 +82,7 @@ interface BudgetItem {
 }
 
 const getSavedSaafDraft = () => {
-    if (typeof window === "undefined") return null
-    const saved = sessionStorage.getItem("apex_saaf_draft")
-    return saved ? JSON.parse(saved) : null
+    return useOrgStore.getState().saafDraft || null
 }
 
 export function Submission() {
@@ -172,7 +184,7 @@ export function Submission() {
             proponents,
             budgetItems,
         }
-        sessionStorage.setItem("apex_saaf_draft", JSON.stringify(draft))
+        useOrgStore.getState().setSaafDraft(draft)
     }, [
         activityType,
         totalOrgMembers,
@@ -199,8 +211,8 @@ export function Submission() {
 
     useEffect(() => {
         if (fetcher.data?.success) {
-            sessionStorage.removeItem("apex_saaf_draft")
-            sessionStorage.removeItem("apex_reservation_draft")
+            useOrgStore.getState().clearSaafDraft()
+            useOrgStore.getState().clearReservationDraft()
             setShowConfirmModal(false)
             setShowSuccessModal(true)
         }
