@@ -1,12 +1,77 @@
 import { Building2Icon, Code2Icon, ShieldCheckIcon } from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
+
+import AgathaPhoto from "@/assets/Agatha.png"
+import AvielPhoto from "@/assets/Aviel.png"
+import BeaPhoto from "@/assets/Bea.png"
+import BenedictPhoto from "@/assets/Benedict.png"
+import JedrickPhoto from "@/assets/JEDRICK.png"
+import JoelPhoto from "@/assets/Joel.png"
+import KarinaPhoto from "@/assets/Karina.png"
+import LunaPhoto from "@/assets/Luna.png"
+import MicoPhoto from "@/assets/MICO.png"
+import NigelPhoto from "@/assets/NIGEL.png"
+import NicolePhoto from "@/assets/Nicole.png"
+import RyanPhoto from "@/assets/Ryan.png"
+
+type TeamMember = {
+  name: string
+  role: string
+  photo: string
+  initials: string
+}
+
+const TEAM_MEMBERS: TeamMember[] = [
+  { name: "Agatha", role: "Chief People Officer: 26-27", photo: AgathaPhoto, initials: "AG" },
+  { name: "Aviel", role: "Chief External Relations Officer: 26-27", photo: AvielPhoto, initials: "AV" },
+  { name: "Bea", role: "Chief Communications Officer: 26-27", photo: BeaPhoto, initials: "BE" },
+  { name: "Benedict", role: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto, initials: "BN" },
+  { name: "Jedrick", role: "Chief Executive Officer: 26-27", photo: JedrickPhoto, initials: "JD" },
+  { name: "Joel", role: "Technology Committee: 26-27", photo: JoelPhoto, initials: "JO" },
+  { name: "Karina", role: "Chief Academic Officer: 26-27", photo: KarinaPhoto, initials: "KA" },
+  { name: "Luna", role: "Organization Mascot: 26-27", photo: LunaPhoto, initials: "LU" },
+  { name: "Mico", role: "Corporate Secretary: 26-27", photo: MicoPhoto, initials: "MI" },
+  { name: "Nigel", role: "Chief Operations Officer: 26-27", photo: NigelPhoto, initials: "NI" },
+  { name: "Nicole", role: "Chief Finance Officer: 26-27", photo: NicolePhoto, initials: "NC" },
+  { name: "Ryan", role: "Chief Technology Officer: 26-27", photo: RyanPhoto, initials: "RY" },
+]
+
+function DevCard({ member }: { member: TeamMember }) {
+  return (
+    <Card className="group overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+      <div className="relative h-52 w-full overflow-hidden bg-neutral-100">
+        <img
+          src={member.photo}
+          alt={member.name}
+          className="h-full w-full object-cover object-top transition-transform duration-300 group-hover:scale-105"
+        />
+      </div>
+      <CardContent className="flex flex-col items-center gap-1 p-4 text-center">
+        <div className="-mt-10 mb-1">
+          <Avatar className="size-14 ring-3 ring-white shadow-md">
+            <AvatarImage src={member.photo} alt={member.name} />
+            <AvatarFallback className="bg-red-800 text-sm font-bold text-white">
+              {member.initials}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+        <h3 className="text-sm font-bold tracking-tight text-neutral-900">
+          {member.name}
+        </h3>
+        <p className="text-xs font-medium text-neutral-500">{member.role}</p>
+      </CardContent>
+    </Card>
+  )
+}
 
 export function About() {
   return (
     <div className="min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-4xl space-y-8">
+      <div className="mx-auto max-w-6xl space-y-8">
         <div className="border-b border-neutral-200 pb-5">
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
-            About the Developers & APEX
+            About the Developers &amp; APEX
           </h1>
           <p className="mt-1 text-xs font-normal text-neutral-500 sm:text-sm">
             Administrative Portal For Events Exchange (APEX) — Mapúa University
@@ -54,6 +119,13 @@ export function About() {
             Designed and built with modern React, React Router Data Mode,
             Tailwind CSS, and Coss UI components.
           </p>
+        </div>
+
+        {/* Developer Cards Grid */}
+        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+          {TEAM_MEMBERS.map((member) => (
+            <DevCard key={member.name} member={member} />
+          ))}
         </div>
       </div>
     </div>
