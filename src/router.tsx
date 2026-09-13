@@ -6,8 +6,7 @@ import { Submission, action as submissionAction } from "@/routes/submission"
 import { Reservation } from "@/routes/reservation"
 import { About } from "@/routes/about"
 import { Login, action as loginAction } from "@/routes/login"
-import { OrgDashboard } from "@/routes/org-dashboard"
-import { DashboardLayout } from "@/components/layout/DashboardLayout"
+import { OrgDashboard, DashboardLayout } from "@/routes/org-dashboard"
 
 export const router = createBrowserRouter([
   {
