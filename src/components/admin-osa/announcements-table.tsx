@@ -33,7 +33,17 @@ export function AnnouncementsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-150">
-            {announcements.map((announcement) => (
+            {announcements.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-6 py-10 text-center text-sm text-neutral-500"
+                >
+                  No announcement records are available yet.
+                </td>
+              </tr>
+            ) : (
+            announcements.map((announcement) => (
               <tr
                 key={announcement.id}
                 className="transition-colors hover:bg-neutral-50/70"
@@ -68,7 +78,8 @@ export function AnnouncementsTable({
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

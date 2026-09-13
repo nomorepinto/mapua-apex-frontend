@@ -1,6 +1,6 @@
 import { useCallback, useState, type ChangeEvent } from "react"
 
-import { useOrgStore } from "@/stores/org-store"
+import type { Appeal } from "@/components/org-dashboard/types"
 
 export const APPEAL_STATUSES = [
   "All",
@@ -20,16 +20,13 @@ export const APPEAL_DEPARTMENTS = [
 ] as const
 
 const ITEMS_PER_PAGE = 5
+const EMPTY_APPEALS: Appeal[] = []
 
 export function useAppealsFilter() {
-  const appeals = useOrgStore((state) => state.appeals)
-  const searchQuery = useOrgStore((state) => state.searchQuery)
-  const setSearchQuery = useOrgStore((state) => state.setSearchQuery)
-  const statusFilter = useOrgStore((state) => state.statusFilter)
-  const setStatusFilter = useOrgStore((state) => state.setStatusFilter)
-  const departmentFilter = useOrgStore((state) => state.departmentFilter)
-  const setDepartmentFilter = useOrgStore((state) => state.setDepartmentFilter)
-
+  const appeals = EMPTY_APPEALS
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("All")
+  const [departmentFilter, setDepartmentFilter] = useState("All")
   const [currentPage, setCurrentPage] = useState(1)
 
   const query = searchQuery.toLowerCase()
@@ -61,29 +58,20 @@ export function useAppealsFilter() {
     [totalPages]
   )
 
-  const handleStatusChange = useCallback(
-    (status: string) => {
-      setStatusFilter(status)
-      setCurrentPage(1)
-    },
-    [setStatusFilter]
-  )
+  const handleStatusChange = useCallback((status: string) => {
+    setStatusFilter(status)
+    setCurrentPage(1)
+  }, [])
 
-  const handleDeptChange = useCallback(
-    (department: string) => {
-      setDepartmentFilter(department)
-      setCurrentPage(1)
-    },
-    [setDepartmentFilter]
-  )
+  const handleDeptChange = useCallback((department: string) => {
+    setDepartmentFilter(department)
+    setCurrentPage(1)
+  }, [])
 
-  const handleSearch = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(event.target.value)
-      setCurrentPage(1)
-    },
-    [setSearchQuery]
-  )
+  const handleSearch = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(event.target.value)
+    setCurrentPage(1)
+  }, [])
 
   return {
     searchQuery,
@@ -92,6 +80,7 @@ export function useAppealsFilter() {
     currentPage,
     totalPages,
     paginatedAppeals,
+    emptyMessage: "No appeal records are available yet.",
     handlePageChange,
     handleStatusChange,
     handleDeptChange,

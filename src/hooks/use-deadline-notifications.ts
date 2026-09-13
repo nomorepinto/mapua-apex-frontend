@@ -1,11 +1,11 @@
-import type { Submission } from "@/stores/org-store"
+import type { TrackedSubmission } from "@/components/org-dashboard/types"
 
 export interface DeadlineNotification {
-  sub: Submission
+  sub: TrackedSubmission
   diffDays: number
 }
 
-export function useDeadlineNotifications(submissions: Submission[]) {
+export function useDeadlineNotifications(submissions: TrackedSubmission[]) {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 

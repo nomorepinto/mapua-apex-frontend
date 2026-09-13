@@ -9,26 +9,26 @@ import type { InstitutionMetrics } from "@/lib/types"
 const REVIEW_STAT_CARDS = [
   {
     label: "Pending Review",
-    value: "07",
-    badge: "Action Required",
-    badgeColor: "bg-amber-100 text-amber-800 border-amber-300",
+    value: "0",
+    badge: "No data",
+    badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-300",
   },
   {
     label: "Total Approved",
-    value: "42",
-    badge: "Authorized",
-    badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-300",
+    value: "0",
+    badge: "No data",
+    badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-300",
   },
   {
     label: "Returned for Revision",
-    value: "04",
-    badge: "Needs Edits",
-    badgeColor: "bg-red-100 text-red-800 border-red-300",
+    value: "0",
+    badge: "No data",
+    badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-300",
   },
   {
     label: "Total Reviewed",
-    value: "53",
-    badge: "Term Cumulative",
+    value: "0",
+    badge: "No data",
     badgeColor: "bg-neutral-100 text-neutral-600 border-neutral-300",
   },
 ] as const

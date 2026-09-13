@@ -28,7 +28,17 @@ export function OrgAccountsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-150">
-            {orgs.map((org) => (
+            {orgs.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="px-6 py-10 text-center text-sm text-neutral-500"
+                >
+                  No organization records are available yet.
+                </td>
+              </tr>
+            ) : (
+            orgs.map((org) => (
               <tr key={org.id} className="transition-colors hover:bg-neutral-50/70">
                 <td className="px-6 py-4 font-semibold text-neutral-900">
                   {org.name}
@@ -58,7 +68,8 @@ export function OrgAccountsTable({
                   </div>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

@@ -1,10 +1,10 @@
 import { X, CheckCircle, Clock, Circle } from "lucide-react"
-import type { Submission } from "@/stores/org-store"
+import type { TrackedSubmission } from "@/components/org-dashboard/types"
 
 interface SubmissionTrackerModalProps {
   isOpen: boolean
   onClose: () => void
-  submission: Submission | null
+  submission: TrackedSubmission | null
 }
 
 const SIGNATORY_STEPS = ["Adviser", "CSS", "Dean", "OSAAR"]

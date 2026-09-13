@@ -1,7 +1,7 @@
 import { X, Bell, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 
 import { useDeadlineNotifications } from "@/hooks/use-deadline-notifications"
-import { useOrgStore } from "@/stores/org-store"
+import type { TrackedSubmission } from "@/components/org-dashboard/types"
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -9,7 +9,7 @@ interface NotificationsModalProps {
 }
 
 export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps) {
-  const submissions = useOrgStore((state) => state.submissions)
+  const submissions: TrackedSubmission[] = []
   const notifications = useDeadlineNotifications(submissions)
 
   if (!isOpen) return null
@@ -31,8 +31,8 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
           {notifications.length === 0 ? (
             <div className="p-8 text-center flex flex-col items-center">
               <CheckCircle className="w-8 h-8 text-neutral-300 mb-2" />
-              <p className="text-sm font-medium text-neutral-500">You're all caught up!</p>
-              <p className="text-xs text-neutral-400 mt-1">No pressing deadlines right now.</p>
+              <p className="text-sm font-medium text-neutral-500">No notifications are available yet.</p>
+              <p className="text-xs text-neutral-400 mt-1">Deadline reminders will appear here when submissions exist.</p>
             </div>
           ) : (
             <div className="flex flex-col gap-1">

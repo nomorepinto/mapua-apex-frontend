@@ -10,11 +10,21 @@ import { InstitutionalAlignmentSection } from "@/components/submission/instituti
 import { ProponentsSection } from "@/components/submission/proponents-section"
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { useSaafForm } from "@/hooks/use-saaf-form"
+import { useSubmissionHydrated } from "@/stores/submission-store"
 
 export function Submission() {
+  const hasHydrated = useSubmissionHydrated()
   const formRef = useRef<HTMLFormElement>(null)
   const form = useSaafForm()
   const { draft } = form
+
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-full w-full items-center justify-center bg-[#F3F4F6]">
+        <p className="text-sm text-neutral-500">Loading draft…</p>
+      </div>
+    )
+  }
 
   return (
     <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">

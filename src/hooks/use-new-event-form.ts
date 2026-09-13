@@ -1,13 +1,13 @@
 import { useCallback, useState } from "react"
 
-import { useOrgStore } from "@/stores/org-store"
+const UNAVAILABLE = "No event records are available yet."
 
 export function useNewEventForm(defaultDate: Date | undefined, onClose: () => void) {
-  const addCalendarEvent = useOrgStore((state) => state.addCalendarEvent)
   const [title, setTitle] = useState("")
   const [date, setDate] = useState(() =>
     defaultDate ? defaultDate.toISOString().split("T")[0] : ""
   )
+  const [error, setError] = useState<string | null>(null)
 
   const canSubmit = Boolean(title.trim() && date)
 
@@ -15,12 +15,24 @@ export function useNewEventForm(defaultDate: Date | undefined, onClose: () => vo
     (event?: { preventDefault: () => void }) => {
       event?.preventDefault()
       if (!title.trim() || !date) return
-      addCalendarEvent(new Date(date), title.trim())
-      setTitle("")
-      onClose()
+      setError(UNAVAILABLE)
     },
-    [addCalendarEvent, date, onClose, title]
+    [date, title]
   )
 
-  return { title, setTitle, date, setDate, canSubmit, handleSubmit }
+  const handleClose = useCallback(() => {
+    setError(null)
+    onClose()
+  }, [onClose])
+
+  return {
+    title,
+    setTitle,
+    date,
+    setDate,
+    canSubmit,
+    error,
+    handleSubmit,
+    handleClose,
+  }
 }

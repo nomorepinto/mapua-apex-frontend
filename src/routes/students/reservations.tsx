@@ -10,15 +10,27 @@ import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
-import { useOrgStore } from "@/stores/org-store"
+import {
+  useHasReservation,
+  useSubmissionHydrated,
+} from "@/stores/submission-store"
 
 export function Reservation() {
-  const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  const hasHydrated = useSubmissionHydrated()
+  const hasReservation = useHasReservation()
   const formRef = useRef<HTMLFormElement>(null)
   const form = useReservationForm()
   const { draft } = form
 
-  if (reserveFacilities !== "yes") {
+  if (!hasHydrated) {
+    return (
+      <div className="flex min-h-full w-full items-center justify-center bg-[#F3F4F6]">
+        <p className="text-sm text-neutral-500">Loading draft…</p>
+      </div>
+    )
+  }
+
+  if (!hasReservation) {
     return <Navigate to="/students/submissions/saaf" replace />
   }
 

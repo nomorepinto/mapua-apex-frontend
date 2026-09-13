@@ -1,7 +1,7 @@
 import { AlertTriangle, CheckCircle, Volume2 } from "lucide-react"
 
 import { formatRelativeTime } from "@/lib/progress-color"
-import type { ActivityLog } from "@/stores/org-store"
+import type { ActivityLog } from "@/components/org-dashboard/types"
 
 const ACTIVITY_STYLES = {
   success: {
@@ -32,8 +32,10 @@ export function RecentActivities({ activities }: { activities: ActivityLog[] }) 
       <h2 className="mb-4 text-xl font-bold text-[#1E293B]">Recent Activities</h2>
 
       <div className="flex flex-col gap-3">
-        {activities.length === 0 ? (
-          <p className="text-xs text-[#94A3B8] italic">No recent activities.</p>
+          {activities.length === 0 ? (
+            <p className="text-xs text-[#94A3B8] italic">
+              No activity records are available yet.
+            </p>
         ) : (
           activities.slice(0, 5).map((activity) => {
             const style = ACTIVITY_STYLES[activity.type]

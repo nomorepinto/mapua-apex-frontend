@@ -105,7 +105,7 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
                 <tbody className="divide-y divide-neutral-50">
                   {paginatedAppeals.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-sm text-[#94A3B8]">No appeals found matching your criteria.</td>
+                      <td colSpan={5} className="py-12 text-center text-sm text-[#94A3B8]">No appeal records are available yet.</td>
                     </tr>
                   ) : (
                     paginatedAppeals.map((a, i) => (

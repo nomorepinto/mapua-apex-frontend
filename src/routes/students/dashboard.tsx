@@ -51,7 +51,7 @@ export function OrgDashboard() {
             tasks={dashboard.milestoneTasks}
             onViewAll={dashboard.openMilestone}
           />
-          <ResourceLinks onAccess={dashboard.handleResourceAccess} />
+          <ResourceLinks onAccess={() => undefined} />
         </div>
         <RecentActivities activities={dashboard.activities} />
       </div>

@@ -38,8 +38,7 @@ export function CalendarCard({
             day.toLocaleDateString("en-US", { weekday: "narrow" }),
         }}
         modifiers={{
-          hasEvent: (date) =>
-            date.getDate() === 19 || !!calendarEvents[getDateKey(date)]?.length,
+          hasEvent: (date) => !!calendarEvents[getDateKey(date)]?.length,
         }}
         modifiersClassNames={{
           hasEvent:
@@ -73,7 +72,11 @@ export function CalendarCard({
             ))}
           </div>
         </div>
-      ) : null}
+      ) : (
+        <p className="mt-5 border-t border-neutral-100 pt-3 text-xs text-[#94A3B8]">
+          No calendar events are available yet.
+        </p>
+      )}
     </div>
   )
 }

@@ -1,12 +1,8 @@
-import { useCallback, useEffect, useState, type MouseEvent } from "react"
+import { useCallback, useMemo, useState, type MouseEvent } from "react"
 import { useFetcher, useNavigate, useNavigation } from "react-router"
 
 import { useScrollToTop } from "@/hooks/use-scroll-to-top"
-
-import {
-  createEmptyProponent,
-  DEFAULT_SAAF_DRAFT,
-} from "@/components/submission/constants"
+import { createEmptyProponent } from "@/components/submission/constants"
 import type {
   BudgetItem,
   Proponent,
@@ -19,105 +15,113 @@ import {
   sanitizeIntegerInput,
 } from "@/lib/numeric-input"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
-import { useOrgStore } from "@/stores/org-store"
-
-function getSavedSaafDraft(): SaafDraft {
-  const saved = useOrgStore.getState().saafDraft
-  if (!saved) return DEFAULT_SAAF_DRAFT
-  return { ...DEFAULT_SAAF_DRAFT, ...saved }
-}
+import { submissionToSaaf } from "@/lib/submission-draft"
+import {
+  useHasReservation,
+  useSubmissionActions,
+  useSubmissionStore,
+} from "@/stores/submission-store"
 
 export function useSaafForm() {
   const navigate = useNavigate()
   const navigation = useNavigation()
   const fetcher = useFetcher<SubmissionActionData>()
-  const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  const hasReservation = useHasReservation()
+  const submission = useSubmissionStore((state) => state.draft)
+  const { updateFromSaaf } = useSubmissionActions()
+  const draft = useMemo(() => submissionToSaaf(submission), [submission])
   const isSubmitting =
     navigation.state === "submitting" || fetcher.state === "submitting"
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [successDismissed, setSuccessDismissed] = useState(false)
-  const [draft, setDraft] = useState<SaafDraft>(getSavedSaafDraft)
   const showSuccessModal = Boolean(fetcher.data?.success) && !successDismissed
 
   useScrollToTop()
 
-  useEffect(() => {
-    if (fetcher.data?.success) return
-    useOrgStore.getState().setSaafDraft(draft)
-  }, [draft, fetcher.data])
+  const commit = useCallback(
+    (next: SaafDraft) => {
+      updateFromSaaf(next)
+    },
+    [updateFromSaaf]
+  )
 
   const updateField = useCallback(
     <K extends keyof SaafDraft>(key: K, value: SaafDraft[K]) => {
-      setDraft((prev) => ({ ...prev, [key]: value }))
+      commit({ ...draft, [key]: value })
     },
-    []
+    [commit, draft]
   )
 
   const handleAddProponent = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
-      proponents: [
-        ...prev.proponents,
-        createEmptyProponent(String(Date.now())),
-      ],
-    }))
-  }, [])
-
-  const handleRemoveProponent = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.proponents.length === 1) return prev
-      return {
-        ...prev,
-        proponents: prev.proponents.filter((p) => p.id !== id),
-      }
+    commit({
+      ...draft,
+      proponents: [...draft.proponents, createEmptyProponent(String(Date.now()))],
     })
-  }, [])
+  }, [commit, draft])
+
+  const handleRemoveProponent = useCallback(
+    (id: string) => {
+      if (draft.proponents.length === 1) return
+      commit({
+        ...draft,
+        proponents: draft.proponents.filter((proponent) => proponent.id !== id),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleUpdateProponent = useCallback(
     (id: string, field: keyof Proponent, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        proponents: prev.proponents.map((p) =>
-          p.id === id ? { ...p, [field]: value } : p
+      commit({
+        ...draft,
+        proponents: draft.proponents.map((proponent) =>
+          proponent.id === id ? { ...proponent, [field]: value } : proponent
         ),
-      }))
+      })
     },
-    []
+    [commit, draft]
   )
 
-  const handleDepartmentChange = useCallback((id: string, value: string) => {
-    setDraft((prev) => ({
-      ...prev,
-      departmentValues: { ...prev.departmentValues, [id]: value },
-    }))
-  }, [])
+  const handleDepartmentChange = useCallback(
+    (id: string, value: string) => {
+      commit({
+        ...draft,
+        departmentValues: { ...draft.departmentValues, [id]: value },
+        proponents: draft.proponents.map((proponent) =>
+          proponent.id === id ? { ...proponent, department: value } : proponent
+        ),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleAddBudgetItem = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
+    commit({
+      ...draft,
       budgetItems: [
-        ...prev.budgetItems,
+        ...draft.budgetItems,
         {
           id: String(Date.now()),
-          item: String(prev.budgetItems.length + 1),
+          item: String(draft.budgetItems.length + 1),
           unit: "1",
           quantity: "1",
           pricePerUnit: "0",
         },
       ],
-    }))
-  }, [])
-
-  const handleRemoveBudgetItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.budgetItems.length === 1) return prev
-      return {
-        ...prev,
-        budgetItems: prev.budgetItems.filter((item) => item.id !== id),
-      }
     })
-  }, [])
+  }, [commit, draft])
+
+  const handleRemoveBudgetItem = useCallback(
+    (id: string) => {
+      if (draft.budgetItems.length === 1) return
+      commit({
+        ...draft,
+        budgetItems: draft.budgetItems.filter((item) => item.id !== id),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleUpdateBudgetItem = useCallback(
     (id: string, field: keyof BudgetItem, value: string) => {
@@ -128,14 +132,14 @@ export function useSaafForm() {
         sanitized = sanitizeDecimalInput(value)
       }
 
-      setDraft((prev) => ({
-        ...prev,
-        budgetItems: prev.budgetItems.map((item) =>
+      commit({
+        ...draft,
+        budgetItems: draft.budgetItems.map((item) =>
           item.id === id ? { ...item, [field]: sanitized } : item
         ),
-      }))
+      })
     },
-    []
+    [commit, draft]
   )
 
   const grandTotal = draft.budgetItems.reduce(
@@ -172,9 +176,9 @@ export function useSaafForm() {
   const handleSavePdf = useCallback(() => {
     void saveProposalPdf({
       ...draft,
-      proponents: draft.proponents.map((p) => ({
-        ...p,
-        department: draft.departmentValues[p.id] || p.department,
+      proponents: draft.proponents.map((proponent) => ({
+        ...proponent,
+        department: draft.departmentValues[proponent.id] || proponent.department,
       })),
     })
   }, [draft])
@@ -186,7 +190,7 @@ export function useSaafForm() {
     showConfirmModal,
     showSuccessModal,
     grandTotal,
-    reserveFacilities,
+    reserveFacilities: hasReservation ? "yes" : "no",
     updateField,
     handleAddProponent,
     handleRemoveProponent,

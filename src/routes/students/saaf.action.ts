@@ -1,7 +1,7 @@
 import type { ActionFunctionArgs } from "react-router"
 
 import type { SubmissionActionData } from "@/components/submission/types"
-import { useOrgStore } from "@/stores/org-store"
+import { useSubmissionStore } from "@/stores/submission-store"
 
 export async function action({
   request,
@@ -16,21 +16,8 @@ export async function action({
     }
   }
 
-  useOrgStore.getState().addSubmission({
-    activity_classification: (data.activityType as string) || "co-curricular",
-    current_signatory: "Adviser",
-    target_date:
-      (data.dateOfEvent as string) || new Date().toISOString().split("T")[0],
-    activity_details: {
-      title: (data.activityTitle as string) || "Untitled Activity",
-      description: (data.activityDescription as string) || "",
-      venue: (data.activityVenue as string) || "",
-      date: (data.dateOfEvent as string) || "",
-    },
-  })
-  useOrgStore.getState().clearSaafDraft()
-  useOrgStore.getState().clearReservationDraft()
-  useOrgStore.getState().clearSubmissionStart()
+  useSubmissionStore.getState().finalizeDraft()
+  useSubmissionStore.getState().resetDraft()
 
   return {
     success: true,

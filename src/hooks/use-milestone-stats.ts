@@ -1,5 +1,5 @@
 import { getProgressColor } from "@/lib/progress-color"
-import type { Task } from "@/stores/org-store"
+import type { Task } from "@/components/org-dashboard/types"
 
 export function getAssignedText(task: Task) {
   const owners = new Set(

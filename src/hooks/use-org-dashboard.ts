@@ -1,7 +1,6 @@
 import { useCallback, useState } from "react"
 
-import type { Submission } from "@/stores/org-store"
-import { useOrgStore } from "@/stores/org-store"
+import type { TrackedSubmission } from "@/components/org-dashboard/types"
 
 export function useOrgDashboard() {
   const [isAppealsOpen, setIsAppealsOpen] = useState(false)
@@ -9,16 +8,9 @@ export function useOrgDashboard() {
   const [isNewEventOpen, setIsNewEventOpen] = useState(false)
   const [isTrackerOpen, setIsTrackerOpen] = useState(false)
   const [selectedSubmission, setSelectedSubmission] =
-    useState<Submission | null>(null)
+    useState<TrackedSubmission | null>(null)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
-
-  const selectedDate = useOrgStore((state) => state.selectedDate)
-  const setSelectedDate = useOrgStore((state) => state.setSelectedDate)
-  const calendarEvents = useOrgStore((state) => state.calendarEvents)
-  const milestoneTasks = useOrgStore((state) => state.milestoneTasks)
-  const activities = useOrgStore((state) => state.activities)
-  const appeals = useOrgStore((state) => state.appeals)
-  const logActivity = useOrgStore((state) => state.logActivity)
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined)
 
   const openAppeals = useCallback(() => setIsAppealsOpen(true), [])
   const closeAppeals = useCallback(() => setIsAppealsOpen(false), [])
@@ -33,13 +25,6 @@ export function useOrgDashboard() {
     setTimeout(() => setSelectedSubmission(null), 200)
   }, [])
 
-  const handleResourceAccess = useCallback(
-    (title: string, description: string) => {
-      logActivity(title, description, "info")
-    },
-    [logActivity]
-  )
-
   return {
     isAppealsOpen,
     isMilestoneOpen,
@@ -49,18 +34,17 @@ export function useOrgDashboard() {
     isNotificationsOpen,
     selectedDate,
     setSelectedDate,
-    calendarEvents,
-    milestoneTasks,
-    activities,
-    appeals,
+    calendarEvents: {} as Record<string, { title: string; time?: string }[]>,
+    milestoneTasks: [],
+    activities: [],
+    appeals: [],
     openAppeals,
     closeAppeals,
-    openMilestone,
     closeMilestone,
+    openMilestone,
     openNewEvent,
     closeNewEvent,
     closeTracker,
     closeNotifications,
-    handleResourceAccess,
   }
 }

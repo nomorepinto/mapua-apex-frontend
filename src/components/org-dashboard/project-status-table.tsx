@@ -1,5 +1,5 @@
 import { getStatusTextColor } from "@/lib/progress-color"
-import type { Appeal } from "@/stores/org-store"
+import type { Appeal } from "@/components/org-dashboard/types"
 
 export function ProjectStatusTable({
   appeals,
@@ -32,7 +32,17 @@ export function ProjectStatusTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
-            {appeals.slice(0, 3).map((item) => (
+            {appeals.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="py-8 text-center text-sm text-[#94A3B8]"
+                >
+                  No project status records are available yet.
+                </td>
+              </tr>
+            ) : (
+            appeals.slice(0, 3).map((item) => (
               <tr
                 key={item.id}
                 className="cursor-pointer transition-colors hover:bg-neutral-50/50"
@@ -58,7 +68,8 @@ export function ProjectStatusTable({
                   </span>
                 </td>
               </tr>
-            ))}
+            ))
+            )}
           </tbody>
         </table>
       </div>

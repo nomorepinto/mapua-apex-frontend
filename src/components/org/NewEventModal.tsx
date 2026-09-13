@@ -7,7 +7,7 @@ interface NewEventModalProps {
 }
 
 export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalProps) {
-  const { title, setTitle, date, setDate, canSubmit, handleSubmit } =
+  const { title, setTitle, date, setDate, canSubmit, error, handleSubmit, handleClose } =
     useNewEventForm(defaultDate, onClose)
 
   if (!isOpen) return null
@@ -18,7 +18,7 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
         
         <div className="flex items-center justify-between p-4 bg-white border-b border-neutral-200/60 sticky top-0 z-10">
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             type="button"
             className="text-[17px] text-[#D9291C] hover:opacity-70 transition-opacity"
           >
@@ -58,6 +58,9 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
               />
             </div>
           </div>
+          {error ? (
+            <p className="px-4 pb-4 text-sm text-red-600">{error}</p>
+          ) : null}
         </div>
       </div>
     </div>

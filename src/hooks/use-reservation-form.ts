@@ -1,8 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react"
+import { useCallback, useMemo, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
 
 import { buildCombinedProposalPayload } from "@/components/reservation/build-proposal-payload"
-import { DEFAULT_RESERVATION_DRAFT } from "@/components/reservation/constants"
 import { useScrollToTop } from "@/hooks/use-scroll-to-top"
 import type {
   AVItem,
@@ -12,115 +11,120 @@ import type {
   RoomItem,
 } from "@/components/reservation/types"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
-import { useOrgStore } from "@/stores/org-store"
-
-function getSavedReservationDraft(): ReservationDraft {
-  const saved = useOrgStore.getState().reservationDraft
-  if (!saved) return DEFAULT_RESERVATION_DRAFT
-  return {
-    ...DEFAULT_RESERVATION_DRAFT,
-    ...saved,
-    equipment: {
-      ...DEFAULT_RESERVATION_DRAFT.equipment,
-      ...(saved.equipment ?? {}),
-    },
-  }
-}
+import {
+  submissionToReservation,
+  submissionToSaaf,
+} from "@/lib/submission-draft"
+import {
+  useSubmissionActions,
+  useSubmissionStore,
+} from "@/stores/submission-store"
 
 export function useReservationForm() {
   const navigate = useNavigate()
+  const submission = useSubmissionStore((state) => state.draft)
+  const { updateFromReservation, finalizeDraft, resetDraft } =
+    useSubmissionActions()
+  const draft = useMemo(
+    () => submissionToReservation(submission),
+    [submission]
+  )
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [draft, setDraft] = useState<ReservationDraft>(getSavedReservationDraft)
 
   useScrollToTop()
 
-  useEffect(() => {
-    useOrgStore.getState().setReservationDraft(draft)
-  }, [draft])
+  const commit = useCallback(
+    (next: ReservationDraft) => {
+      updateFromReservation(next)
+    },
+    [updateFromReservation]
+  )
 
   const updateField = useCallback(
     <K extends keyof ReservationDraft>(key: K, value: ReservationDraft[K]) => {
-      setDraft((prev) => ({ ...prev, [key]: value }))
+      commit({ ...draft, [key]: value })
     },
-    []
+    [commit, draft]
   )
 
   const toggleEquipment = useCallback(
     (key: keyof EquipmentFlags, checked: boolean) => {
-      setDraft((prev) => ({
-        ...prev,
-        equipment: { ...prev.equipment, [key]: checked },
-      }))
+      commit({
+        ...draft,
+        equipment: { ...draft.equipment, [key]: checked },
+      })
     },
-    []
+    [commit, draft]
   )
 
   const handleAddFacilityItem = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
+    commit({
+      ...draft,
       facilityItems: [
-        ...prev.facilityItems,
+        ...draft.facilityItems,
         {
           id: String(Date.now()),
-          item: String(prev.facilityItems.length + 1),
+          item: String(draft.facilityItems.length + 1),
           dateOfUse: "",
           timeOfUse: "",
           location: "",
         },
       ],
-    }))
-  }, [])
-
-  const handleRemoveFacilityItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.facilityItems.length === 1) return prev
-      return {
-        ...prev,
-        facilityItems: prev.facilityItems.filter((i) => i.id !== id),
-      }
     })
-  }, [])
+  }, [commit, draft])
+
+  const handleRemoveFacilityItem = useCallback(
+    (id: string) => {
+      if (draft.facilityItems.length === 1) return
+      commit({
+        ...draft,
+        facilityItems: draft.facilityItems.filter((item) => item.id !== id),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleUpdateFacilityItem = useCallback(
     (id: string, field: keyof FacilityItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        facilityItems: prev.facilityItems.map((i) =>
-          i.id === id ? { ...i, [field]: value } : i
+      commit({
+        ...draft,
+        facilityItems: draft.facilityItems.map((item) =>
+          item.id === id ? { ...item, [field]: value } : item
         ),
-      }))
+      })
     },
-    []
+    [commit, draft]
   )
 
-  const handleRemoveRoomItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.roomItems.length === 1) return prev
-      return {
-        ...prev,
-        roomItems: prev.roomItems.filter((i) => i.id !== id),
-      }
-    })
-  }, [])
+  const handleRemoveRoomItem = useCallback(
+    (id: string) => {
+      if (draft.roomItems.length === 1) return
+      commit({
+        ...draft,
+        roomItems: draft.roomItems.filter((item) => item.id !== id),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleUpdateRoomItem = useCallback(
     (id: string, field: keyof RoomItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        roomItems: prev.roomItems.map((i) =>
-          i.id === id ? { ...i, [field]: value } : i
+      commit({
+        ...draft,
+        roomItems: draft.roomItems.map((item) =>
+          item.id === id ? { ...item, [field]: value } : item
         ),
-      }))
+      })
     },
-    []
+    [commit, draft]
   )
 
   const handleAddAvItem = useCallback(() => {
-    setDraft((prev) => ({
-      ...prev,
+    commit({
+      ...draft,
       avItems: [
-        ...prev.avItems,
+        ...draft.avItems,
         {
           id: String(Date.now()),
           dateNeeded: "",
@@ -129,29 +133,30 @@ export function useReservationForm() {
           remarks: "",
         },
       ],
-    }))
-  }, [])
-
-  const handleRemoveAvItem = useCallback((id: string) => {
-    setDraft((prev) => {
-      if (prev.avItems.length === 1) return prev
-      return {
-        ...prev,
-        avItems: prev.avItems.filter((i) => i.id !== id),
-      }
     })
-  }, [])
+  }, [commit, draft])
+
+  const handleRemoveAvItem = useCallback(
+    (id: string) => {
+      if (draft.avItems.length === 1) return
+      commit({
+        ...draft,
+        avItems: draft.avItems.filter((item) => item.id !== id),
+      })
+    },
+    [commit, draft]
+  )
 
   const handleUpdateAvItem = useCallback(
     (id: string, field: keyof AVItem, value: string) => {
-      setDraft((prev) => ({
-        ...prev,
-        avItems: prev.avItems.map((i) =>
-          i.id === id ? { ...i, [field]: value } : i
+      commit({
+        ...draft,
+        avItems: draft.avItems.map((item) =>
+          item.id === id ? { ...item, [field]: value } : item
         ),
-      }))
+      })
     },
-    []
+    [commit, draft]
   )
 
   const handleGoBack = useCallback(() => {
@@ -173,13 +178,12 @@ export function useReservationForm() {
     setShowConfirmModal(false)
     console.log(
       "Submitting Combined Proposal (SAAF + Reservation):",
-      buildCombinedProposalPayload(draft)
+      buildCombinedProposalPayload()
     )
-    useOrgStore.getState().clearSaafDraft()
-    useOrgStore.getState().clearReservationDraft()
-    useOrgStore.getState().clearSubmissionStart()
+    finalizeDraft()
+    resetDraft()
     setShowSuccessModal(true)
-  }, [draft])
+  }, [finalizeDraft, resetDraft])
 
   const handleSuccessAction = useCallback(() => {
     setShowSuccessModal(false)
@@ -187,33 +191,8 @@ export function useReservationForm() {
   }, [navigate])
 
   const handleSavePdf = useCallback(() => {
-    const saafDraft = useOrgStore.getState().saafDraft || {}
-    void saveProposalPdf(
-      {
-        activityType: saafDraft.activityType,
-        totalOrgMembers: saafDraft.totalOrgMembers,
-        activityTitle: saafDraft.activityTitle,
-        activityDescription: saafDraft.activityDescription,
-        activityObjectives: saafDraft.activityObjectives,
-        activityVenue: saafDraft.activityVenue,
-        dateOfEvent: saafDraft.dateOfEvent,
-        dayOfEvent: saafDraft.dayOfEvent,
-        timeOfEvent: saafDraft.timeOfEvent,
-        expectedParticipants: saafDraft.expectedParticipants,
-        individualContribution: saafDraft.individualContribution,
-        proposedBudget: saafDraft.proposedBudget,
-        mission1: saafDraft.mission1,
-        mission2: saafDraft.mission2,
-        mission3: saafDraft.mission3,
-        coreValuesExplanation: saafDraft.coreValuesExplanation,
-        peoExplanation: saafDraft.peoExplanation,
-        sdgExplanation: saafDraft.sdgExplanation,
-        proponents: saafDraft.proponents || [],
-        budgetItems: saafDraft.budgetItems || [],
-      },
-      draft
-    )
-  }, [draft])
+    void saveProposalPdf(submissionToSaaf(submission), draft)
+  }, [draft, submission])
 
   return {
     draft,

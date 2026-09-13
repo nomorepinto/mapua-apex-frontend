@@ -1,5 +1,45 @@
 //import { getIdToken } from "@/lib/auth"
-import type { ActivityProposal } from "@/stores/deandb-session-store"
+export interface DynamoDBMetadata {
+  PK?: string
+  SK?: string
+  GSI1PK?: string
+  GSI1SK?: string
+  createdAt?: string
+  updatedAt?: string
+  version?: number
+}
+
+export type SignatoryActivityClassification =
+  | "Co-curricular"
+  | "Extra-curricular"
+  | "Institutional"
+
+export type ActivityStatus =
+  | "Approved"
+  | "Under Review"
+  | "Pending Dean Approval"
+  | "Needs Revision"
+  | "Rejected"
+
+export interface ActivityProposal extends DynamoDBMetadata {
+  id: string
+  title: string
+  org: string
+  date: string
+  type: SignatoryActivityClassification | string
+  status: ActivityStatus
+  statusColor: string
+  venue?: string
+  description?: string
+  targetParticipants?: number | string
+  budget?: number | string
+  submittedBy?: string
+  proponentEmail?: string
+  contactNumber?: string
+  deanRemarks?: string
+  reviewedAt?: string
+  reviewedBy?: string
+}
 
 const BASE_URL = ""
 async function getIdToken(): Promise<string> {

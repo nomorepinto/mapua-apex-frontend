@@ -1,22 +1,34 @@
-import { useState, type FormEvent } from "react"
+import { useEffect, useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
 
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { Button } from "@/components/ui/button"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
-import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
-import { useOrgStore } from "@/stores/org-store"
+import {
+  useSubmissionActions,
+  useWizardStart,
+} from "@/stores/submission-store"
 
 export function SubmissionsStart() {
   const navigate = useNavigate()
-  const savedName = useOrgStore((state) => state.eventName)
-  const savedChoice = useOrgStore((state) => state.reserveFacilities)
-  const [eventName, setEventName] = useState(savedName)
+  const wizard = useWizardStart()
+  const { startWizard } = useSubmissionActions()
+  const [eventName, setEventName] = useState("")
   const [reserveFacilities, setReserveFacilities] = useState<"yes" | "no" | "">(
-    savedChoice ?? ""
+    ""
   )
   const [error, setError] = useState<string | null>(null)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    if (!wizard.hasHydrated || ready) return
+    if (wizard.eventName) {
+      setEventName(wizard.eventName)
+      setReserveFacilities(wizard.hasReservation ? "yes" : "no")
+    }
+    setReady(true)
+  }, [ready, wizard.eventName, wizard.hasHydrated, wizard.hasReservation])
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -30,14 +42,16 @@ export function SubmissionsStart() {
       return
     }
 
-    const existingDraft = useOrgStore.getState().saafDraft
-    useOrgStore.getState().setSubmissionStart(name, reserveFacilities)
-    useOrgStore.getState().setSaafDraft({
-      ...DEFAULT_SAAF_DRAFT,
-      ...existingDraft,
-      activityTitle: name,
-    })
+    startWizard(name, reserveFacilities === "yes")
     navigate("/students/submissions/saaf")
+  }
+
+  if (!wizard.hasHydrated) {
+    return (
+      <div className="flex min-h-full w-full items-center justify-center bg-[#F3F4F6]">
+        <p className="text-sm text-neutral-500">Loading draft…</p>
+      </div>
+    )
   }
 
   return (

@@ -5,7 +5,7 @@ import {
   formatAuditTimestamp,
 } from "@/components/admin-osa/audit"
 import { Button } from "@/components/ui/button"
-import type { AuditLogEntry } from "@/stores/admin-osa-store"
+import type { AuditLogEntry } from "@/components/admin-osa/audit"
 
 export function AuditLogModal({
   open,
@@ -56,7 +56,7 @@ export function AuditLogModal({
             <div className="py-12 text-center">
               <ScrollTextIcon className="mx-auto mb-3 h-8 w-8 text-neutral-300" />
               <p className="text-sm text-neutral-500">
-                No audit log entries for this organization.
+                No audit records are available yet.
               </p>
             </div>
           ) : (

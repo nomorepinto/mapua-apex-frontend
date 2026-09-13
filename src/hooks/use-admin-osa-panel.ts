@@ -1,19 +1,21 @@
 import { useCallback, useState } from "react"
 
-import { exportAuditLogCsv } from "@/components/admin-osa/audit"
-import type { Announcement } from "@/lib/types"
-import { useAdminOsaStore } from "@/stores/admin-osa-store"
+import type { AuditLogEntry } from "@/components/admin-osa/audit"
+import type { Announcement, InstitutionMetrics, OrgAccountView } from "@/lib/types"
+
+const UNAVAILABLE = "No records are available yet."
+
+const EMPTY_METRICS: InstitutionMetrics = {
+  activeOrganizations: 0,
+  activeOrganizationsChange: "No data available",
+  totalActiveSubmissions: 0,
+  totalActiveSubmissionsNote: "No data available",
+  approvalSlaRate: 0,
+  approvalSlaTurnaround: "No data available",
+}
 
 export function useAdminOsaPanel() {
-  const orgViews = useAdminOsaStore((state) => state.orgViews)
-  const metrics = useAdminOsaStore((state) => state.metrics)
-  const announcements = useAdminOsaStore((state) => state.announcements)
-  const createAnnouncement = useAdminOsaStore((state) => state.createAnnouncement)
-  const updateAnnouncement = useAdminOsaStore((state) => state.updateAnnouncement)
-  const deleteAnnouncement = useAdminOsaStore((state) => state.deleteAnnouncement)
-  const getAuditLogsForOrg = useAdminOsaStore((state) => state.getAuditLogsForOrg)
-  const getAllAuditLogs = useAdminOsaStore((state) => state.getAllAuditLogs)
-
+  const [actionError, setActionError] = useState<string | null>(null)
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
   const [announcementModalMode, setAnnouncementModalMode] = useState<
     "create" | "edit"
@@ -24,7 +26,6 @@ export function useAdminOsaPanel() {
   const [editInitialTitle, setEditInitialTitle] = useState("")
   const [editInitialMessage, setEditInitialMessage] = useState("")
   const [showAuditLogModal, setShowAuditLogModal] = useState(false)
-  const [auditLogOrgId, setAuditLogOrgId] = useState<string | null>(null)
   const [auditLogOrgName, setAuditLogOrgName] = useState("")
 
   const handleOpenCreateModal = useCallback(() => {
@@ -33,6 +34,7 @@ export function useAdminOsaPanel() {
     setEditInitialTitle("")
     setEditInitialMessage("")
     setShowAnnouncementModal(true)
+    setActionError(null)
   }, [])
 
   const handleOpenEditModal = useCallback((announcement: Announcement) => {
@@ -41,44 +43,37 @@ export function useAdminOsaPanel() {
     setEditInitialTitle(announcement.title)
     setEditInitialMessage(announcement.title)
     setShowAnnouncementModal(true)
+    setActionError(null)
   }, [])
 
-  const handleAnnouncementSubmit = useCallback(
-    (title: string) => {
-      if (announcementModalMode === "edit" && editingAnnouncementId) {
-        updateAnnouncement(editingAnnouncementId, title)
-      } else {
-        createAnnouncement(title)
-      }
-      setShowAnnouncementModal(false)
-    },
-    [
-      announcementModalMode,
-      createAnnouncement,
-      editingAnnouncementId,
-      updateAnnouncement,
-    ]
-  )
+  const handleAnnouncementSubmit = useCallback((_title: string) => {
+    setShowAnnouncementModal(false)
+    setActionError(UNAVAILABLE)
+  }, [])
 
-  const handleOpenAuditLog = useCallback((orgId: string, orgName: string) => {
-    setAuditLogOrgId(orgId)
+  const handleOpenAuditLog = useCallback((_orgId: string, orgName: string) => {
     setAuditLogOrgName(orgName)
     setShowAuditLogModal(true)
+    setActionError(null)
   }, [])
 
-  const filteredAuditLogs = auditLogOrgId
-    ? getAuditLogsForOrg(auditLogOrgId)
-    : []
-
   const handleExportAuditLog = useCallback(() => {
-    const orgNameMap = new Map(orgViews.map((org) => [org.id, org.name]))
-    exportAuditLogCsv(getAllAuditLogs(), orgNameMap)
-  }, [getAllAuditLogs, orgViews])
+    setActionError(UNAVAILABLE)
+  }, [])
+
+  const deleteAnnouncement = useCallback((_id: string) => {
+    setActionError(UNAVAILABLE)
+  }, [])
+
+  const filteredAuditLogs: AuditLogEntry[] = []
+  const orgViews: OrgAccountView[] = []
+  const announcements: Announcement[] = []
 
   return {
     orgViews,
-    metrics,
+    metrics: EMPTY_METRICS,
     announcements,
+    actionError,
     deleteAnnouncement,
     showAnnouncementModal,
     setShowAnnouncementModal,

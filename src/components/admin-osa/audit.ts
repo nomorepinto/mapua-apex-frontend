@@ -7,7 +7,22 @@ import {
   PlusIcon,
 } from "lucide-react"
 
-import type { AuditLogEntry } from "@/stores/admin-osa-store"
+export type AuditAction =
+  | "submission_created"
+  | "submission_approved"
+  | "submission_denied"
+  | "account_updated"
+  | "announcement_created"
+  | "status_changed"
+
+export interface AuditLogEntry {
+  id: string
+  timestamp: string
+  action: AuditAction
+  actor: string
+  description: string
+  orgId?: string
+}
 
 export function formatAuditTimestamp(iso: string): string {
   return new Date(iso).toLocaleDateString("en-US", {

@@ -2,8 +2,7 @@ import { CheckCircle, Trash2, Plus, Calendar } from "lucide-react"
 
 import { useDisclosure } from "@/hooks/use-disclosure"
 import { getAssignedText, useMilestoneStats } from "@/hooks/use-milestone-stats"
-import { useOrgStore } from "@/stores/org-store"
-import type { Task } from "@/stores/org-store"
+import type { Task } from "@/components/org-dashboard/types"
 import { NewTaskModal } from "./NewTaskModal"
 
 interface MilestoneModalProps {
@@ -12,15 +11,20 @@ interface MilestoneModalProps {
 }
 
 export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
-  const milestoneTasks = useOrgStore((state) => state.milestoneTasks)
-  const activeTaskId = useOrgStore((state) => state.activeTaskId)
-  const setActiveTaskId = useOrgStore((state) => state.setActiveTaskId)
-  const toggleTaskStatus = useOrgStore((state) => state.toggleTaskStatus)
-  const toggleChecklistItem = useOrgStore((state) => state.toggleChecklistItem)
-  const deleteMilestoneTask = useOrgStore((state) => state.deleteMilestoneTask)
-  const addChecklistItem = useOrgStore((state) => state.addChecklistItem)
-  const updateChecklistItem = useOrgStore((state) => state.updateChecklistItem)
-  const removeChecklistItem = useOrgStore((state) => state.removeChecklistItem)
+  const milestoneTasks: Task[] = []
+  const activeTaskId: string | null = null
+  const setActiveTaskId = (_id: string | null) => undefined
+  const toggleTaskStatus = (_id: string) => undefined
+  const toggleChecklistItem = (_taskId: string, _index: number) => undefined
+  const deleteMilestoneTask = (_id: string) => undefined
+  const addChecklistItem = (_taskId: string) => undefined
+  const updateChecklistItem = (
+    _taskId: string,
+    _index: number,
+    _field: keyof Task["checklist"][number],
+    _value: string | boolean
+  ) => undefined
+  const removeChecklistItem = (_taskId: string, _index: number) => undefined
   const newTask = useDisclosure()
   const {
     completedTasks,
@@ -123,6 +127,11 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
               </div>
 
               <div className="flex flex-col gap-2">
+                {milestoneTasks.length === 0 ? (
+                  <p className="py-6 text-sm text-[#94A3B8]">
+                    No milestone tasks are available yet.
+                  </p>
+                ) : null}
                 {milestoneTasks.map((task, idx) => {
                   const isActive = activeTaskId === task.id;
                   const isTitleHighlight = task.status === 'In Progress' ? 'text-[#B45309]' : 'text-[#1E293B]';

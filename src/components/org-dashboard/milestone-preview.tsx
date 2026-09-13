@@ -1,7 +1,7 @@
 import { CheckCircle } from "lucide-react"
 
 import { useMilestoneStats } from "@/hooks/use-milestone-stats"
-import type { Task } from "@/stores/org-store"
+import type { Task } from "@/components/org-dashboard/types"
 
 export function MilestonePreview({
   tasks,
@@ -38,7 +38,12 @@ export function MilestonePreview({
       </div>
 
       <div className="flex flex-col gap-4">
-        {tasks.slice(0, 3).map((task, index) => {
+        {tasks.length === 0 ? (
+          <p className="text-sm text-[#94A3B8]">
+            No milestone tasks are available yet.
+          </p>
+        ) : (
+        tasks.slice(0, 3).map((task, index) => {
           const isCompleted = task.status === "Completed"
           const isInProgress = task.status === "In Progress"
 
@@ -80,7 +85,8 @@ export function MilestonePreview({
               </div>
             </div>
           )
-        })}
+        })
+        )}
       </div>
 
       <div className="mt-4 flex justify-end">

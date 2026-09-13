@@ -14,7 +14,9 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
     dueDate,
     setDueDate,
     canSubmit,
+    error,
     handleSubmit,
+    handleClose,
   } = useNewTaskForm(onClose)
 
   if (!isOpen) return null
@@ -26,7 +28,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
         <div className="flex items-center justify-between p-6 border-b border-neutral-100">
           <h2 className="text-lg font-bold text-[#1E293B]">New Task</h2>
           <button 
-            onClick={onClose}
+            onClick={handleClose}
             type="button"
             className="w-8 h-8 flex items-center justify-center rounded-full text-neutral-400 hover:bg-neutral-100 hover:text-[#1E293B] transition-colors"
           >
@@ -69,10 +71,14 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
             />
           </div>
 
+          {error ? (
+            <p className="text-sm text-red-600">{error}</p>
+          ) : null}
+
           <div className="mt-4 flex justify-end gap-3">
             <button 
               type="button"
-              onClick={onClose}
+              onClick={handleClose}
               className="px-5 py-2.5 rounded-xl text-sm font-semibold text-[#64748B] hover:bg-neutral-100 transition-colors"
             >
               Cancel

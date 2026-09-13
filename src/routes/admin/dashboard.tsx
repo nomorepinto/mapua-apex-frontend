@@ -34,6 +34,12 @@ export function AdminOsaPanel() {
           </Button>
         </div>
 
+        {panel.actionError ? (
+          <p className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            {panel.actionError}
+          </p>
+        ) : null}
+
         <OrgAccountsTable
           orgs={panel.orgViews}
           onOpenAuditLog={panel.handleOpenAuditLog}
