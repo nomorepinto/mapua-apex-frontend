@@ -23,18 +23,18 @@ type TeamMember = {
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: "Agatha", role: "CPO: 26-27", photo: AgathaPhoto, initials: "AG" },
-  { name: "Aviel", role: "CERO: 26-27", photo: AvielPhoto, initials: "AV" },
-  { name: "Bea", role: "CCO: 26-27", photo: BeaPhoto, initials: "BE" },
-  { name: "Benedict", role: "CCRO: 26-27", photo: BenedictPhoto, initials: "BN" },
-  { name: "Jedrick", role: "CEO: 26-27", photo: JedrickPhoto, initials: "JD" },
-  { name: "Joel", role: "TC: 26-27", photo: JoelPhoto, initials: "JO" },
-  { name: "Karina", role: "CAO: 26-27", photo: KarinaPhoto, initials: "KA" },
-  { name: "Luna", role: "AM: 26-27", photo: LunaPhoto, initials: "LU" },
-  { name: "Mico", role: "CS: 26-27", photo: MicoPhoto, initials: "MI" },
-  { name: "Nigel", role: "COO: 26-27", photo: NigelPhoto, initials: "NI" },
-  { name: "Nicole", role: "CFO: 26-27", photo: NicolePhoto, initials: "NC" },
-  { name: "Ryan", role: "CTO: 26-27", photo: RyanPhoto, initials: "RY" },
+  { name: "Agatha", role: "Chief People Officer: 26-27", photo: AgathaPhoto, initials: "AG" },
+  { name: "Aviel", role: "Chief External Relations Officer: 26-27", photo: AvielPhoto, initials: "AV" },
+  { name: "Bea", role: "Chief Communications Officer: 26-27", photo: BeaPhoto, initials: "BE" },
+  { name: "Benedict", role: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto, initials: "BN" },
+  { name: "Jedrick", role: "Chief Executive Officer: 26-27", photo: JedrickPhoto, initials: "JD" },
+  { name: "Joel", role: "Technology Committee: 26-27", photo: JoelPhoto, initials: "JO" },
+  { name: "Karina", role: "Chief Academic Officer: 26-27", photo: KarinaPhoto, initials: "KA" },
+  { name: "Luna", role: "Organization Mascot: 26-27", photo: LunaPhoto, initials: "LU" },
+  { name: "Mico", role: "Corporate Secretary: 26-27", photo: MicoPhoto, initials: "MI" },
+  { name: "Nigel", role: "Chief Operations Officer: 26-27", photo: NigelPhoto, initials: "NI" },
+  { name: "Nicole", role: "Chief Finance Officer: 26-27", photo: NicolePhoto, initials: "NC" },
+  { name: "Ryan", role: "Chief Technology Officer: 26-27", photo: RyanPhoto, initials: "RY" },
 ]
 
 function DevCard({ member }: { member: TeamMember }) {
