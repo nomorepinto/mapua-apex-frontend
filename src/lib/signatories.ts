@@ -1,10 +1,7 @@
-//import { getIdToken } from "@/lib/auth"
+import { getIdToken } from "@/lib/auth"
 import type { ActivityProposal } from "@/stores/deandb-session-store"
 
-const BASE_URL = ""
-async function getIdToken(): Promise<string> {
-    return ""
-}
+const BASE_URL = "http://localhost:8000/api/v1"
 
 async function authedFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
     const token = await getIdToken()
