@@ -86,6 +86,7 @@ export function useAppealsFilter() {
   )
 
   return {
+    hasAppeals: appeals.length > 0,
     searchQuery,
     statusFilter,
     departmentFilter,

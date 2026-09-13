@@ -14,7 +14,7 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-sm font-sans">
-      <div className="bg-[#F2F2F7] w-full sm:max-w-md h-[90vh] sm:h-auto sm:rounded-2xl shadow-xl overflow-hidden animate-in slide-in-from-bottom sm:slide-in-from-bottom-0 sm:fade-in sm:zoom-in-95 duration-200 flex flex-col rounded-t-2xl">
+      <div className="flex h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#F2F2F7] shadow-xl sm:h-auto sm:max-w-md sm:rounded-2xl">
         
         <div className="flex items-center justify-between p-4 bg-white border-b border-neutral-200/60 sticky top-0 z-10">
           <button 

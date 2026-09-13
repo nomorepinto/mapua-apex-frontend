@@ -17,14 +17,14 @@ export function OrgDashboard() {
   const dashboard = useOrgDashboard()
 
   return (
-    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-6 p-6 md:p-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-[#1E293B]">
+    <div className="mx-auto flex w-full max-w-[1360px] flex-col gap-6 p-4 sm:p-6 md:p-8">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h1 className="text-xl font-bold text-[#1E293B] sm:text-2xl">
           Organization Dashboard
         </h1>
         <Link
           to="/students/submissions"
-          className="inline-block cursor-pointer rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800"
+          className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800 sm:w-auto"
         >
           Create Project/Event
         </Link>

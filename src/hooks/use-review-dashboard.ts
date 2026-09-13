@@ -1,13 +1,16 @@
-import { useCallback, useState } from "react"
-
-import { ACTIVITIES } from "@/components/ui/activity.data"
-import type { Activity } from "@/components/ui/activity.types"
+import { useCallback, useMemo, useState } from "react"
 import { useAuth } from "react-oidc-context"
+
+import {
+  buildDepartmentOrgMap,
+  computeReviewStats,
+} from "@/components/ui/activity.data"
+import type { Activity } from "@/components/ui/activity.types"
 
 export function useReviewDashboard() {
   const auth = useAuth()
   const name = auth.user?.profile?.email || auth.user?.profile?.name || "Guest"
-  const [activitiesList, setActivitiesList] = useState<Activity[]>(ACTIVITIES)
+  const [activitiesList, setActivitiesList] = useState<Activity[]>([])
   const [selectedDept, setSelectedDept] = useState<string | null>(null)
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null)
   const [activeActivity, setActiveActivity] = useState<Activity | null>(null)
@@ -47,6 +50,19 @@ export function useReviewDashboard() {
     []
   )
 
+  const stats = useMemo(
+    () => computeReviewStats(activitiesList),
+    [activitiesList]
+  )
+  const departmentOrgMap = useMemo(
+    () => buildDepartmentOrgMap(activitiesList),
+    [activitiesList]
+  )
+  const departments = useMemo(
+    () => Object.keys(departmentOrgMap),
+    [departmentOrgMap]
+  )
+
   const filteredActivities =
     !selectedDept && !selectedOrg
       ? activitiesList
@@ -58,10 +74,14 @@ export function useReviewDashboard() {
 
   return {
     name,
+    stats,
+    departments,
+    departmentOrgMap,
     selectedDept,
     selectedOrg,
     activeActivity,
     filteredActivities,
+    hasActivities: activitiesList.length > 0,
     handleDeptSelect,
     handleOrgSelect,
     handleActivitySelect,

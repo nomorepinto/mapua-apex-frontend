@@ -19,8 +19,8 @@ export function SubmissionTrackerModal({ isOpen, onClose, submission }: Submissi
   if (currentStepIndex === -1 && submission.status === 'Under Review') currentStepIndex = 1;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-xl rounded-2xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl animate-in zoom-in-95 duration-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-neutral-100 bg-neutral-50/50">
           <div>
             <h2 className="text-lg font-bold text-[#1E293B]">Submission Progress Tracker</h2>
@@ -35,7 +35,7 @@ export function SubmissionTrackerModal({ isOpen, onClose, submission }: Submissi
           <div className="mb-6">
             <h3 className="font-bold text-[#1E293B] text-[15px]">{submission.activity_details.title}</h3>
             <p className="text-sm text-[#64748B] mt-1 line-clamp-2">{submission.activity_details.description}</p>
-            <div className="flex items-center gap-4 mt-3">
+            <div className="mt-3 flex flex-wrap items-center gap-2 sm:gap-4">
                <span className="text-xs font-semibold text-[#1E293B] bg-neutral-100 px-2.5 py-1 rounded-md">
                  Target Date: {submission.target_date}
                </span>

@@ -43,7 +43,7 @@ export function AvTable({
 
       <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xs">
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse text-left text-sm">
+          <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
                 <th className="w-48 border-r border-neutral-300 px-4 py-3 text-center">

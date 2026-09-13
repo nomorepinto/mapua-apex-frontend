@@ -548,7 +548,7 @@ export function AdminSignatoriesPage() {
               <CardAction>
                 <Input
                   aria-label="Search organizations and signatories"
-                  className="w-56"
+                  className="w-full min-w-0 sm:w-56"
                   onChange={(event) => setSearch(event.currentTarget.value)}
                   placeholder="Search org or signatory"
                   type="search"

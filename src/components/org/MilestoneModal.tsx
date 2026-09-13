@@ -67,17 +67,17 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
-      <div className="bg-white w-full max-w-6xl rounded-2xl shadow-xl flex flex-col h-[85vh] overflow-hidden">
+      <div className="flex h-[85dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
 
-        <div className="p-10 flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-10">
           {/* Header */}
-          <div className="flex justify-between items-start mb-12">
-            <div>
-              <h2 className="text-3xl font-bold text-[#1E293B] mb-1">APEX Tech Semestral Milestone</h2>
-              <p className="text-[#64748B] text-sm">Project Apex Alpha - Jul 1 &ndash; Dec 15 &middot; Lead: Sarah Chen</p>
+          <div className="mb-8 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <h2 className="mb-1 text-2xl font-bold text-[#1E293B] sm:text-3xl">Semestral Milestone</h2>
+              <p className="text-sm text-[#64748B]">Track tasks for the current term.</p>
             </div>
             
-            <div className="flex items-start gap-12">
+            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-8 lg:gap-12">
               {/* Circular Progress & Stats */}
               <div className="flex items-center gap-6">
                 <div className="relative w-20 h-20 shrink-0 flex items-center justify-center">
@@ -106,16 +106,16 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
               </div>
 
               {/* Header Button */}
-              <button onClick={onClose} className="px-4 py-2 border border-neutral-200 rounded-lg text-xs font-semibold text-[#475569] hover:bg-neutral-50 flex items-center gap-2 shrink-0">
+              <button onClick={onClose} className="flex min-h-11 shrink-0 items-center gap-2 self-start rounded-lg border border-neutral-200 px-4 py-2 text-xs font-semibold text-[#475569] hover:bg-neutral-50">
                  <span>&larr; Back to dashboard</span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-12">
             {/* Task List */}
             <div className="lg:col-span-2">
-              <div className="flex text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-4 border-b border-neutral-100 pb-2">
+              <div className="mb-4 hidden border-b border-neutral-100 pb-2 text-xs font-bold tracking-wider text-[#94A3B8] uppercase sm:flex">
                 <div className="flex-1">Task</div>
                 <div className="w-24">Status</div>
                 <div className="w-24">Assigned</div>
@@ -123,6 +123,11 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
               </div>
 
               <div className="flex flex-col gap-2">
+                {milestoneTasks.length === 0 ? (
+                  <p className="py-8 text-sm text-[#94A3B8]">
+                    No tasks yet. Add a task to start this term&apos;s milestone.
+                  </p>
+                ) : null}
                 {milestoneTasks.map((task, idx) => {
                   const isActive = activeTaskId === task.id;
                   const isTitleHighlight = task.status === 'In Progress' ? 'text-[#B45309]' : 'text-[#1E293B]';
@@ -131,9 +136,9 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
                       key={task.id}
                       onClick={() => setActiveTaskId(task.id)}
                       onDoubleClick={() => toggleTaskStatus(task.id)}
-                      className={`flex items-center py-3 cursor-pointer transition-colors select-none group ${isActive ? 'bg-neutral-50 -mx-4 px-4 rounded-xl' : ''} ${task.status === 'In Progress' && isActive ? 'bg-[#FFFBEB]' : ''}`}
+                      className={`flex flex-wrap items-center gap-y-2 py-3 cursor-pointer transition-colors select-none group ${isActive ? 'bg-neutral-50 -mx-2 px-2 rounded-xl sm:-mx-4 sm:px-4' : ''} ${task.status === 'In Progress' && isActive ? 'bg-[#FFFBEB]' : ''}`}
                     >
-                      <div className="flex-1 flex items-center gap-3">
+                      <div className="flex min-w-0 flex-[1_1_12rem] items-center gap-3">
                         {getTaskIcon(task, idx)}
                         <span className={`text-sm font-bold ${isTitleHighlight}`}>{task.title}</span>
                       </div>
@@ -143,7 +148,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
                       <div className={`w-24 text-xs truncate pr-2 ${isActive ? 'text-[#1E293B] font-semibold' : 'text-[#475569]'}`}>
                         {getAssignedText(task)}
                       </div>
-                      <div className="w-8 flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="w-8 flex justify-end sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={(e) => { e.stopPropagation(); deleteMilestoneTask(task.id); }}
                           className="p-1.5 text-neutral-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"

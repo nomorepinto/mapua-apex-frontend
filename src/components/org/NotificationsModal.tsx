@@ -15,14 +15,23 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end pr-8 pt-20 pointer-events-none">
-      <div className="bg-white w-96 rounded-2xl shadow-2xl border border-neutral-100 overflow-hidden pointer-events-auto animate-in slide-in-from-right-4 fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-start justify-end p-3 sm:p-0 sm:pr-8 sm:pt-20">
+      <button
+        type="button"
+        className="absolute inset-0 bg-black/40 sm:bg-transparent"
+        aria-label="Close notifications"
+        onClick={onClose}
+      />
+      <div
+        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-2xl sm:w-96"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-[#F8FAFC]">
           <div className="flex items-center gap-2">
             <Bell className="w-4 h-4 text-[#1E293B]" />
             <h2 className="text-sm font-bold text-[#1E293B]">Notifications & Reminders</h2>
           </div>
-          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-600 transition-colors cursor-pointer">
+          <button onClick={onClose} className="inline-flex size-11 items-center justify-center text-neutral-400 transition-colors hover:text-neutral-600 cursor-pointer" aria-label="Close notifications">
             <X className="w-4 h-4" />
           </button>
         </div>

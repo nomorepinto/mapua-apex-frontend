@@ -2,16 +2,15 @@ import { useCallback, useState } from "react"
 
 import { exportAuditLogCsv } from "@/components/admin-osa/audit"
 import type { Announcement } from "@/lib/types"
+import { toastManager } from "@/components/ui/toast"
 import { useAdminOsaStore } from "@/stores/admin-osa-store"
 
 export function useAdminOsaPanel() {
   const orgViews = useAdminOsaStore((state) => state.orgViews)
-  const metrics = useAdminOsaStore((state) => state.metrics)
   const announcements = useAdminOsaStore((state) => state.announcements)
   const createAnnouncement = useAdminOsaStore((state) => state.createAnnouncement)
   const updateAnnouncement = useAdminOsaStore((state) => state.updateAnnouncement)
   const deleteAnnouncement = useAdminOsaStore((state) => state.deleteAnnouncement)
-  const getAuditLogsForOrg = useAdminOsaStore((state) => state.getAuditLogsForOrg)
   const getAllAuditLogs = useAdminOsaStore((state) => state.getAllAuditLogs)
 
   const [showAnnouncementModal, setShowAnnouncementModal] = useState(false)
@@ -23,9 +22,6 @@ export function useAdminOsaPanel() {
   >(null)
   const [editInitialTitle, setEditInitialTitle] = useState("")
   const [editInitialMessage, setEditInitialMessage] = useState("")
-  const [showAuditLogModal, setShowAuditLogModal] = useState(false)
-  const [auditLogOrgId, setAuditLogOrgId] = useState<string | null>(null)
-  const [auditLogOrgName, setAuditLogOrgName] = useState("")
 
   const handleOpenCreateModal = useCallback(() => {
     setAnnouncementModalMode("create")
@@ -60,24 +56,21 @@ export function useAdminOsaPanel() {
     ]
   )
 
-  const handleOpenAuditLog = useCallback((orgId: string, orgName: string) => {
-    setAuditLogOrgId(orgId)
-    setAuditLogOrgName(orgName)
-    setShowAuditLogModal(true)
-  }, [])
-
-  const filteredAuditLogs = auditLogOrgId
-    ? getAuditLogsForOrg(auditLogOrgId)
-    : []
-
   const handleExportAuditLog = useCallback(() => {
+    const logs = getAllAuditLogs()
+    if (logs.length === 0) {
+      toastManager.add({
+        title: "No audit logs",
+        description: "There is nothing to export yet.",
+        type: "error",
+      })
+      return
+    }
     const orgNameMap = new Map(orgViews.map((org) => [org.id, org.name]))
-    exportAuditLogCsv(getAllAuditLogs(), orgNameMap)
+    exportAuditLogCsv(logs, orgNameMap)
   }, [getAllAuditLogs, orgViews])
 
   return {
-    orgViews,
-    metrics,
     announcements,
     deleteAnnouncement,
     showAnnouncementModal,
@@ -86,14 +79,9 @@ export function useAdminOsaPanel() {
     editingAnnouncementId,
     editInitialTitle,
     editInitialMessage,
-    showAuditLogModal,
-    setShowAuditLogModal,
-    auditLogOrgName,
-    filteredAuditLogs,
     handleOpenCreateModal,
     handleOpenEditModal,
     handleAnnouncementSubmit,
-    handleOpenAuditLog,
     handleExportAuditLog,
   }
 }

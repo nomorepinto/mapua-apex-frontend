@@ -261,8 +261,19 @@
     @apply border-border outline-ring/50;
   }
 
+  html {
+    @apply font-sans font-mono;
+    overflow-x: clip;
+  }
+
   body {
     @apply bg-background text-foreground;
+    min-height: 100dvh;
+    overflow-x: clip;
+  }
+
+  #root {
+    min-height: 100dvh;
   }
 
   code,
@@ -270,10 +281,6 @@
   samp,
   pre {
     font-family: var(--font-mono);
-  }
-
-  html {
-    @apply font-sans font-mono;
   }
 }
 

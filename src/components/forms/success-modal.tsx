@@ -20,7 +20,7 @@ export function SuccessModal({
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-in zoom-in-95 flex min-h-[190px] w-[380px] flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-2xl duration-150"
+        className="animate-in zoom-in-95 flex min-h-[190px] w-full max-w-[380px] flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-2xl duration-150"
       >
         <div className="flex items-center justify-center bg-[#333333] py-6">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#52A41C] shadow-md">
@@ -33,7 +33,7 @@ export function SuccessModal({
           <button
             type="button"
             onClick={onAction}
-            className="w-full cursor-pointer rounded-xl bg-neutral-900 py-2 text-xs font-semibold text-white transition-all hover:bg-black"
+            className="min-h-11 w-full cursor-pointer rounded-xl bg-neutral-900 py-2 text-xs font-semibold text-white transition-all hover:bg-black"
           >
             {actionLabel}
           </button>

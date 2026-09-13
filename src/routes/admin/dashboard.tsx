@@ -2,9 +2,6 @@ import { DownloadIcon } from "lucide-react"
 
 import { AnnouncementModal } from "@/components/admin-osa/announcement-modal"
 import { AnnouncementsTable } from "@/components/admin-osa/announcements-table"
-import { AuditLogModal } from "@/components/admin-osa/audit-log-modal"
-import { MetricsSection } from "@/components/admin-osa/metrics-section"
-import { OrgAccountsTable } from "@/components/admin-osa/org-accounts-table"
 import { Button } from "@/components/ui/button"
 import { useAdminOsaPanel } from "@/hooks/use-admin-osa-panel"
 
@@ -27,18 +24,13 @@ export function AdminOsaPanel() {
 
           <Button
             onClick={panel.handleExportAuditLog}
-            className="flex h-10 cursor-pointer items-center gap-2 rounded-xl bg-[#800000] px-5 py-2.5 font-semibold text-white shadow-sm transition-all hover:bg-[#660000]"
+            className="flex h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl bg-[#800000] px-5 py-2.5 font-semibold text-white shadow-sm transition-all hover:bg-[#660000] sm:h-10 sm:w-auto"
           >
             <DownloadIcon className="h-4 w-4" />
             <span>Export System Audit Log</span>
           </Button>
         </div>
 
-        <OrgAccountsTable
-          orgs={panel.orgViews}
-          onOpenAuditLog={panel.handleOpenAuditLog}
-        />
-        <MetricsSection metrics={panel.metrics} />
         <AnnouncementsTable
           announcements={panel.announcements}
           onCreate={panel.handleOpenCreateModal}
@@ -58,13 +50,6 @@ export function AdminOsaPanel() {
           initialMessage={panel.editInitialMessage}
         />
       ) : null}
-
-      <AuditLogModal
-        open={panel.showAuditLogModal}
-        onClose={() => panel.setShowAuditLogModal(false)}
-        orgName={panel.auditLogOrgName}
-        logs={panel.filteredAuditLogs}
-      />
     </div>
   )
 }

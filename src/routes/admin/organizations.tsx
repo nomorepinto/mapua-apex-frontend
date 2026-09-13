@@ -313,7 +313,7 @@ export function AdminOrganizationsPage() {
               <CardAction>
                 <Input
                   aria-label="Search organizations"
-                  className="w-56"
+                  className="w-full min-w-0 sm:w-56"
                   onChange={(event) => setSearch(event.currentTarget.value)}
                   placeholder="Search name or ID"
                   type="search"

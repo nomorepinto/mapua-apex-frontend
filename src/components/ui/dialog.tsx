@@ -99,7 +99,7 @@ export function DialogPopup({
               !fullScreen &&
               "max-sm:max-w-none max-sm:origin-bottom max-sm:rounded-none max-sm:border-x-0 max-sm:border-t max-sm:border-b-0 max-sm:data-ending-style:translate-y-4 max-sm:data-starting-style:translate-y-4 max-sm:before:hidden max-sm:before:rounded-none",
             fullScreen &&
-              "row-start-1 fixed inset-0 w-screen h-screen max-w-none max-h-none rounded-none border-0 shadow-none before:hidden sm:scale-100 sm:data-ending-style:scale-100 sm:data-starting-style:scale-100",
+              "row-start-1 fixed inset-0 w-screen h-dvh max-w-none max-h-none rounded-none border-0 shadow-none before:hidden sm:scale-100 sm:data-ending-style:scale-100 sm:data-starting-style:scale-100",
             className,
           )}
           data-slot="dialog-popup"

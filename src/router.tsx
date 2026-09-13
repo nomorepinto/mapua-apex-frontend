@@ -6,7 +6,7 @@ import { SignatoriesLayout } from "@/routes/layouts/signatories-layout"
 import { StudentsLayout } from "@/routes/layouts/students-layout"
 
 function RouteFallback() {
-  return <div className="min-h-screen w-full bg-[#F3F4F6]" />
+  return <div className="min-h-dvh w-full bg-[#F3F4F6]" />
 }
 
 function PassThroughLayout() {

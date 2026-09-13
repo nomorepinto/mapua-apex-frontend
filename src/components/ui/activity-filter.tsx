@@ -36,7 +36,7 @@ const ActivityFilter = memo(function ActivityFilter({
         aria-haspopup="dialog"
         aria-expanded={filter.open}
         onClick={filter.toggle}
-        className="flex items-center gap-2 text-xs font-semibold px-3.5 py-2 rounded-xl border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs"
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-neutral-200 bg-white px-3.5 py-2 text-xs font-semibold text-neutral-700 shadow-2xs transition-all hover:border-neutral-300 hover:bg-neutral-50"
       >
         <SlidersHorizontalIcon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
         <span className="max-w-52 truncate text-neutral-700">{filter.label}</span>
@@ -56,33 +56,38 @@ const ActivityFilter = memo(function ActivityFilter({
         <div
           role="dialog"
           aria-label="Filter by Department and Organization"
-          className="absolute right-0 top-full mt-2 z-30 bg-white rounded-2xl border border-neutral-200 shadow-xl py-2 overflow-hidden"
-          style={{ minWidth: "340px" }}
+          className="absolute right-0 top-full z-30 mt-2 max-h-[min(24rem,70vh)] w-[min(21.25rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-2xl border border-neutral-200 bg-white py-2 shadow-xl"
         >
           <div className="px-3 pt-1 pb-0.5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 px-1 mb-1">
               Department
             </p>
             <ul role="listbox" aria-label="Select department" className="space-y-0.5">
-              {departments.map((dept) => {
-                const isSelected = selectedDept === dept
-                return (
-                  <li
-                    key={dept}
-                    role="option"
-                    aria-selected={isSelected}
-                    onClick={() => filter.handleDeptClick(dept)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${
-                      isSelected
-                        ? "bg-[#800000]/8 text-[#800000] font-semibold"
-                        : "text-neutral-700 hover:bg-neutral-50"
-                    }`}
-                  >
-                    <span>{dept}</span>
-                    {isSelected ? <ChevronRightIcon className="w-3 h-3 text-[#800000]" /> : null}
-                  </li>
-                )
-              })}
+              {departments.length === 0 ? (
+                <li className="px-3 py-2 text-xs text-neutral-400">
+                  No departments available.
+                </li>
+              ) : (
+                departments.map((dept) => {
+                  const isSelected = selectedDept === dept
+                  return (
+                    <li
+                      key={dept}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => filter.handleDeptClick(dept)}
+                      className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-[#800000]/8 text-[#800000] font-semibold"
+                          : "text-neutral-700 hover:bg-neutral-50"
+                      }`}
+                    >
+                      <span>{dept}</span>
+                      {isSelected ? <ChevronRightIcon className="w-3 h-3 text-[#800000]" /> : null}
+                    </li>
+                  )
+                })
+              )}
             </ul>
           </div>
 

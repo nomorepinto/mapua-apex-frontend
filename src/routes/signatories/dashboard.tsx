@@ -6,7 +6,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
-import { STATS, DEPARTMENT_ORG_MAP, DEPARTMENTS } from "@/components/ui/activity.data"
 import { StatCard } from "@/components/ui/stat-card"
 import { ActivityRow } from "@/components/ui/activity-row"
 import { ActivityDetailModal } from "@/components/ui/activity-detail-modal"
@@ -31,15 +30,15 @@ export function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {STATS.map((stat) => (
+          {dashboard.stats.map((stat) => (
             <StatCard key={stat.label} {...stat} />
           ))}
         </div>
 
         <div className="flex items-center justify-end">
           <ActivityFilter
-            departments={DEPARTMENTS}
-            departmentOrgMap={DEPARTMENT_ORG_MAP}
+            departments={dashboard.departments}
+            departmentOrgMap={dashboard.departmentOrgMap}
             selectedDept={dashboard.selectedDept}
             selectedOrg={dashboard.selectedOrg}
             onDeptSelect={dashboard.handleDeptSelect}
@@ -49,7 +48,7 @@ export function Dashboard() {
 
         <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[40rem]">
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500 text-xs font-bold uppercase tracking-wider hover:bg-transparent">
                   <TableHead className="py-4 px-6 font-bold text-neutral-500">
@@ -76,7 +75,9 @@ export function Dashboard() {
                       colSpan={5}
                       className="py-14 text-center text-sm text-neutral-400"
                     >
-                      No activities match the selected filters.
+                      {dashboard.hasActivities
+                        ? "No activities match the selected filters."
+                        : "No submissions to review yet."}
                     </TableCell>
                   </TableRow>
                 ) : (

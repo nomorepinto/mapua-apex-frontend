@@ -26,9 +26,9 @@ const STUDENT_NAV = [
 export function StudentsLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "org_adviser", "org_submitter"]}>
-      <div className="flex h-screen w-full overflow-hidden bg-[#F5F6F8]">
+      <div className="flex h-dvh w-full flex-col overflow-hidden bg-[#F5F6F8] lg:flex-row">
         <AppSidebar homeTo="/students/dashboard" items={STUDENT_NAV} />
-        <main className="min-w-0 flex-1 overflow-y-auto">
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />
         </main>
       </div>

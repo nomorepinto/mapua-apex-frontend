@@ -40,7 +40,7 @@ export function AnnouncementModal({
         onClick={onClose}
       />
 
-      <div className="relative mx-4 w-full max-w-[797px] overflow-hidden rounded-2xl bg-white shadow-xl">
+      <div className="relative mx-4 max-h-[min(90dvh,40rem)] w-full max-w-[797px] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-xl">
         <div className="space-y-2 bg-[#2D2D2D] px-6 py-5">
           <h3 className="text-lg font-bold text-white">
             {isEdit ? "Edit Announcement" : "Announcement"}
@@ -82,17 +82,17 @@ export function AnnouncementModal({
           </div>
         </div>
 
-        <div className="flex flex-col items-end gap-2 px-6 pb-5">
+        <div className="flex flex-col items-stretch gap-2 px-6 pb-5 sm:items-end">
           <Button
             onClick={handleSubmit}
             disabled={!title.trim() || !message.trim()}
-            className="cursor-pointer rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="min-h-11 w-full cursor-pointer rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
             {isEdit ? "Save Announcement" : "Post Announcement"}
           </Button>
           <Button
             onClick={onClose}
-            className="cursor-pointer rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700"
+            className="min-h-11 w-full cursor-pointer rounded-lg bg-red-600 px-5 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-red-700 sm:w-auto"
           >
             Cancel Action
           </Button>

@@ -44,7 +44,7 @@ export function ResourceLinks({
                 onAccess("Resource accessed", resource.activity)
                 alert(resource.alert)
               }}
-              className="group flex cursor-pointer items-center gap-3 text-left"
+              className="group flex min-h-11 cursor-pointer items-center gap-3 text-left"
             >
               <Icon
                 className={`h-5 w-5 shrink-0 text-neutral-400 transition-colors ${resource.hoverColor}`}

@@ -39,7 +39,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   return (
     <>
       <Dialog open={activity !== null} onOpenChange={handleOpenChange}>
-        <DialogPopup className="max-w-4xl w-full max-h-[90vh] flex flex-col">
+        <DialogPopup className="flex max-h-[90dvh] w-full max-w-4xl flex-col">
           {/* Top Dark Banner Header matching Figma 11849-2751 */}
           <DialogHeader className="bg-[#2B2E35] text-white px-6 sm:px-8 py-6 shrink-0 rounded-t-2xl">
             <div className="w-full pr-10">
@@ -85,30 +85,30 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
                 <hr className="border-neutral-200" />
 
                 {/* 2. Key Metadata Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8 text-sm">
-                  <div className="flex items-center justify-between py-1 border-b border-neutral-100">
+                <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm md:grid-cols-2">
+                  <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Event Date & Time</span>
-                    <span className="text-neutral-600 font-medium">
+                    <span className="font-medium text-neutral-600 sm:text-right">
                       {activity.time ? `${activity.time} ` : ""}{activity.date}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between py-1 border-b border-neutral-100">
+                  <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Venue</span>
-                    <span className="text-neutral-600 font-medium">{activity.venue}</span>
+                    <span className="font-medium text-neutral-600 sm:text-right">{activity.venue}</span>
                   </div>
 
-                  <div className="flex items-center justify-between py-1 border-b border-neutral-100">
+                  <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Estimated Budget</span>
-                    <span className="text-neutral-600 font-medium">{activity.proposedBudget}</span>
+                    <span className="font-medium text-neutral-600 sm:text-right">{activity.proposedBudget}</span>
                   </div>
 
-                  <div className="flex items-center justify-between py-1 border-b border-neutral-100">
+                  <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Number of Participants</span>
-                    <span className="text-neutral-600 font-medium">{activity.expectedParticipants}</span>
+                    <span className="font-medium text-neutral-600 sm:text-right">{activity.expectedParticipants}</span>
                   </div>
 
-                  <div className="flex items-center justify-between py-1 border-b border-neutral-100">
+                  <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Advisor Signoff</span>
                     <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs">
                       <CheckCircle2Icon className="w-3.5 h-3.5" />
@@ -150,12 +150,12 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
 
           {/* Action Footer matching Figma 11849-2751 */}
           <DialogFooter className="border-t border-neutral-200 px-6 sm:px-8 py-4 bg-white shrink-0 rounded-b-2xl">
-            <div className="w-full flex items-center justify-end gap-3 flex-wrap">
+            <div className="flex w-full flex-col items-stretch justify-end gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {/* Approve Proposal */}
               <Button
                 type="button"
                 onClick={handleApprove}
-                className="bg-white hover:bg-neutral-50 border border-neutral-300 text-neutral-800 font-bold px-6 py-2.5 rounded-xl shadow-2xs cursor-pointer text-sm"
+                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50"
               >
                 Approve Proposal
               </Button>
@@ -164,7 +164,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
               <Button
                 type="button"
                 onClick={() => setReturnModalOpen(true)}
-                className="bg-neutral-900 hover:bg-black text-white font-bold px-6 py-2.5 rounded-xl shadow-2xs cursor-pointer text-sm"
+                className="min-h-11 cursor-pointer rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-black"
               >
                 Return Proposal
               </Button>
@@ -173,7 +173,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
               <Button
                 type="button"
                 onClick={handleDefer}
-                className="bg-[#800000] hover:bg-[#660000] text-white font-bold px-6 py-2.5 rounded-xl shadow-2xs cursor-pointer text-sm"
+                className="min-h-11 cursor-pointer rounded-xl bg-[#800000] px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-[#660000]"
               >
                 Defer Decision
               </Button>

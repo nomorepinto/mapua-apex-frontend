@@ -19,7 +19,7 @@ export function EquipmentSection({
         {EQUIPMENT_OPTIONS.map((option) => (
           <label
             key={option.key}
-            className="flex cursor-pointer items-center gap-2 select-none"
+            className="flex min-h-11 cursor-pointer items-center gap-2 select-none"
           >
             <input
               type="checkbox"
@@ -32,8 +32,8 @@ export function EquipmentSection({
         ))}
       </div>
 
-      <div className="flex items-center gap-2 pt-1 text-xs text-neutral-800">
-        <label className="flex shrink-0 cursor-pointer items-center gap-2 select-none">
+      <div className="flex flex-col gap-2 pt-1 text-xs text-neutral-800 sm:flex-row sm:items-center">
+        <label className="flex min-h-11 shrink-0 cursor-pointer items-center gap-2 select-none">
           <input
             type="checkbox"
             checked={equipment.others}

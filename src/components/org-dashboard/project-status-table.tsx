@@ -21,7 +21,7 @@ export function ProjectStatusTable({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-left">
+        <table className="w-full min-w-[40rem] border-collapse text-left">
           <thead>
             <tr className="border-b border-neutral-100 text-xs font-bold tracking-wider text-[#94A3B8] uppercase">
               <th className="pr-6 pb-3 font-bold">APPEAL ID</th>
@@ -32,6 +32,16 @@ export function ProjectStatusTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-neutral-50">
+            {appeals.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="py-10 text-center text-sm text-[#94A3B8]"
+                >
+                  No project status records yet.
+                </td>
+              </tr>
+            ) : null}
             {appeals.slice(0, 3).map((item) => (
               <tr
                 key={item.id}

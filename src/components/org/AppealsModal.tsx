@@ -19,6 +19,7 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
     currentPage,
     totalPages,
     paginatedAppeals,
+    hasAppeals,
     handlePageChange,
     handleStatusChange,
     handleDeptChange,
@@ -33,11 +34,11 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
-      <div className="bg-[#F5F6F8] w-full max-w-6xl rounded-2xl shadow-xl flex flex-col h-[90vh] overflow-hidden">
+      <div className="flex h-[90dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-[#F5F6F8] shadow-xl">
         
         {/* Header & Search */}
-        <div className="bg-white p-6 border-b border-neutral-200 shrink-0 flex items-center justify-between">
-          <div className="relative w-[300px]">
+        <div className="flex shrink-0 flex-col gap-3 border-b border-neutral-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <div className="relative w-full sm:w-[300px]">
             <Search className="w-4 h-4 text-neutral-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
@@ -47,15 +48,15 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
               className="w-full pl-9 pr-4 py-2 bg-[#F8FAFC] border border-neutral-200 rounded-lg text-sm text-[#1E293B] focus:outline-none focus:ring-2 focus:ring-[#1E293B]"
             />
           </div>
-          <button onClick={onClose} className="p-2 hover:bg-neutral-100 rounded-full transition-colors">
+          <button onClick={onClose} className="inline-flex size-11 items-center justify-center rounded-full transition-colors hover:bg-neutral-100 self-end sm:self-auto" aria-label="Close appeals">
             <X className="w-5 h-5 text-neutral-500" />
           </button>
         </div>
 
         {/* Modal Content */}
-        <div className="flex-1 overflow-y-auto p-8">
-          <div className="bg-white rounded-2xl shadow-sm border border-neutral-200 p-8 min-h-full">
-            <h2 className="text-2xl font-bold text-[#1E293B] mb-8">Comprehensive Appeals Dashboard</h2>
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8">
+          <div className="min-h-full rounded-2xl border border-neutral-200 bg-white p-4 shadow-sm sm:p-8">
+            <h2 className="mb-6 text-xl font-bold text-[#1E293B] sm:mb-8 sm:text-2xl">Comprehensive Appeals Dashboard</h2>
             
             {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-8 mb-8">
@@ -91,8 +92,8 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
             </div>
 
             {/* Table */}
-            <div className="overflow-x-auto min-h-[400px]">
-              <table className="w-full text-left border-collapse">
+            <div className="overflow-x-auto min-h-[240px] sm:min-h-[400px]">
+              <table className="w-full min-w-[40rem] text-left border-collapse">
                 <thead>
                   <tr className="text-[#94A3B8] text-[10px] font-bold uppercase tracking-wider border-b border-neutral-100">
                     <th className="pb-4 pr-4">Appeal ID</th>
@@ -105,7 +106,11 @@ export function AppealsModal({ isOpen, onClose }: AppealsModalProps) {
                 <tbody className="divide-y divide-neutral-50">
                   {paginatedAppeals.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-12 text-center text-sm text-[#94A3B8]">No appeals found matching your criteria.</td>
+                      <td colSpan={5} className="py-12 text-center text-sm text-[#94A3B8]">
+                        {hasAppeals
+                          ? "No appeals found matching your criteria."
+                          : "No appeals yet."}
+                      </td>
                     </tr>
                   ) : (
                     paginatedAppeals.map((a, i) => (

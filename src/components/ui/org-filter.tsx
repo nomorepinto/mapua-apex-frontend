@@ -20,7 +20,7 @@ const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilte
         aria-haspopup="listbox"
         aria-expanded={open}
         onClick={toggle}
-        className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg border border-neutral-200 bg-white text-neutral-700 hover:bg-neutral-50 hover:border-neutral-300 transition-all shadow-2xs"
+        className="flex min-h-11 items-center gap-2 rounded-lg border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold text-neutral-700 shadow-2xs transition-all hover:border-neutral-300 hover:bg-neutral-50"
       >
         <UsersIcon className="w-3.5 h-3.5 text-neutral-400 shrink-0" />
         <span className="max-w-36 truncate">{selected ?? "Organization"}</span>
@@ -42,7 +42,7 @@ const OrgFilter = memo(function OrgFilter({ orgs, selected, onSelect }: OrgFilte
           <ul
             role="listbox"
             aria-label="Select organization"
-            className="absolute left-0 top-full mt-1.5 z-20 min-w-56 bg-white rounded-xl border border-neutral-200 shadow-lg py-1 overflow-hidden"
+            className="absolute left-0 top-full z-20 mt-1.5 max-h-64 w-[min(18rem,calc(100vw-2rem))] overflow-y-auto rounded-xl border border-neutral-200 bg-white py-1 shadow-lg"
           >
             {orgs.map((org) => (
               <li
