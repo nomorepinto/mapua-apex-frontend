@@ -1,46 +1,148 @@
-import { createBrowserRouter, Navigate } from "react-router"
+import { createBrowserRouter, Navigate, Outlet } from "react-router"
 
-import { Root } from "@/routes/root"
-import { Dashboard } from "@/routes/dashboard"
-import { Submission, action as submissionAction } from "@/routes/submission"
-import { Reservation } from "@/routes/reservation"
-import { About } from "@/routes/about"
-import { Login, action as loginAction } from "@/routes/login"
+// Removed login imports
+import { AdminLayout } from "@/routes/layouts/admin-layout"
+import { SignatoriesLayout } from "@/routes/layouts/signatories-layout"
+import { StudentsLayout } from "@/routes/layouts/students-layout"
+
+function RouteFallback() {
+  return <div className="min-h-screen w-full bg-[#F3F4F6]" />
+}
+
+function PassThroughLayout() {
+  return <Outlet />
+}
+
+import { AuthGuard } from "@/components/auth/AuthGuard"
+import { RoleRedirect } from "@/components/auth/RoleRedirect"
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Root,
+    Component: () => (
+      <AuthGuard>
+        <RoleRedirect />
+      </AuthGuard>
+    ),
+  },
+  {
+    path: "students",
+    Component: StudentsLayout,
     children: [
       {
         index: true,
-        Component: () => <Navigate to="/dashboard" replace />,
+        Component: () => <Navigate to="dashboard" replace />,
       },
       {
         path: "dashboard",
-        Component: Dashboard,
-      },
-      {
-        path: "submission",
-        Component: Submission,
-        action: submissionAction,
-      },
-      {
-        path: "reservation",
-        Component: Reservation,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { OrgDashboard } = await import("@/routes/students/dashboard")
+          return { Component: OrgDashboard }
+        },
       },
       {
         path: "about",
-        Component: About,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { About } = await import("@/routes/about")
+          return { Component: About }
+        },
+      },
+      {
+        path: "submissions",
+        Component: PassThroughLayout,
+        children: [
+          {
+            index: true,
+            HydrateFallback: RouteFallback,
+            lazy: async () => {
+              const { SubmissionsStart } = await import(
+                "@/routes/students/submissions"
+              )
+              return { Component: SubmissionsStart }
+            },
+          },
+          {
+            path: "saaf",
+            Component: PassThroughLayout,
+            children: [
+              {
+                index: true,
+                HydrateFallback: RouteFallback,
+                lazy: async () => {
+                  const [{ Submission }, { action }] = await Promise.all([
+                    import("@/routes/students/saaf"),
+                    import("@/routes/students/saaf.action"),
+                  ])
+                  return { Component: Submission, action }
+                },
+              },
+              {
+                path: "reservations",
+                HydrateFallback: RouteFallback,
+                lazy: async () => {
+                  const { Reservation } = await import(
+                    "@/routes/students/reservations"
+                  )
+                  return { Component: Reservation }
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  },
+  {
+    path: "signatories",
+    Component: SignatoriesLayout,
+    children: [
+      {
+        index: true,
+        Component: () => <Navigate to="dashboard" replace />,
       },
       {
         path: "dashboard",
-        Component: Dashboard,
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { Dashboard } = await import("@/routes/signatories/dashboard")
+          return { Component: Dashboard }
+        },
       },
       {
-        path: "login",
-        Component: Login,
-        action: loginAction,
+        path: "about",
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { About } = await import("@/routes/about")
+          return { Component: About }
+        },
+      },
+    ],
+  },
+  {
+    path: "admin",
+    Component: AdminLayout,
+    children: [
+      {
+        index: true,
+        Component: () => <Navigate to="dashboard" replace />,
+      },
+      {
+        path: "dashboard",
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { AdminOsaPanel } = await import("@/routes/admin/dashboard")
+          return { Component: AdminOsaPanel }
+        },
+      },
+      {
+        path: "about",
+        HydrateFallback: RouteFallback,
+        lazy: async () => {
+          const { About } = await import("@/routes/about")
+          return { Component: About }
+        },
       },
     ],
   },

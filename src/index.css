@@ -13,9 +13,9 @@
   --animate-toast-error-odd: toast-error-odd 0.28s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-toast-error-even: toast-error-even 0.28s cubic-bezier(0.5, 1, 0.89, 1);
   --animate-caret-blink: 1s ease-out infinite caret-blink;
-  --font-heading: 'Inter', sans-serif;
+  --font-heading: 'Inter Variable', sans-serif;
   --font-mono: 'Geist Mono Variable', monospace;
-  --font-sans: 'Inter', sans-serif;
+  --font-sans: 'Inter Variable', sans-serif;
   --font-audiowide: 'Audiowide', cursive, sans-serif;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
@@ -279,4 +279,15 @@
 
 .font-audiowide {
   font-family: 'Audiowide', cursive, sans-serif !important;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
+  appearance: textfield;
 }

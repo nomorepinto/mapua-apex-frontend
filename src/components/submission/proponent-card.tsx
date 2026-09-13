@@ -1,0 +1,323 @@
+import { memo } from "react"
+import { Trash2Icon } from "lucide-react"
+
+import {
+  DEPARTMENTS,
+  FIELD_INPUT_CLASS,
+  SELECT_CONTENT_STYLE,
+  SELECT_ITEM_CLASS,
+} from "@/components/submission/constants"
+import type { Proponent } from "@/components/submission/types"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { blockNonIntegerKeys, sanitizeIntegerInput } from "@/lib/numeric-input"
+
+interface ProponentCardProps {
+  proponent: Proponent
+  index: number
+  canRemove: boolean
+  departmentValue: string
+  onUpdate: (id: string, field: keyof Proponent, value: string) => void
+  onRemove: (id: string) => void
+  onDepartmentChange: (id: string, value: string) => void
+}
+
+export const ProponentCard = memo(function ProponentCard({
+  proponent,
+  index,
+  canRemove,
+  departmentValue,
+  onUpdate,
+  onRemove,
+  onDepartmentChange,
+}: ProponentCardProps) {
+  return (
+    <div className="space-y-6 rounded-2xl border border-neutral-200/80 bg-white/60 p-6 shadow-xs">
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-3">
+        <div className="flex items-center gap-3">
+          <span className="text-base font-bold tracking-wider text-neutral-900 uppercase">
+            PROPONENT {index + 1} -
+          </span>
+          <input
+            type="text"
+            name={`proponent_${index}_positionTitle`}
+            placeholder="Position"
+            value={proponent.position}
+            onChange={(e) => onUpdate(proponent.id, "position", e.target.value)}
+            style={{ color: "#171717" }}
+            className="rounded-md border border-neutral-200 bg-neutral-100/90 px-3 py-1 text-sm !text-neutral-900 placeholder:text-neutral-400 focus:ring-1 focus:ring-red-700 focus:outline-none"
+          />
+        </div>
+        {canRemove ? (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={() => onRemove(proponent.id)}
+            className="cursor-pointer gap-1 text-xs text-red-600 hover:bg-red-50 hover:text-red-700"
+          >
+            <Trash2Icon className="h-3.5 w-3.5" />
+            Remove
+          </Button>
+        ) : null}
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-12">
+        <div className="space-y-1.5 md:col-span-4">
+          <label className="block text-xs font-medium text-neutral-700">
+            First Name <span className="text-red-500">*</span>
+          </label>
+          <Input
+            name={`proponent_${index}_firstName`}
+            value={proponent.firstName}
+            onChange={(e) => onUpdate(proponent.id, "firstName", e.target.value)}
+            placeholder="First Name"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5 md:col-span-3">
+          <label className="block text-xs font-medium text-neutral-700">
+            Middle Name
+          </label>
+          <Input
+            name={`proponent_${index}_middleName`}
+            value={proponent.middleName}
+            onChange={(e) =>
+              onUpdate(proponent.id, "middleName", e.target.value)
+            }
+            placeholder="Middle Name"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+        <div className="space-y-1.5 md:col-span-4">
+          <label className="block text-xs font-medium text-neutral-700">
+            Last Name <span className="text-red-500">*</span>
+          </label>
+          <Input
+            name={`proponent_${index}_lastName`}
+            value={proponent.lastName}
+            onChange={(e) => onUpdate(proponent.id, "lastName", e.target.value)}
+            placeholder="Last Name"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5 md:col-span-1">
+          <label className="block text-xs font-medium text-neutral-700">
+            Suffix
+          </label>
+          <Input
+            name={`proponent_${index}_suffix`}
+            value={proponent.suffix}
+            onChange={(e) => onUpdate(proponent.id, "suffix", e.target.value)}
+            placeholder="Jr."
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Student Number <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="text"
+            inputMode="numeric"
+            name={`proponent_${index}_studentNumber`}
+            placeholder="202XXXXXXX"
+            value={proponent.studentNumber}
+            onKeyDown={blockNonIntegerKeys}
+            onChange={(e) =>
+              onUpdate(
+                proponent.id,
+                "studentNumber",
+                sanitizeIntegerInput(e.target.value)
+              )
+            }
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Program and Year <span className="text-red-500">*</span>
+          </label>
+          <Input
+            name={`proponent_${index}_programAndYear`}
+            value={proponent.programAndYear}
+            onChange={(e) =>
+              onUpdate(proponent.id, "programAndYear", e.target.value)
+            }
+            placeholder="BSCS - 3rd Year"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Date of Submission <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="date"
+            name={`proponent_${index}_dateOfSubmission`}
+            value={proponent.dateOfSubmission}
+            onChange={(e) =>
+              onUpdate(proponent.id, "dateOfSubmission", e.target.value)
+            }
+            style={{ color: "#171717" }}
+            className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Department <span className="text-red-500">*</span>
+          </label>
+          <Select
+            value={departmentValue}
+            onValueChange={(val) => {
+              if (typeof val === "string") onDepartmentChange(proponent.id, val)
+            }}
+          >
+            <SelectTrigger className="h-9.5 w-full truncate rounded-lg border-neutral-300 bg-white !text-neutral-900">
+              <SelectValue placeholder="Select Department">
+                {departmentValue || "Select Department"}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent
+              className="animate-in fade-in-80 z-50 max-h-72 rounded-xl bg-white p-1.5 text-neutral-900"
+              style={SELECT_CONTENT_STYLE}
+            >
+              {DEPARTMENTS.map((dept) => (
+                <SelectItem key={dept} value={dept} className={SELECT_ITEM_CLASS}>
+                  {dept}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <input
+            type="hidden"
+            name={`proponent_${index}_department`}
+            value={departmentValue}
+            required
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Position of the Applicant <span className="text-red-500">*</span>
+          </label>
+          <Input
+            name={`proponent_${index}_positionOfApplicant`}
+            value={proponent.positionOfApplicant}
+            onChange={(e) =>
+              onUpdate(proponent.id, "positionOfApplicant", e.target.value)
+            }
+            placeholder="President / Project Lead"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Name of Organization / Course and Section{" "}
+            <span className="text-red-500">*</span>
+          </label>
+          <Input
+            name={`proponent_${index}_orgOrCourseSection`}
+            value={proponent.orgOrCourseSection}
+            onChange={(e) =>
+              onUpdate(proponent.id, "orgOrCourseSection", e.target.value)
+            }
+            placeholder="Organization Name"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Contact Number <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="text"
+            inputMode="numeric"
+            name={`proponent_${index}_contactNumber`}
+            placeholder="09XXXXXXXXX"
+            value={proponent.contactNumber}
+            onKeyDown={blockNonIntegerKeys}
+            onChange={(e) =>
+              onUpdate(
+                proponent.id,
+                "contactNumber",
+                sanitizeIntegerInput(e.target.value)
+              )
+            }
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Email Address <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="email"
+            pattern="^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+            title="Please enter a valid email address with an '@' and domain (e.g., student@mymail.mapua.edu.ph)"
+            name={`proponent_${index}_emailAddress`}
+            value={proponent.emailAddress}
+            onChange={(e) =>
+              onUpdate(proponent.id, "emailAddress", e.target.value)
+            }
+            placeholder="student@mymail.mapua.edu.ph"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+        <div className="space-y-1.5">
+          <label className="block text-xs font-medium text-neutral-700">
+            Facebook Link <span className="text-red-500">*</span>
+          </label>
+          <Input
+            type="url"
+            name={`proponent_${index}_facebookLink`}
+            value={proponent.facebookLink}
+            onChange={(e) =>
+              onUpdate(proponent.id, "facebookLink", e.target.value)
+            }
+            placeholder="https://facebook.com/username"
+            style={{ color: "#171717" }}
+            className={FIELD_INPUT_CLASS}
+            required
+          />
+        </div>
+      </div>
+    </div>
+  )
+})

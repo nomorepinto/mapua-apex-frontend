@@ -23,9 +23,10 @@ dist-ssr
 *.sln
 *.sw?
 
-# Environment variables
+# Agent files and skills
+.agents/
+
+# Environment files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.*
+!.env.example
