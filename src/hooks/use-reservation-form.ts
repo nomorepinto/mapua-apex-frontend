@@ -156,7 +156,7 @@ export function useReservationForm() {
 
   const handleGoBack = useCallback(() => {
     window.scrollTo(0, 0)
-    navigate("/submission")
+    navigate("/students/submissions/saaf")
   }, [navigate])
 
   const handleInitiateSubmit = useCallback(
@@ -177,12 +177,13 @@ export function useReservationForm() {
     )
     useOrgStore.getState().clearSaafDraft()
     useOrgStore.getState().clearReservationDraft()
+    useOrgStore.getState().clearSubmissionStart()
     setShowSuccessModal(true)
   }, [draft])
 
   const handleSuccessAction = useCallback(() => {
     setShowSuccessModal(false)
-    navigate("/submission")
+    navigate("/students/submissions/saaf")
   }, [navigate])
 
   const handleSavePdf = useCallback(() => {

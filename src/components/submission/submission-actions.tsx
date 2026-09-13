@@ -5,31 +5,19 @@ import { Button } from "@/components/ui/button"
 
 export function SubmissionActions({
   isSubmitting,
-  onReserveVenue,
+  showNextPage,
+  onNextPage,
   onSavePdf,
   onSubmit,
 }: {
   isSubmitting: boolean
-  onReserveVenue: () => void
+  showNextPage: boolean
+  onNextPage: () => void
   onSavePdf: () => void
   onSubmit: (e: MouseEvent) => void
 }) {
   return (
-    <div className="flex flex-col items-start justify-between gap-6 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center">
-      <div className="space-y-2">
-        <p className="text-sm font-bold text-neutral-800">
-          Do you have Venue Reservation?{" "}
-          <span className="font-normal text-neutral-500">(optional)</span>
-        </p>
-        <button
-          type="button"
-          onClick={onReserveVenue}
-          className="cursor-pointer rounded-full bg-[#242424] px-5 py-2.5 text-xs font-medium text-white shadow-xs transition-colors hover:bg-black"
-        >
-          Click here to reserve a venue
-        </button>
-      </div>
-
+    <div className="flex flex-col items-start justify-end gap-6 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center">
       <div className="flex w-full items-center justify-end gap-3 sm:w-auto">
         <button
           type="button"
@@ -39,14 +27,24 @@ export function SubmissionActions({
           <DownloadIcon className="h-3.5 w-3.5" />
           Save as PDF
         </button>
-        <Button
-          type="button"
-          onClick={onSubmit}
-          disabled={isSubmitting}
-          className="h-10 min-w-36 cursor-pointer rounded-lg bg-[#0B6623] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#084D1A]"
-        >
-          {isSubmitting ? "Submitting..." : "Submit"}
-        </Button>
+        {showNextPage ? (
+          <Button
+            type="button"
+            onClick={onNextPage}
+            className="h-10 min-w-36 cursor-pointer rounded-lg bg-[#242424] px-10 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-black"
+          >
+            Next page
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            onClick={onSubmit}
+            disabled={isSubmitting}
+            className="h-10 min-w-36 cursor-pointer rounded-lg bg-[#0B6623] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#084D1A]"
+          >
+            {isSubmitting ? "Submitting..." : "Submit"}
+          </Button>
+        )}
       </div>
     </div>
   )

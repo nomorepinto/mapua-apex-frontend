@@ -23,7 +23,7 @@ export function OrgDashboard() {
           Organization Dashboard
         </h1>
         <Link
-          to="/submission"
+          to="/students/submissions"
           className="inline-block cursor-pointer rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-neutral-800"
         >
           Create Project/Event
