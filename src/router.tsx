@@ -1,7 +1,6 @@
 import { createBrowserRouter, Navigate, Outlet } from "react-router"
 
-import { Login } from "@/routes/login"
-import { action as loginAction } from "@/routes/login.action"
+// Removed login imports
 import { AdminLayout } from "@/routes/layouts/admin-layout"
 import { SignatoriesLayout } from "@/routes/layouts/signatories-layout"
 import { StudentsLayout } from "@/routes/layouts/students-layout"
@@ -14,11 +13,17 @@ function PassThroughLayout() {
   return <Outlet />
 }
 
+import { AuthGuard } from "@/components/auth/AuthGuard"
+import { RoleRedirect } from "@/components/auth/RoleRedirect"
+
 export const router = createBrowserRouter([
   {
     path: "/",
-    Component: Login,
-    action: loginAction,
+    Component: () => (
+      <AuthGuard>
+        <RoleRedirect />
+      </AuthGuard>
+    ),
   },
   {
     path: "students",

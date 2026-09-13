@@ -25,3 +25,8 @@ dist-ssr
 
 # Agent files and skills
 .agents/
+
+# Environment files
+.env
+.env.*
+!.env.example

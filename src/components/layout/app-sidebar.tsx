@@ -6,7 +6,7 @@ import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { useDisclosure } from "@/hooks/use-disclosure"
 import { useSignOut } from "@/hooks/use-sign-out"
-import { ROLE_LABELS, useSessionStore } from "@/stores/session-store"
+import { useAuth } from "react-oidc-context"
 
 export type AppSidebarItem = {
   label: string
@@ -24,8 +24,13 @@ export function AppSidebar({
   items: AppSidebarItem[]
   showSettings?: boolean
 }) {
-  const name = useSessionStore((state) => state.name)
-  const role = useSessionStore((state) => state.role)
+  const auth = useAuth()
+  const name = auth.user?.profile?.email || auth.user?.profile?.name || "Guest"
+  const userGroups = (auth.user?.profile["cognito:groups"] as string[]) || []
+  const displayRole = userGroups.length > 0 
+    ? userGroups.map((g) => g.replace(/_/g, " ")).join(", ")
+    : "No role assigned"
+
   const handleSignOut = useSignOut()
   const settings = useDisclosure()
 
@@ -128,10 +133,10 @@ export function AppSidebar({
         <div className="border-t border-red-900/60 pt-4">
           <div className="rounded-xl border border-red-900/50 bg-[#6b0000]/90 p-3.5 shadow-sm">
             <p className="text-sm font-semibold tracking-wide text-white">
-              {name || "Guest"}
+              {name}
             </p>
             <p className="mt-0.5 text-xs font-medium text-[#FBC02D]">
-              {role ? ROLE_LABELS[role] : "Not signed in"}
+              {displayRole}
             </p>
           </div>
         </div>

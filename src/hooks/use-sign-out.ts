@@ -1,14 +1,10 @@
 import { useCallback } from "react"
-import { useNavigate } from "react-router"
-
-import { useSessionStore } from "@/stores/session-store"
+import { useAuth } from "react-oidc-context"
 
 export function useSignOut() {
-  const navigate = useNavigate()
-  const signOut = useSessionStore((state) => state.signOut)
+  const auth = useAuth()
 
   return useCallback(() => {
-    signOut()
-    navigate("/")
-  }, [navigate, signOut])
+    auth.signoutRedirect()
+  }, [auth])
 }

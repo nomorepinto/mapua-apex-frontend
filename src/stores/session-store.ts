@@ -3,11 +3,9 @@ import { persist, createJSONStorage } from "zustand/middleware"
 
 export type AppRole = "students" | "signatories" | "admin"
 
+// Keeping store around in case it's needed for other session data later
 export type SessionState = {
-  name: string | null
-  role: AppRole | null
-  signIn: (name: string, role: AppRole) => void
-  signOut: () => void
+  // Add other session state here
 }
 
 export const ROLE_LABELS: Record<AppRole, string> = {
@@ -18,15 +16,8 @@ export const ROLE_LABELS: Record<AppRole, string> = {
 
 export const useSessionStore = create<SessionState>()(
   persist(
-    (set) => ({
-      name: null,
-      role: null,
-      signIn: (name: string, role: AppRole) => {
-        set({ name, role })
-      },
-      signOut: () => {
-        set({ name: null, role: null })
-      },
+    () => ({
+      // initial state
     }),
     {
       name: "apex-session-store",
