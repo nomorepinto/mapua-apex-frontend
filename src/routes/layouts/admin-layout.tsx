@@ -3,7 +3,6 @@ import { Outlet } from "react-router"
 
 import { AuthGuard } from "@/components/auth/AuthGuard"
 import { AppSidebar } from "@/components/layout/app-sidebar"
-import { ForceLightMode } from "@/components/layout/force-light-mode"
 
 const ADMIN_NAV = [
   {
@@ -32,14 +31,12 @@ const ADMIN_NAV = [
 export function AdminLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar"]}>
-      <ForceLightMode>
-        <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground lg:flex-row">
-          <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} showSettings />
-          <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
-            <Outlet />
-          </main>
-        </div>
-      </ForceLightMode>
+      <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground lg:flex-row">
+        <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} showSettings />
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
+          <Outlet />
+        </main>
+      </div>
     </AuthGuard>
   )
 }
