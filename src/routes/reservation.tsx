@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react"
 import { useNavigate } from "react-router"
 import { PlusIcon, Trash2Icon, CheckIcon, DownloadIcon } from "lucide-react"
 import { generateProposalPdf } from "@/lib/pdf-generator"
+import { useOrgStore } from "@/stores/org-store"
 
 interface FacilityItem {
     id: string
@@ -28,9 +29,7 @@ interface AVItem {
 }
 
 const getSavedReservationDraft = () => {
-    if (typeof window === "undefined") return null
-    const saved = sessionStorage.getItem("apex_reservation_draft")
-    return saved ? JSON.parse(saved) : null
+    return useOrgStore.getState().reservationDraft || null
 }
 
 export function Reservation() {
@@ -120,7 +119,7 @@ export function Reservation() {
             roomItems,
             avItems,
         }
-        sessionStorage.setItem("apex_reservation_draft", JSON.stringify(draft))
+        useOrgStore.getState().setReservationDraft(draft)
     }, [
         equipment,
         otherEquipmentText,
@@ -195,8 +194,12 @@ export function Reservation() {
     const handleConfirmProceed = () => {
         setShowConfirmModal(false)
 
-        const saafRaw = sessionStorage.getItem("apex_saaf_draft")
-        const saafDraft = saafRaw ? JSON.parse(saafRaw) : null
+        let saafDraft: any = null
+        try {
+            saafDraft = useOrgStore.getState().saafDraft
+        } catch (e) {
+            console.warn("Could not read SAAF draft from store", e)
+        }
 
         const finalProposalPayload = {
             PK: "EVENTuuid",
@@ -314,14 +317,18 @@ export function Reservation() {
 
         console.log("Submitting Combined Proposal (SAAF + Reservation):", finalProposalPayload)
 
-        sessionStorage.removeItem("apex_saaf_draft")
-        sessionStorage.removeItem("apex_reservation_draft")
+        useOrgStore.getState().clearSaafDraft()
+        useOrgStore.getState().clearReservationDraft()
         setShowSuccessModal(true)
     }
 
     const handleSavePdf = () => {
-        const saafRaw = sessionStorage.getItem("apex_saaf_draft")
-        const saafDraft = saafRaw ? JSON.parse(saafRaw) : {}
+        let saafDraft: any = null
+        try {
+            saafDraft = useOrgStore.getState().saafDraft || {}
+        } catch (e) {
+            console.warn("Could not read SAAF draft from store", e)
+        }
 
         generateProposalPdf(
             {
