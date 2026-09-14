@@ -1,6 +1,5 @@
 import { Building2Icon, Code2Icon, ShieldCheckIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar"
 
 import AgathaPhoto from "@/assets/Agatha.png"
 import AvielPhoto from "@/assets/Aviel.png"
@@ -17,24 +16,24 @@ import RyanPhoto from "@/assets/Ryan.png"
 
 type TeamMember = {
   name: string
-  role: string
+  coorole: string
+  awsrole: string
   photo: string
-  initials: string
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
-  { name: "Jedrick", role: "Chief Executive Officer: 26-27", photo: JedrickPhoto, initials: "JD" },
-  { name: "Nigel", role: "Chief Operations Officer: 26-27", photo: NigelPhoto, initials: "NI" },
-  { name: "Mico", role: "Corporate Secretary: 26-27", photo: MicoPhoto, initials: "MI" },
-  { name: "Ryan", role: "Chief Technology Officer: 26-27", photo: RyanPhoto, initials: "RY" },
-  { name: "Agatha", role: "Chief People Officer: 26-27", photo: AgathaPhoto, initials: "AG" },
-  { name: "Bea", role: "Chief Communications Officer: 26-27", photo: BeaPhoto, initials: "BE" },
-  { name: "Nicole", role: "Chief Finance Officer: 26-27", photo: NicolePhoto, initials: "NC" },
-  { name: "Karina", role: "Chief Auditing Officer: 26-27", photo: KarinaPhoto, initials: "KA" },
-  { name: "Aviel", role: "Chief External Relations Officer: 26-27", photo: AvielPhoto, initials: "AV" },
-  { name: "Benedict", role: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto, initials: "BN" },
-  { name: "Joel", role: "Technology Committee: 26-27", photo: JoelPhoto, initials: "JO" },
-  { name: "Luna", role: "Organization Mascot: 26-27", photo: LunaPhoto, initials: "LU" },
+  { name: "Jedrick", coorole: "Council of Organizations: Organization's Welfare and Advocacy Committee 25-26", awsrole: "AWS-SBG Arcus: Chief Executive Officer 26-27", photo: JedrickPhoto },
+  { name: "Nigel", coorole: "Council of Organizations: External Relations Co-Head 25-26", awsrole: "Chief Operations Officer: 26-27", photo: NigelPhoto },
+  { name: "Mico", coorole: "", awsrole: "Corporate Secretary: 26-27", photo: MicoPhoto },
+  { name: "Ryan", coorole: "Council of Organizations: Organization's Welfare and Advocacy Head 25-26", awsrole: "Chief Technology Officer: 26-27", photo: RyanPhoto },
+  { name: "Agatha", coorole: "", awsrole: "Chief People Officer: 26-27", photo: AgathaPhoto },
+  { name: "Bea", coorole: "Council of Organizations: Creatives Committee 25-26", awsrole: "Chief Communications Officer: 26-27", photo: BeaPhoto },
+  { name: "Nicole", coorole: "Council of Organizations: Organization's Welfare and Advocacy Co-Head 25-26", awsrole: "Chief Finance Officer: 26-27", photo: NicolePhoto },
+  { name: "Karina", coorole: "Council of Organizations: External Relations Co-Head 25-26",awsrole: "Chief Auditing Officer: 26-27", photo: KarinaPhoto },
+  { name: "Aviel", coorole: "Council of Organizations: External Relations Head 25-26", awsrole: "Chief External Relations Officer: 26-27", photo: AvielPhoto },
+  { name: "Benedict", coorole: "Council of Organizations: Supreme Overlord 25-26", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
+  { name: "Joel", coorole: "", awsrole: "Technology Committee: 26-27", photo: JoelPhoto },
+  { name: "Luna", coorole: "", awsrole: "Organization Mascot: 26-27", photo: LunaPhoto },
 ]
 
 function DevCard({ member }: { member: TeamMember }) {
@@ -48,18 +47,11 @@ function DevCard({ member }: { member: TeamMember }) {
         />
       </div>
       <CardContent className="flex flex-col items-center gap-1 p-4 text-center">
-        <div className="-mt-10 mb-1">
-          <Avatar className="size-14 ring-3 ring-white shadow-md">
-            <AvatarImage src={member.photo} alt={member.name} />
-            <AvatarFallback className="bg-red-800 text-sm font-bold text-white">
-              {member.initials}
-            </AvatarFallback>
-          </Avatar>
-        </div>
         <h3 className="text-sm font-bold tracking-tight text-neutral-900">
           {member.name}
         </h3>
-        <p className="text-xs font-medium text-neutral-500">{member.role}</p>
+        <p className="text-xs font-bold text-red-800">{member.coorole}</p>
+        <p className="text-xs font-medium text-amber-600">{member.awsrole}</p>
       </CardContent>
     </Card>
   )
