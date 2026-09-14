@@ -1,23 +1,27 @@
 import { X, Search, ChevronDown } from "lucide-react"
 import { useState } from "react"
-import { useOrgStore, type Appeal } from "@/stores/org-store"
+import type { AppealRow } from "@/lib/dynamodb-adapters"
 
 interface AppealsModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectDocument?: (appeal: Appeal) => void;
+  isOpen: boolean
+  onClose: () => void
+  appeals: AppealRow[]
+  isLoading?: boolean
+  onSelectDocument?: (appeal: AppealRow) => void
 }
 
-export function AppealsModal({ isOpen, onClose, onSelectDocument }: AppealsModalProps) {
-  const { 
-    appeals, 
-    searchQuery, setSearchQuery, 
-    statusFilter, setStatusFilter, 
-    departmentFilter, setDepartmentFilter 
-  } = useOrgStore()
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+export function AppealsModal({
+  isOpen,
+  onClose,
+  appeals,
+  isLoading = false,
+  onSelectDocument,
+}: AppealsModalProps) {
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("All")
+  const [departmentFilter, setDepartmentFilter] = useState("All")
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
   if (!isOpen) return null;
 
@@ -152,13 +156,17 @@ export function AppealsModal({ isOpen, onClose, onSelectDocument }: AppealsModal
                   {paginatedAppeals.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="py-12 text-center text-sm font-semibold text-[#94A3B8]">
-                        {appeals.length === 0 ? "No appeals found" : "No appeals found matching your criteria."}
+                    {isLoading
+                      ? "Loading appeals…"
+                      : appeals.length === 0
+                        ? "No appeals found"
+                        : "No appeals found matching your criteria."}
                       </td>
                     </tr>
                   ) : (
-                    paginatedAppeals.map((a, i) => (
+                    paginatedAppeals.map((a) => (
                       <tr 
-                        key={i} 
+                        key={a.appeal_id} 
                         onClick={() => {
                           if (onSelectDocument) {
                             onSelectDocument(a);

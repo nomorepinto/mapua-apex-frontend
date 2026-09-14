@@ -1,12 +1,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
-import type { ApiSubmission, ApiAppeal } from "@/lib/dynamodb-adapters"
+import type { ApiSubmission, ApiAppeal, ApiSignatory } from "@/lib/dynamodb-adapters"
 
 export const SIGNATORY_KEYS = {
+  me: ["signatory-me"] as const,
   queue: ["signatory-queue"] as const,
   detail: (eventId: string, submissionId: string) =>
     ["signatory-submission-detail", eventId, submissionId] as const,
   appeals: ["signatory-appeals"] as const,
+}
+
+/**
+ * Fetch the signed-in signatory (JWT custom:signatory_id).
+ */
+export function useCurrentSignatoryQuery() {
+  return useQuery({
+    queryKey: SIGNATORY_KEYS.me,
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: ApiSignatory }>("/signatories/me")
+      return res.data
+    },
+  })
 }
 
 /**

@@ -144,6 +144,11 @@ interface OrgState {
   setReservationDraft: (draft: ReservationDraft) => void;
   patchReservationDraft: (patch: Partial<ReservationDraft>) => void;
   clearReservationDraft: () => void;
+
+  editingEventId: string | null;
+  editingSubmissionId: string | null;
+  setEditingSubmission: (eventId: string, submissionId: string) => void;
+  clearEditingSubmission: () => void;
 }
 
 export const useOrgStore = create<OrgState>()(
@@ -414,6 +419,13 @@ export const useOrgStore = create<OrgState>()(
       reservationDraft: { ...(state.reservationDraft ?? {}), ...patch } as ReservationDraft,
     })),
   clearReservationDraft: () => set({ reservationDraft: null }),
+
+  editingEventId: null,
+  editingSubmissionId: null,
+  setEditingSubmission: (eventId, submissionId) =>
+    set({ editingEventId: eventId, editingSubmissionId: submissionId }),
+  clearEditingSubmission: () =>
+    set({ editingEventId: null, editingSubmissionId: null }),
 }),
     {
       name: "apex_org_wizard_v1",
@@ -423,6 +435,8 @@ export const useOrgStore = create<OrgState>()(
         reserveFacilities: state.reserveFacilities,
         saafDraft: state.saafDraft,
         reservationDraft: state.reservationDraft,
+        editingEventId: state.editingEventId,
+        editingSubmissionId: state.editingSubmissionId,
       }),
     }
   )

@@ -1,10 +1,11 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 import type {
   ApiSubmission,
   ApiNotification,
   ApiAppeal,
   ApiDeadline,
+  ApiOrganization,
 } from "@/lib/dynamodb-adapters"
 
 export const SUBMISSION_KEYS = {
@@ -16,6 +17,7 @@ export const SUBMISSION_KEYS = {
   appeals: (eventId: string, submissionId: string) =>
     ["submission-appeals", eventId, submissionId] as const,
   deadlines: ["org-deadlines"] as const,
+  organization: ["org-organization"] as const,
 }
 
 /**
@@ -84,6 +86,19 @@ export function useSubmissionAppealsQuery(eventId?: string, submissionId?: strin
 }
 
 /**
+ * Fetch the logged-in student's organization (JWT custom:organization_id).
+ */
+export function useCurrentOrganizationQuery() {
+  return useQuery({
+    queryKey: SUBMISSION_KEYS.organization,
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: ApiOrganization }>("/students/organization")
+      return res.data
+    },
+  })
+}
+
+/**
  * Fetch upcoming deadlines for the organization
  */
 export function useOrgDeadlinesQuery() {
@@ -117,26 +132,60 @@ export function useCreateSubmissionMutation() {
 }
 
 /**
+ * Fetch appeals for every denied submission in parallel.
+ */
+export function useDeniedSubmissionAppealsQuery(
+  submissions: ApiSubmission[],
+  enabled = true
+) {
+  const denied = submissions.filter((submission) => submission.status === "denied")
+
+  return useQueries({
+    queries: denied.map((submission) => ({
+      queryKey: SUBMISSION_KEYS.appeals(submission.event_id, submission.submission_id),
+      queryFn: async () => {
+        const res = await apiClient.get<{ data: ApiAppeal[] }>(
+          `/students/events/${submission.event_id}/submissions/${submission.submission_id}/appeals`
+        )
+        return {
+          submission,
+          appeals: res.data || [],
+        }
+      },
+      enabled,
+    })),
+  })
+}
+
+/**
  * Mutation to update/resubmit a denied or pending submission
  */
-export function useUpdateSubmissionMutation(eventId: string, submissionId: string) {
+export function useUpdateSubmissionMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: unknown) => {
+    mutationFn: async ({
+      eventId,
+      submissionId,
+      payload,
+    }: {
+      eventId: string
+      submissionId: string
+      payload: unknown
+    }) => {
       const res = await apiClient.put<{ data: ApiSubmission }>(
         `/students/events/${eventId}/submissions/${submissionId}`,
         payload
       )
       return res.data
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })
       queryClient.invalidateQueries({
-        queryKey: SUBMISSION_KEYS.detail(eventId, submissionId),
+        queryKey: SUBMISSION_KEYS.detail(variables.eventId, variables.submissionId),
       })
       queryClient.invalidateQueries({
-        queryKey: SUBMISSION_KEYS.notifications(eventId, submissionId),
+        queryKey: SUBMISSION_KEYS.notifications(variables.eventId, variables.submissionId),
       })
     },
   })

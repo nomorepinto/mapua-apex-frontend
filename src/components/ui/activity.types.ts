@@ -15,6 +15,8 @@ export interface Objective {
 
 export interface Activity {
   id: string
+  eventId: string
+  submissionId: string
   title: string
   org: string
   department: string
@@ -22,7 +24,6 @@ export interface Activity {
   time?: string
   submittedDate: string
   representative: string
-  priority: ActivityPriority
   decision: ActivityDecision
   type: string
   status?: "Review" | "Returned" | "Accepted" | "Pending Dean Approval"
@@ -30,7 +31,6 @@ export interface Activity {
   venue: string
   expectedParticipants: number
   proposedBudget: string
-  advisorSignoff: "Verified" | "Pending"
   proponents: Proponent[]
   objectives: Objective[]
 }

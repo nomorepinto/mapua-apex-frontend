@@ -1,9 +1,10 @@
 import { useCallback, useState, type FormEvent } from "react"
-import { useNavigate } from "react-router"
+import { useNavigate, useSearchParams } from "react-router"
 
 import { DEFAULT_RESERVATION_DRAFT } from "@/components/reservation/constants"
 
 import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
+import { useHydrateEditingSubmission } from "@/hooks/use-hydrate-editing-submission"
 import { useScrollToTop } from "@/hooks/use-scroll-to-top"
 import type {
   AVItem,
@@ -12,17 +13,17 @@ import type {
   ReservationDraft,
   RoomItem,
 } from "@/components/reservation/types"
-import { apiClient } from "@/lib/api-client"
-import { buildSaafApiPayload } from "@/lib/dynamodb-adapters"
-import { queryClient } from "@/main"
-import { SUBMISSION_KEYS } from "@/hooks/use-submissions"
+import { buildSaafApiPayload, omitEventIdFromPayload } from "@/lib/dynamodb-adapters"
+import { useCreateSubmissionMutation, useUpdateSubmissionMutation } from "@/hooks/use-submissions"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
 import { useOrgStore } from "@/stores/org-store"
 
 export function useReservationForm() {
-
-
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  useHydrateEditingSubmission()
+  const createSubmission = useCreateSubmissionMutation()
+  const updateSubmission = useUpdateSubmissionMutation()
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
 
@@ -143,8 +144,9 @@ export function useReservationForm() {
 
   const handleGoBack = useCallback(() => {
     window.scrollTo(0, 0)
-    navigate("/students/submissions/saaf")
-  }, [navigate])
+    const query = searchParams.toString()
+    navigate(`/students/submissions/saaf${query ? `?${query}` : ""}`)
+  }, [navigate, searchParams])
 
   const handleInitiateSubmit = useCallback(
     (e: FormEvent, form: HTMLFormElement | null) => {
@@ -172,14 +174,29 @@ export function useReservationForm() {
     try {
       setIsSubmitting(true)
       setSubmitError(null)
-      const payload = buildSaafApiPayload(saafDraft, currentDraft)
-      await apiClient.post("/students/submissions", payload)
+      const editingEventId = useOrgStore.getState().editingEventId
+      const editingSubmissionId = useOrgStore.getState().editingSubmissionId
+      const payload = buildSaafApiPayload(
+        saafDraft,
+        currentDraft,
+        editingEventId ?? undefined
+      )
+
+      if (editingEventId && editingSubmissionId) {
+        await updateSubmission.mutateAsync({
+          eventId: editingEventId,
+          submissionId: editingSubmissionId,
+          payload: omitEventIdFromPayload(payload),
+        })
+      } else {
+        await createSubmission.mutateAsync(payload)
+      }
 
       useOrgStore.getState().clearSaafDraft()
       useOrgStore.getState().clearReservationDraft()
       useOrgStore.getState().clearSubmissionStart()
+      useOrgStore.getState().clearEditingSubmission()
 
-      queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })
       setShowSuccessModal(true)
     } catch (error) {
       console.error("Submission failed:", error)
@@ -189,7 +206,7 @@ export function useReservationForm() {
     } finally {
       setIsSubmitting(false)
     }
-  }, [])
+  }, [createSubmission, updateSubmission])
 
   const handleSuccessAction = useCallback(() => {
     setShowSuccessModal(false)

@@ -13,7 +13,7 @@ export function useActivityDetail({
     action: "approve" | "return" | "defer",
     activityId: string,
     details?: { title: string; message: string }
-  ) => void
+  ) => void | Promise<void>
 }) {
   const [returnModalOpen, setReturnModalOpen] = useState(false)
 
@@ -24,26 +24,23 @@ export function useActivityDetail({
     [onClose]
   )
 
-  const handleApprove = useCallback(() => {
+  const handleApprove = useCallback(async () => {
     if (!activity) return
-    onAction?.("approve", activity.id)
-    onClose()
-  }, [activity, onAction, onClose])
+    await onAction?.("approve", activity.id)
+  }, [activity, onAction])
 
-  const handleDefer = useCallback(() => {
+  const handleDefer = useCallback(async () => {
     if (!activity) return
-    onAction?.("defer", activity.id)
-    onClose()
-  }, [activity, onAction, onClose])
+    await onAction?.("defer", activity.id)
+  }, [activity, onAction])
 
   const handleReturnSubmit = useCallback(
-    (title: string, message: string) => {
+    async (title: string, message: string) => {
       if (!activity) return
-      onAction?.("return", activity.id, { title, message })
+      await onAction?.("return", activity.id, { title, message })
       setReturnModalOpen(false)
-      onClose()
     },
-    [activity, onAction, onClose]
+    [activity, onAction]
   )
 
   return {

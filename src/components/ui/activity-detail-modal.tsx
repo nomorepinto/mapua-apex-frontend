@@ -1,5 +1,4 @@
 import { memo } from "react"
-import { CheckCircle2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,12 +18,20 @@ import { useActivityDetail } from "@/hooks/use-activity-detail"
 export interface ActivityDetailModalProps {
   activity: Activity | null
   onClose: () => void
-  onAction?: (action: "approve" | "return" | "defer", activityId: string, details?: { title: string; message: string }) => void
+  isActing?: boolean
+  actionError?: string | null
+  onAction?: (
+    action: "approve" | "return" | "defer",
+    activityId: string,
+    details?: { title: string; message: string }
+  ) => void | Promise<void>
 }
 
 const ActivityDetailModal = memo(function ActivityDetailModal({
   activity,
   onClose,
+  isActing = false,
+  actionError,
   onAction,
 }: ActivityDetailModalProps) {
   const {
@@ -109,10 +116,9 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
                   </div>
 
                   <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
-                    <span className="font-bold text-neutral-900">Advisor Signoff</span>
-                    <span className="inline-flex items-center gap-1 text-emerald-600 font-semibold text-xs">
-                      <CheckCircle2Icon className="w-3.5 h-3.5" />
-                      {activity.advisorSignoff}
+                    <span className="font-bold text-neutral-900">Activity type</span>
+                    <span className="font-medium text-neutral-600 sm:text-right capitalize">
+                      {activity.type}
                     </span>
                   </div>
                 </div>
@@ -151,31 +157,34 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
           {/* Action Footer matching Figma 11849-2751 */}
           <DialogFooter className="border-t border-neutral-200 px-6 sm:px-8 py-4 bg-white shrink-0 rounded-b-2xl">
             <div className="flex w-full flex-col items-stretch justify-end gap-3 sm:flex-row sm:flex-wrap sm:items-center">
-              {/* Approve Proposal */}
+              {actionError ? (
+                <p className="mr-auto text-xs font-semibold text-rose-600">{actionError}</p>
+              ) : null}
               <Button
                 type="button"
+                disabled={isActing}
                 onClick={handleApprove}
-                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50"
+                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50 disabled:opacity-50"
               >
-                Approve Proposal
+                {isActing ? "Working…" : "Approve Proposal"}
               </Button>
 
-              {/* Return Proposal */}
               <Button
                 type="button"
+                disabled={isActing}
                 onClick={() => setReturnModalOpen(true)}
-                className="min-h-11 cursor-pointer rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-black"
+                className="min-h-11 cursor-pointer rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-black disabled:opacity-50"
               >
                 Return Proposal
               </Button>
 
-              {/* Defer Decision */}
               <Button
                 type="button"
+                disabled={isActing}
                 onClick={handleDefer}
-                className="min-h-11 cursor-pointer rounded-xl bg-[#800000] px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-[#660000]"
+                className="min-h-11 cursor-pointer rounded-xl bg-[#800000] px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-[#660000] disabled:opacity-50"
               >
-                Defer Decision
+                Close
               </Button>
             </div>
           </DialogFooter>

@@ -3,7 +3,6 @@ import type React from "react"
 
 import { TableCell, TableRow } from "@/components/ui/table"
 import type { Activity } from "./activity.types"
-import { getPriorityStyles } from "./activity.types"
 
 // ─── ActivityRow ──────────────────────────────────────────────────────────────
 
@@ -23,8 +22,6 @@ const ActivityRow = memo(function ActivityRow({ activity, onSelect }: ActivityRo
     },
     [handleClick],
   )
-
-  const priorityStyles = getPriorityStyles(activity.priority)
 
   return (
     <TableRow
@@ -50,12 +47,10 @@ const ActivityRow = memo(function ActivityRow({ activity, onSelect }: ActivityRo
         {activity.submittedDate}
       </TableCell>
 
-      {/* 4. PRIORITY */}
+      {/* 4. TYPE */}
       <TableCell className="py-4.5 px-6">
-        <span
-          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider ${priorityStyles.bg} ${priorityStyles.text}`}
-        >
-          {activity.priority}
+        <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-neutral-100 text-neutral-700">
+          {activity.type}
         </span>
       </TableCell>
 
