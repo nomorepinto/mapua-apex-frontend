@@ -20,9 +20,7 @@ export function Dashboard() {
       <div className="max-w-6xl mx-auto space-y-7">
         <div className="space-y-1">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 font-sans">
-            {dashboard.name
-              ? `${dashboard.name} Review Dashboard`
-              : "[ROLE] Review Dashboard"}
+            {dashboard.roleLabel} Review Dashboard
           </h1>
           <p className="text-xs sm:text-sm text-neutral-500 font-normal">
             Academic Term: 2026-2027 • Pending institutional approvals for student activities.

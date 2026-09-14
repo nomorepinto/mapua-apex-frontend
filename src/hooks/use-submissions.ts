@@ -5,6 +5,7 @@ import type {
   ApiNotification,
   ApiAppeal,
   ApiDeadline,
+  ApiOrganization,
 } from "@/lib/dynamodb-adapters"
 
 export const SUBMISSION_KEYS = {
@@ -16,6 +17,7 @@ export const SUBMISSION_KEYS = {
   appeals: (eventId: string, submissionId: string) =>
     ["submission-appeals", eventId, submissionId] as const,
   deadlines: ["org-deadlines"] as const,
+  organization: ["org-organization"] as const,
 }
 
 /**
@@ -80,6 +82,19 @@ export function useSubmissionAppealsQuery(eventId?: string, submissionId?: strin
       return res.data || []
     },
     enabled: Boolean(eventId && submissionId),
+  })
+}
+
+/**
+ * Fetch the logged-in student's organization (JWT custom:organization_id).
+ */
+export function useCurrentOrganizationQuery() {
+  return useQuery({
+    queryKey: SUBMISSION_KEYS.organization,
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: ApiOrganization }>("/students/organization")
+      return res.data
+    },
   })
 }
 

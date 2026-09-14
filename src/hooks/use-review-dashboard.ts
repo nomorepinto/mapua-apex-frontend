@@ -7,7 +7,12 @@ import {
 } from "@/components/ui/activity.data"
 import type { Activity } from "@/components/ui/activity.types"
 import {
+  roleFromCognitoGroups,
+  signatoryRoleLabel,
+} from "@/components/admin-osa/signatory-roles"
+import {
   useApproveSubmissionMutation,
+  useCurrentSignatoryQuery,
   useDenySubmissionMutation,
   useResolveAppealMutation,
   useSignatoryAppealsQuery,
@@ -18,7 +23,10 @@ import { apiAppealToRow, apiSubmissionToActivity } from "@/lib/dynamodb-adapters
 
 export function useReviewDashboard() {
   const auth = useAuth()
-  const name = auth.user?.profile?.email || auth.user?.profile?.name || "Guest"
+  const groups = (auth.user?.profile["cognito:groups"] as string[]) || []
+  const meQuery = useCurrentSignatoryQuery()
+  const role = meQuery.data?.role || roleFromCognitoGroups(groups)
+  const roleLabel = role ? signatoryRoleLabel(role) : "Signatory"
   const queueQuery = useSignatoryQueueQuery()
   const appealsQuery = useSignatoryAppealsQuery()
   const approveMutation = useApproveSubmissionMutation()
@@ -162,7 +170,7 @@ export function useReviewDashboard() {
         })
 
   return {
-    name,
+    roleLabel,
     stats,
     departments,
     departmentOrgMap,

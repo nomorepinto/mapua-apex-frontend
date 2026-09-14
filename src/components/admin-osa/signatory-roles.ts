@@ -45,6 +45,15 @@ export function signatoryRoleLabel(role: string): string {
   return match?.label ?? role
 }
 
+export function roleFromCognitoGroups(groups: string[]): ApiSignatoryRole | undefined {
+  if (groups.includes("CDM_Reviewer")) return "cdm"
+  if (groups.includes("Dean")) return "dean"
+  if (groups.includes("ORG_Adviser")) return "adviser"
+  if (groups.includes("OSAAR")) return "osaar"
+  if (groups.includes("Admin")) return "admin"
+  return undefined
+}
+
 export function optionsForRole(
   people: ApiSignatory[],
   role: OrganizationDeskRole

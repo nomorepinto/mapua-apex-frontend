@@ -16,6 +16,7 @@ import {
 import { AppealsModal } from "@/components/org/AppealsModal"
 import { SubmissionTrackerModal } from "@/components/org/SubmissionTrackerModal"
 import {
+  useCurrentOrganizationQuery,
   useDeniedSubmissionAppealsQuery,
   useOrgDeadlinesQuery,
   useOrgSubmissionsQuery,
@@ -37,6 +38,7 @@ export function OrgDashboard() {
   const [isRemindersExpanded, setIsRemindersExpanded] = useState(true)
   const [dismissedReminderIds, setDismissedReminderIds] = useState<string[]>([])
 
+  const organizationQuery = useCurrentOrganizationQuery()
   const submissionsQuery = useOrgSubmissionsQuery()
   const deadlinesQuery = useOrgDeadlinesQuery()
   const appealsQueries = useDeniedSubmissionAppealsQuery(
@@ -96,7 +98,7 @@ export function OrgDashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
-            Organization Dashboard
+            {organizationQuery.data?.name || "Organization"} Dashboard
           </h1>
           <p className="text-sm text-[#64748B] mt-0.5">
             Overview of active submittals, official announcements, and reminders timeline
