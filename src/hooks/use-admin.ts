@@ -69,6 +69,19 @@ export function useAdminSubmissionDetailQuery(eventId?: string, submissionId?: s
 }
 
 /**
+ * Fetch all appeals system-wide
+ */
+export function useAdminAppealsQuery() {
+  return useQuery({
+    queryKey: ADMIN_KEYS.appeals,
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: ApiAppeal[] }>("/admins/appeals")
+      return res.data || []
+    },
+  })
+}
+
+/**
  * Fetch all registered organizations
  */
 export function useOrganizationsQuery() {

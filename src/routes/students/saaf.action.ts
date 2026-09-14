@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router"
 
 import type { SubmissionActionData } from "@/components/submission/types"
 import { apiClient } from "@/lib/api-client"
-import { buildSaafApiPayload } from "@/lib/dynamodb-adapters"
+import { buildSaafApiPayload, omitEventIdFromPayload } from "@/lib/dynamodb-adapters"
 import { queryClient } from "@/main"
 import { SUBMISSION_KEYS } from "@/hooks/use-submissions"
 import { useOrgStore } from "@/stores/org-store"
@@ -22,6 +22,8 @@ export async function action({
 
   const saafDraft = useOrgStore.getState().saafDraft
   const reservationDraft = useOrgStore.getState().reservationDraft
+  const editingEventId = useOrgStore.getState().editingEventId
+  const editingSubmissionId = useOrgStore.getState().editingSubmissionId
 
   if (!saafDraft) {
     return {
@@ -31,13 +33,25 @@ export async function action({
   }
 
   try {
-    const payload = buildSaafApiPayload(saafDraft, reservationDraft)
-    await apiClient.post("/students/submissions", payload)
+    const payload = buildSaafApiPayload(
+      saafDraft,
+      reservationDraft,
+      editingEventId ?? undefined
+    )
 
-    // Clear drafts from Zustand client store
+    if (editingEventId && editingSubmissionId) {
+      await apiClient.put(
+        `/students/events/${editingEventId}/submissions/${editingSubmissionId}`,
+        omitEventIdFromPayload(payload)
+      )
+    } else {
+      await apiClient.post("/students/submissions", payload)
+    }
+
     useOrgStore.getState().clearSaafDraft()
     useOrgStore.getState().clearReservationDraft()
     useOrgStore.getState().clearSubmissionStart()
+    useOrgStore.getState().clearEditingSubmission()
 
     // Invalidate server queries
     queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })

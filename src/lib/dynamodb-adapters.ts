@@ -1,5 +1,12 @@
-import type { SaafDraft } from "@/components/submission/types"
+import { DEFAULT_RESERVATION_DRAFT } from "@/components/reservation/constants"
 import type { ReservationDraft } from "@/components/reservation/types"
+import {
+  createEmptyProponent,
+  DEFAULT_BUDGET_ITEMS,
+  DEFAULT_SAAF_DRAFT,
+} from "@/components/submission/constants"
+import type { SaafDraft } from "@/components/submission/types"
+import type { Activity } from "@/components/ui/activity.types"
 
 /**
  * Backend API Submission shape returned by Laravel DynamoDB routes
@@ -321,4 +328,442 @@ export function getSubmissionStatusMeta(status: string) {
     default:
       return { label: "Under Review", color: "bg-amber-500/10 text-amber-600 border-amber-200" }
   }
+}
+
+export type DashboardSubmissionStatus = "Under Review" | "Approved" | "Returned"
+
+export interface DashboardSubmissionRow {
+  event_id: string
+  submission_id: string
+  id: string
+  activity_classification: string
+  current_signatory: string
+  target_date: string
+  requires_venue: boolean
+  submitted_date: string
+  api_status: "pending" | "approved" | "denied"
+  activity_details: {
+    title: string
+    description: string
+    venue: string
+    date: string
+    time?: string
+    expected_attendees?: number
+    budget?: string
+    proponent?: string
+    requirements?: string[]
+  }
+  status: DashboardSubmissionStatus
+  statusColor: string
+}
+
+export interface AppealRow {
+  id: string
+  appeal_id: string
+  event_id: string
+  submission_id: string
+  title: string
+  date: string
+  department: string
+  status: string
+  statusColor: string
+  comment: string
+  resolution?: string | null
+}
+
+export interface TrackerAssignee {
+  role: string
+  name: string
+  statusText: string
+  state: "completed" | "current" | "queued"
+}
+
+export interface TrackerStepper {
+  fullSteps: string[]
+  currentStepIdx: number
+  isAllApproved: boolean
+  progressPercent: number
+  remainingSteps: number
+  assigneesList: TrackerAssignee[]
+}
+
+export interface DeadlineReminder {
+  id: string
+  section: "Important" | "Upcoming"
+  dateStr: string
+  title: string
+  code: string
+  statusText: string
+  dueDateText: string
+  isUrgent: boolean
+}
+
+export function formatDisplayDate(value?: string | null): string {
+  if (!value) return "—"
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleDateString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  })
+}
+
+function formatProponentName(
+  proponent?: NonNullable<ApiSubmission["proponents"]>[number]
+): string {
+  if (!proponent) return ""
+  return [proponent.first_name, proponent.middle_name, proponent.last_name]
+    .filter(Boolean)
+    .join(" ")
+    .trim()
+}
+
+export function apiSubmissionToDashboardRow(submission: ApiSubmission): DashboardSubmissionRow {
+  const meta = getSubmissionStatusMeta(submission.status)
+  const firstProponent = submission.proponents?.[0]
+  const title = submission.activity_details?.title_and_nature || "Untitled activity"
+  const budget = submission.activity_details?.proposed_budget
+
+  return {
+    event_id: submission.event_id,
+    submission_id: submission.submission_id,
+    id: submission.submission_id,
+    activity_classification: submission.activity_classification?.activity_type || "extra-curricular",
+    current_signatory: submission.current_signatory || "—",
+    target_date: submission.activity_details?.date_of_event || submission.sent_at,
+    requires_venue: Boolean(submission.venue_reservation?.has_reservation),
+    submitted_date: formatDisplayDate(submission.sent_at),
+    api_status: submission.status,
+    activity_details: {
+      title,
+      description: submission.activity_details?.description || "",
+      venue: submission.activity_details?.venue || "—",
+      date: formatDisplayDate(submission.activity_details?.date_of_event),
+      time: submission.activity_details?.time_of_event || "",
+      expected_attendees: submission.activity_details?.expected_participants,
+      budget: typeof budget === "number" ? `₱${budget.toLocaleString("en-PH")}` : "—",
+      proponent: formatProponentName(firstProponent) || firstProponent?.org_or_course_section || "",
+      requirements: [],
+    },
+    status: meta.label as DashboardSubmissionStatus,
+    statusColor: meta.color,
+  }
+}
+
+export function apiSubmissionToActivity(submission: ApiSubmission): Activity {
+  const firstProponent = submission.proponents?.[0]
+  const title = submission.activity_details?.title_and_nature || "Untitled activity"
+  const budget = submission.activity_details?.proposed_budget
+  const objectivesText = submission.activity_details?.objectives || ""
+  const objectives = objectivesText
+    .split(/\n+/)
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const separator = line.indexOf(":")
+      if (separator > 0) {
+        return {
+          title: line.slice(0, separator).trim(),
+          description: line.slice(separator + 1).trim(),
+        }
+      }
+      return { title: "Objective", description: line }
+    })
+
+  const decision =
+    submission.status === "denied"
+      ? "Return"
+      : submission.status === "approved"
+        ? "Review"
+        : "Review"
+
+  const status =
+    submission.status === "approved"
+      ? "Accepted"
+      : submission.status === "denied"
+        ? "Returned"
+        : "Review"
+
+  return {
+    id: `${submission.event_id}:${submission.submission_id}`,
+    eventId: submission.event_id,
+    submissionId: submission.submission_id,
+    title,
+    org: firstProponent?.org_or_course_section || "Organization",
+    department: firstProponent?.department || "—",
+    date: formatDisplayDate(submission.activity_details?.date_of_event),
+    time: submission.activity_details?.time_of_event || "",
+    submittedDate: formatDisplayDate(submission.sent_at),
+    representative: formatProponentName(firstProponent) || "—",
+    type: submission.activity_classification?.activity_type || "extra-curricular",
+    decision,
+    status,
+    description: submission.activity_details?.description || "No description provided.",
+    venue: submission.activity_details?.venue || "—",
+    expectedParticipants: submission.activity_details?.expected_participants || 0,
+    proposedBudget:
+      typeof budget === "number" ? `₱${budget.toLocaleString("en-PH")}` : "—",
+    proponents: (submission.proponents || []).map((proponent) => ({
+      role: proponent.position_title || proponent.position_of_applicant || "Proponent",
+      name: formatProponentName(proponent) || proponent.student_number || "—",
+    })),
+    objectives:
+      objectives.length > 0
+        ? objectives
+        : [{ title: "Objective", description: "No objectives listed." }],
+  }
+}
+
+export function apiNotificationsToStepper(
+  notifications: ApiNotification[],
+  currentSignatory?: string,
+  apiStatus?: ApiSubmission["status"]
+): TrackerStepper {
+  const sorted = [...notifications].sort((a, b) => a.sent_at.localeCompare(b.sent_at))
+  const fullyApproved = sorted.some((item) => item.notif_type === "fully approved")
+  const isAllApproved = fullyApproved || apiStatus === "approved"
+
+  const roles: string[] = []
+  for (const item of sorted) {
+    if (item.signatory && !roles.includes(item.signatory)) {
+      roles.push(item.signatory)
+    }
+  }
+  if (currentSignatory && currentSignatory !== "—" && !roles.includes(currentSignatory)) {
+    roles.push(currentSignatory)
+  }
+  if (roles.length === 0) {
+    roles.push("Adviser")
+  }
+
+  const fullSteps = [...roles, "Approved"]
+  const latestBySignatory = new Map<string, ApiNotification>()
+  for (const item of sorted) {
+    latestBySignatory.set(item.signatory, item)
+  }
+
+  let currentStepIdx = roles.findIndex((role) => role === currentSignatory)
+  if (isAllApproved) {
+    currentStepIdx = roles.length
+  } else if (currentStepIdx === -1) {
+    const denied = [...sorted].reverse().find((item) => item.notif_type === "denied")
+    currentStepIdx = denied ? Math.max(0, roles.indexOf(denied.signatory)) : 0
+  }
+
+  const assigneesList: TrackerAssignee[] = roles.map((role, idx) => {
+    const latest = latestBySignatory.get(role)
+    let state: TrackerAssignee["state"] = "queued"
+    let statusText = idx === 0 ? "Queued" : `Queued (Awaiting ${roles[idx - 1]})`
+
+    if (isAllApproved || idx < currentStepIdx) {
+      state = "completed"
+      statusText = latest
+        ? `${latest.notif_type} (${formatDisplayDate(latest.sent_at)})`
+        : "Approved"
+    } else if (idx === currentStepIdx) {
+      state = "current"
+      if (latest?.notif_type === "denied" || apiStatus === "denied") {
+        statusText = latest?.comment
+          ? `Returned for revision — ${latest.comment}`
+          : "Returned for revision"
+      } else {
+        statusText = "Pending signature (in review)"
+      }
+    }
+
+    return { role, name: role, statusText, state }
+  })
+
+  assigneesList.push({
+    role: "System",
+    name: "System sign-off",
+    statusText: isAllApproved ? "Approved" : "Queued (pending all signatures)",
+    state: isAllApproved ? "completed" : "queued",
+  })
+
+  const completedCount = isAllApproved ? roles.length : Math.max(0, currentStepIdx)
+  const remainingSteps = Math.max(0, roles.length - completedCount)
+
+  return {
+    fullSteps,
+    currentStepIdx: isAllApproved ? roles.length : currentStepIdx,
+    isAllApproved,
+    progressPercent: Math.round((completedCount / roles.length) * 100),
+    remainingSteps,
+    assigneesList,
+  }
+}
+
+export function apiAppealToRow(appeal: ApiAppeal, title?: string): AppealRow {
+  const resolved = appeal.status === "resolved"
+  const statusLabel = resolved
+    ? appeal.resolution === "overturned"
+      ? "Approved"
+      : "Returned"
+    : "Under Review"
+  const meta = getSubmissionStatusMeta(
+    resolved ? (appeal.resolution === "overturned" ? "approved" : "denied") : "pending"
+  )
+
+  return {
+    id: appeal.appeal_id,
+    appeal_id: appeal.appeal_id,
+    event_id: appeal.event_id,
+    submission_id: appeal.submission_id,
+    title: title || appeal.submission_id,
+    date: formatDisplayDate(appeal.sent_at),
+    department: appeal.signatory_destination || "Dean",
+    status: statusLabel,
+    statusColor: meta.color,
+    comment: appeal.comment,
+    resolution: appeal.resolution ?? null,
+  }
+}
+
+export function apiDeadlinesToReminders(
+  deadlines: ApiDeadline[],
+  submissions: ApiSubmission[]
+): DeadlineReminder[] {
+  const titleByEvent = new Map(
+    submissions.map((submission) => [
+      submission.event_id,
+      submission.activity_details?.title_and_nature || submission.submission_id,
+    ])
+  )
+  const now = Date.now()
+  const weekMs = 7 * 24 * 60 * 60 * 1000
+
+  return deadlines.map((deadline) => {
+    const due = new Date(deadline.deadline)
+    const dueMs = due.getTime()
+    const isUrgent = !Number.isNaN(dueMs) && dueMs - now <= weekMs
+    return {
+      id: deadline.deadline_id,
+      section: isUrgent ? "Important" : "Upcoming",
+      dateStr: formatDisplayDate(deadline.sent_at),
+      title: titleByEvent.get(deadline.event_id) || "Upcoming deadline",
+      code: deadline.event_id,
+      statusText: isUrgent ? "Action needed before the deadline" : "Scheduled deadline",
+      dueDateText: formatDisplayDate(deadline.deadline),
+      isUrgent,
+    }
+  })
+}
+
+export function apiSubmissionToDrafts(submission: ApiSubmission): {
+  saaf: SaafDraft
+  reservation: ReservationDraft
+  hasReservation: boolean
+} {
+  const proponents = (submission.proponents || []).map((proponent, index) => ({
+    id: proponent.id || String(index + 1),
+    position: proponent.position_title || "",
+    firstName: proponent.first_name || "",
+    middleName: proponent.middle_name || "",
+    lastName: proponent.last_name || "",
+    suffix: proponent.suffix || "",
+    studentNumber: proponent.student_number || "",
+    programAndYear: proponent.program_and_year || "",
+    dateOfSubmission: proponent.date_of_submission || "",
+    department: proponent.department || "",
+    positionOfApplicant: proponent.position_of_applicant || "",
+    orgOrCourseSection: proponent.org_or_course_section || "",
+    contactNumber: proponent.contact_number || "",
+    emailAddress: proponent.email_address || "",
+    facebookLink: proponent.facebook_link || "",
+  }))
+
+  const departmentValues = Object.fromEntries(
+    proponents.map((proponent) => [proponent.id, proponent.department])
+  )
+
+  const budgetItems =
+    submission.detailed_budget_proposal?.items?.map((item, index) => ({
+      id: String(index + 1),
+      item: item.item_no || String(index + 1),
+      unit: String(item.unit ?? 1),
+      quantity: String(item.quantity ?? 0),
+      pricePerUnit: String(item.price_per_unit ?? 0),
+    })) || DEFAULT_BUDGET_ITEMS
+
+  const reservationSource = submission.venue_reservation
+  const equipment = reservationSource?.equipment_requested
+  const reservation: ReservationDraft = {
+    equipment: {
+      monoblock: Boolean(equipment?.monoblock_chairs),
+      whiteboards: Boolean(equipment?.whiteboards),
+      tables: Boolean(equipment?.tables),
+      rostrum: Boolean(equipment?.rostrum),
+      flags: Boolean(equipment?.flags_with_stand),
+      panelBoards: Boolean(equipment?.panel_boards),
+      others: Boolean(equipment?.others_specified),
+    },
+    otherEquipmentText: equipment?.others_specified || "",
+    purpose: reservationSource?.general_facilities?.purpose || "",
+    functionRoomPurpose: reservationSource?.function_rooms?.purpose || "",
+    avPurpose: reservationSource?.audiovisual_equipment?.purpose || "",
+    facilityItems: reservationSource?.general_facilities?.items?.length
+      ? reservationSource.general_facilities.items.map((item, index) => ({
+          id: String(index + 1),
+          item: item.item,
+          dateOfUse: item.date_of_use,
+          timeOfUse: item.time_of_use,
+          location: item.location,
+        }))
+      : DEFAULT_RESERVATION_DRAFT.facilityItems,
+    roomItems: reservationSource?.function_rooms?.items?.length
+      ? reservationSource.function_rooms.items.map((item, index) => ({
+          id: String(index + 1),
+          dateNeeded: item.date_needed,
+          timeNeeded: item.time_needed,
+          roomNeeded: item.room_needed,
+          remarks: item.remarks || "",
+        }))
+      : DEFAULT_RESERVATION_DRAFT.roomItems,
+    avItems: reservationSource?.audiovisual_equipment?.items?.length
+      ? reservationSource.audiovisual_equipment.items.map((item, index) => ({
+          id: String(index + 1),
+          dateNeeded: item.date_needed,
+          timeNeeded: item.time_needed,
+          equipmentNeeded: item.equipment_needed,
+          remarks: item.remarks || "",
+        }))
+      : DEFAULT_RESERVATION_DRAFT.avItems,
+  }
+
+  return {
+    saaf: {
+      ...DEFAULT_SAAF_DRAFT,
+      activityType: submission.activity_classification?.activity_type || DEFAULT_SAAF_DRAFT.activityType,
+      totalOrgMembers: String(submission.activity_classification?.total_org_members ?? ""),
+      expectedParticipants: String(submission.activity_details?.expected_participants ?? ""),
+      individualContribution: String(submission.activity_details?.individual_contribution ?? ""),
+      proposedBudget: String(submission.activity_details?.proposed_budget ?? ""),
+      dayOfEvent: submission.activity_details?.day_of_event || "",
+      departmentValues,
+      activityTitle: submission.activity_details?.title_and_nature || "",
+      activityDescription: submission.activity_details?.description || "",
+      activityObjectives: submission.activity_details?.objectives || "",
+      activityVenue: submission.activity_details?.venue || "",
+      dateOfEvent: submission.activity_details?.date_of_event || "",
+      timeOfEvent: submission.activity_details?.time_of_event || "",
+      mission1: Boolean(submission.institutional_alignment?.mission_statements?.competitive),
+      mission2: Boolean(submission.institutional_alignment?.mission_statements?.research),
+      mission3: Boolean(submission.institutional_alignment?.mission_statements?.solutions),
+      coreValuesExplanation: submission.institutional_alignment?.core_values_explanation || "",
+      peoExplanation: submission.institutional_alignment?.peo_explanation || "",
+      sdgExplanation: submission.institutional_alignment?.sdg_explanation || "",
+      proponents: proponents.length > 0 ? proponents : [createEmptyProponent("1")],
+      budgetItems,
+    },
+    reservation,
+    hasReservation: Boolean(reservationSource?.has_reservation),
+  }
+}
+
+export function omitEventIdFromPayload<T extends { event_id?: string }>(payload: T) {
+  const rest = { ...payload }
+  delete rest.event_id
+  return rest
 }

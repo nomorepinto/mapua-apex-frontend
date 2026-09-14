@@ -1,4 +1,4 @@
-import { Navigate } from "react-router"
+import { Navigate, useSearchParams } from "react-router"
 import { useRef } from "react"
 
 import { AvTable } from "@/components/reservation/av-table"
@@ -14,12 +14,19 @@ import { useOrgStore } from "@/stores/org-store"
 
 export function Reservation() {
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  const [searchParams] = useSearchParams()
   const formRef = useRef<HTMLFormElement>(null)
   const form = useReservationForm()
   const { draft } = form
 
   if (reserveFacilities !== "yes") {
-    return <Navigate to="/students/submissions/saaf" replace />
+    const query = searchParams.toString()
+    return (
+      <Navigate
+        to={`/students/submissions/saaf${query ? `?${query}` : ""}`}
+        replace
+      />
+    )
   }
 
   return (

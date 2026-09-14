@@ -31,10 +31,16 @@ export function SubmissionsStart() {
     }
 
     const existingDraft = useOrgStore.getState().saafDraft
+    const wasEditing = Boolean(useOrgStore.getState().editingEventId)
+    useOrgStore.getState().clearEditingSubmission()
+    if (wasEditing) {
+      useOrgStore.getState().clearSaafDraft()
+      useOrgStore.getState().clearReservationDraft()
+    }
     useOrgStore.getState().setSubmissionStart(name, reserveFacilities)
     useOrgStore.getState().setSaafDraft({
       ...DEFAULT_SAAF_DRAFT,
-      ...existingDraft,
+      ...(wasEditing ? {} : existingDraft ?? {}),
       activityTitle: name,
     })
     navigate("/students/submissions/saaf")

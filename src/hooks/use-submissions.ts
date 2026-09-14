@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 import type {
   ApiSubmission,
@@ -117,26 +117,60 @@ export function useCreateSubmissionMutation() {
 }
 
 /**
+ * Fetch appeals for every denied submission in parallel.
+ */
+export function useDeniedSubmissionAppealsQuery(
+  submissions: ApiSubmission[],
+  enabled = true
+) {
+  const denied = submissions.filter((submission) => submission.status === "denied")
+
+  return useQueries({
+    queries: denied.map((submission) => ({
+      queryKey: SUBMISSION_KEYS.appeals(submission.event_id, submission.submission_id),
+      queryFn: async () => {
+        const res = await apiClient.get<{ data: ApiAppeal[] }>(
+          `/students/events/${submission.event_id}/submissions/${submission.submission_id}/appeals`
+        )
+        return {
+          submission,
+          appeals: res.data || [],
+        }
+      },
+      enabled,
+    })),
+  })
+}
+
+/**
  * Mutation to update/resubmit a denied or pending submission
  */
-export function useUpdateSubmissionMutation(eventId: string, submissionId: string) {
+export function useUpdateSubmissionMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: unknown) => {
+    mutationFn: async ({
+      eventId,
+      submissionId,
+      payload,
+    }: {
+      eventId: string
+      submissionId: string
+      payload: unknown
+    }) => {
       const res = await apiClient.put<{ data: ApiSubmission }>(
         `/students/events/${eventId}/submissions/${submissionId}`,
         payload
       )
       return res.data
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })
       queryClient.invalidateQueries({
-        queryKey: SUBMISSION_KEYS.detail(eventId, submissionId),
+        queryKey: SUBMISSION_KEYS.detail(variables.eventId, variables.submissionId),
       })
       queryClient.invalidateQueries({
-        queryKey: SUBMISSION_KEYS.notifications(eventId, submissionId),
+        queryKey: SUBMISSION_KEYS.notifications(variables.eventId, variables.submissionId),
       })
     },
   })

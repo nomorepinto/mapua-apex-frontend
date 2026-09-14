@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState, type MouseEvent } from "react"
-import { useFetcher, useNavigate, useNavigation } from "react-router"
+import { useFetcher, useNavigate, useNavigation, useSearchParams } from "react-router"
 
 import { useScrollToTop } from "@/hooks/use-scroll-to-top"
+import { useHydrateEditingSubmission } from "@/hooks/use-hydrate-editing-submission"
 import {
   createEmptyProponent,
   DEFAULT_SAAF_DRAFT,
@@ -23,8 +24,10 @@ import { useOrgStore } from "@/stores/org-store"
 export function useSaafForm() {
   const navigate = useNavigate()
   const navigation = useNavigation()
+  const [searchParams] = useSearchParams()
   const fetcher = useFetcher<SubmissionActionData>()
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  useHydrateEditingSubmission()
   const isSubmitting =
     navigation.state === "submitting" || fetcher.state === "submitting"
 
@@ -44,6 +47,7 @@ export function useSaafForm() {
       useOrgStore.getState().clearSaafDraft()
       useOrgStore.getState().clearReservationDraft()
       useOrgStore.getState().clearSubmissionStart()
+      useOrgStore.getState().clearEditingSubmission()
     }
   }, [fetcher.data?.success])
 
@@ -142,9 +146,10 @@ export function useSaafForm() {
   const handleGoToReservation = useCallback(
     (form: HTMLFormElement | null) => {
       if (form && !form.reportValidity()) return
-      navigate("/students/submissions/saaf/reservations")
+      const query = searchParams.toString()
+      navigate(`/students/submissions/saaf/reservations${query ? `?${query}` : ""}`)
     },
-    [navigate]
+    [navigate, searchParams]
   )
 
   const handleInitiateSubmit = useCallback(

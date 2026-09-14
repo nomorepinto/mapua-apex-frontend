@@ -1,12 +1,25 @@
 /**
  * APEX API Client
- * 
- * Provides type-safe HTTP communication with the Laravel backend.
- * Automatically injects the Cognito JWT Bearer token from the OIDC session.
- * Does NOT require or expose static API keys on the frontend.
+ *
+ * Sends the Cognito ID token and the matching role X-Api-Key required by /api/v1.
  */
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "/api/v1"
+
+const API_TOKEN_STUDENT = import.meta.env.VITE_API_TOKEN_STUDENT as string | undefined
+const API_TOKEN_SIGNATORY = import.meta.env.VITE_API_TOKEN_SIGNATORY as
+  | string
+  | undefined
+const API_TOKEN_ADMIN = import.meta.env.VITE_API_TOKEN_ADMIN as string | undefined
+
+const ADMIN_GROUPS = new Set(["admin", "osaar", "Admin", "OSAAR"])
+const SIGNATORY_GROUPS = new Set([
+  "signatory",
+  "CDM_Reviewer",
+  "Dean",
+  "ORG_Adviser",
+])
+const STUDENT_GROUPS = new Set(["student", "ORG_Submitter"])
 
 export class ApiError extends Error {
   status: number
@@ -20,6 +33,54 @@ export class ApiError extends Error {
   }
 }
 
+function decodeJwtPayload(token: string): Record<string, unknown> | null {
+  try {
+    const payload = token.split(".")[1]
+    if (!payload) return null
+    const padded = payload.replace(/-/g, "+").replace(/_/g, "/")
+    const padLength = (4 - (padded.length % 4)) % 4
+    const json = atob(padded + "=".repeat(padLength))
+    return JSON.parse(json) as Record<string, unknown>
+  } catch {
+    return null
+  }
+}
+
+function getCognitoGroups(token: string | null): string[] {
+  if (!token) return []
+  const payload = decodeJwtPayload(token)
+  const groups = payload?.["cognito:groups"]
+  if (Array.isArray(groups)) return groups.map(String)
+  if (typeof groups === "string") return [groups]
+  return []
+}
+
+function groupsOverlap(groups: string[], allowed: Set<string>): boolean {
+  return groups.some((group) => allowed.has(group))
+}
+
+function isEndpoint(endpoint: string, prefix: string): boolean {
+  const path = endpoint.replace(/^\//, "")
+  return path.startsWith(prefix)
+}
+
+/**
+ * Pick the role API key from Cognito groups, falling back to the request path.
+ * Admin tokens may also be used on student and signatory routes.
+ */
+export function getApiKeyForRequest(endpoint: string, token: string | null): string | undefined {
+  const groups = getCognitoGroups(token)
+
+  if (groupsOverlap(groups, ADMIN_GROUPS)) return API_TOKEN_ADMIN
+  if (groupsOverlap(groups, SIGNATORY_GROUPS)) return API_TOKEN_SIGNATORY
+  if (groupsOverlap(groups, STUDENT_GROUPS)) return API_TOKEN_STUDENT
+
+  if (isEndpoint(endpoint, "admins/")) return API_TOKEN_ADMIN
+  if (isEndpoint(endpoint, "signatories/")) return API_TOKEN_SIGNATORY
+  if (isEndpoint(endpoint, "students/")) return API_TOKEN_STUDENT
+
+  return API_TOKEN_ADMIN
+}
 
 /**
  * Retrieves the current Cognito ID token from OIDC session storage.
@@ -37,8 +98,8 @@ export function getCognitoIdToken(): string | null {
         const raw = storage.getItem(storageKey)
         if (raw) {
           const parsed = JSON.parse(raw)
-          if (parsed.id_token || parsed.access_token) {
-            return parsed.id_token || parsed.access_token
+          if (parsed.id_token) {
+            return parsed.id_token as string
           }
         }
       }
@@ -49,8 +110,8 @@ export function getCognitoIdToken(): string | null {
           const raw = storage.getItem(key)
           if (raw) {
             const parsed = JSON.parse(raw)
-            if (parsed.id_token || parsed.access_token) {
-              return parsed.id_token || parsed.access_token
+            if (parsed.id_token) {
+              return parsed.id_token as string
             }
           }
         }
@@ -87,6 +148,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   }
 
   const token = getCognitoIdToken()
+  const apiKey = getApiKeyForRequest(endpoint, token)
 
   const reqHeaders: Record<string, string> = {
     "Content-Type": "application/json",
@@ -96,6 +158,10 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
 
   if (token) {
     reqHeaders["Authorization"] = `Bearer ${token}`
+  }
+
+  if (apiKey) {
+    reqHeaders["X-Api-Key"] = apiKey
   }
 
   const response = await fetch(url, {
@@ -112,20 +178,18 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
     }
 
     const message =
-      (typeof errorData === "object" && errorData !== null && "message" in errorData)
+      typeof errorData === "object" && errorData !== null && "message" in errorData
         ? String((errorData as { message: unknown }).message)
         : `Request failed with status ${response.status}`
 
     throw new ApiError(message, response.status, errorData)
   }
 
-  // If status is 204 No Content
   if (response.status === 204) {
     return {} as T
   }
 
   const json = await response.json()
-  // If wrapped in Laravel's standard data property, return unwrapped or as defined
   return json as T
 }
 
