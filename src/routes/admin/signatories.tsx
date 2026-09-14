@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react"
 import { CircleAlertIcon, DownloadIcon, PlusIcon, StampIcon } from "lucide-react"
-import { Link } from "react-router"
 
 import { CsvFileField } from "@/components/admin-osa/csv-file-field"
 import {
   SIGNATORY_ROLE_ITEMS,
+  compareSignatoriesByRole,
   signatoryRoleLabel,
+  takenSingletonRoles,
   type SignatoryRoleValue,
 } from "@/components/admin-osa/signatory-roles"
 import { FormPageHeader } from "@/components/forms/form-page-header"
@@ -26,16 +27,17 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
-  Combobox,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-  ComboboxPopup,
-} from "@/components/ui/combobox"
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   Empty,
-  EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
@@ -69,195 +71,235 @@ import { toastManager } from "@/components/ui/toast"
 import {
   useBulkCreateSignatoriesMutation,
   useCreateSignatoryMutation,
-  useOrganizationsQuery,
   useSignatoriesQuery,
+  useUpdateSignatoryMutation,
 } from "@/hooks/use-admin"
-import type { ApiOrganization, ApiSignatory } from "@/lib/dynamodb-adapters"
+import { DEPARTMENT_ITEMS, departmentLabel } from "@/lib/departments"
+import {
+  buildSignatoryPayload,
+  type ApiSignatory,
+} from "@/lib/dynamodb-adapters"
 import {
   downloadCsvTemplate,
   parseSignatoryCsv,
   type SignatoryCsvRow,
 } from "@/lib/parse-csv"
 
-type OrgOption = { label: string; value: string }
+const EMPTY_SIGNATORIES: ApiSignatory[] = []
 
 const ROLE_ITEMS = SIGNATORY_ROLE_ITEMS.map((item) => ({ ...item }))
+const DEPT_ITEMS = DEPARTMENT_ITEMS.map((item) => ({ ...item }))
 
-function resolveOrganization(
-  orgs: ApiOrganization[],
-  value: string
-): ApiOrganization | undefined {
-  const needle = value.trim().toLowerCase()
-  return orgs.find(
-    (org) =>
-      org.organization_id.toLowerCase() === needle ||
-      org.name.toLowerCase() === needle
+type DepartmentOption = { label: string; value: string }
+
+const NO_DEPARTMENT: DepartmentOption = {
+  label: "No department",
+  value: "",
+}
+
+const SIGNATORY_CSV_TEMPLATE =
+  "name,role,department\nProf. Juan Dela Cruz,adviser,\nDean Maria Santos,dean,SOIT\nMaria Santos,admin,\nEngr. Leo Cruz,cdm,\nAtty. Kim Ramos,osaar,\n"
+
+function departmentOption(code?: string | null): DepartmentOption | null {
+  if (!code) {
+    return null
+  }
+  const needle = code.trim().toUpperCase()
+  return (
+    DEPT_ITEMS.find((item) => item.value === needle) ?? {
+      label: needle,
+      value: needle,
+    }
   )
 }
 
-function RoleCell({ people }: { people: ApiSignatory[] }) {
-  if (people.length === 0) {
-    return <span className="text-muted-foreground">—</span>
-  }
+function DepartmentSelect({
+  items,
+  onValueChange,
+  value,
+}: {
+  items: DepartmentOption[]
+  onValueChange: (value: DepartmentOption | null) => void
+  value: DepartmentOption | null
+}) {
+  const selectItems = [NO_DEPARTMENT, ...items]
+  const selected = value && value.value ? value : NO_DEPARTMENT
 
   return (
-    <div className="flex flex-col gap-1 whitespace-normal">
-      {people.map((person) => (
-        <span key={person.signatory_id}>{person.name}</span>
-      ))}
-    </div>
+    <Field>
+      <FieldLabel>Department</FieldLabel>
+      <Select
+        itemToStringValue={(item) => item.value}
+        items={selectItems}
+        name="department"
+        onValueChange={(item) =>
+          onValueChange(item && item.value ? item : null)
+        }
+        value={selected}
+      >
+        <SelectTrigger>
+          <SelectValue placeholder="Optional" />
+        </SelectTrigger>
+        <SelectPopup>
+          {selectItems.map((item) => (
+            <SelectItem key={item.value || "none"} value={item}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectPopup>
+      </Select>
+      <FieldDescription>
+        Optional. Stored uppercase and used only for deans (
+        <code>ROLE#DEAN#SOIT</code>).
+      </FieldDescription>
+    </Field>
   )
 }
 
 export function AdminSignatoriesPage() {
-  const orgsQuery = useOrganizationsQuery()
   const signatoriesQuery = useSignatoriesQuery()
   const createSignatory = useCreateSignatoryMutation()
+  const updateSignatory = useUpdateSignatoryMutation()
   const bulkCreate = useBulkCreateSignatoriesMutation()
 
   const [name, setName] = useState("")
   const [role, setRole] = useState<SignatoryRoleValue | null>(null)
-  const [organization, setOrganization] = useState<OrgOption | null>(null)
+  const [department, setDepartment] = useState<DepartmentOption | null>(null)
   const [formError, setFormError] = useState("")
   const [csvError, setCsvError] = useState("")
   const [csvFileName, setCsvFileName] = useState("")
-  const [csvOrganizations, setCsvOrganizations] = useState<string[]>([])
   const [csvRecords, setCsvRecords] = useState<SignatoryCsvRow[]>([])
-  const [csvMode, setCsvMode] = useState<"organizations" | "records" | null>(
-    null
-  )
+  const [csvParseErrors, setCsvParseErrors] = useState<string[]>([])
   const [search, setSearch] = useState("")
+  const [editing, setEditing] = useState<ApiSignatory | null>(null)
+  const [editName, setEditName] = useState("")
+  const [editRole, setEditRole] = useState<SignatoryRoleValue | null>(null)
+  const [editDepartment, setEditDepartment] =
+    useState<DepartmentOption | null>(null)
+  const [editError, setEditError] = useState("")
 
-  const organizations = orgsQuery.data ?? []
-  const signatories = signatoriesQuery.data ?? []
+  const signatories = signatoriesQuery.data ?? EMPTY_SIGNATORIES
+  const takenRoles = takenSingletonRoles(signatories)
 
-  const orgItems = useMemo<OrgOption[]>(
-    () =>
-      organizations.map((org) => ({
-        label: org.name,
-        value: org.organization_id,
-      })),
-    [organizations]
+  const roleItems = useMemo(
+    () => ROLE_ITEMS.filter((item) => !takenRoles.has(item.value)),
+    [takenRoles]
+  )
+  const selectedRole = roleItems.find((item) => item.value === role) ?? null
+
+  const editRoleItems = useMemo(() => {
+    const taken = takenSingletonRoles(signatories, editing?.signatory_id)
+    return ROLE_ITEMS.filter((item) => !taken.has(item.value))
+  }, [editing?.signatory_id, signatories])
+  const selectedEditRole =
+    editRoleItems.find((item) => item.value === editRole) ?? null
+
+  const departmentItems = useMemo(() => {
+    if (
+      department &&
+      !DEPT_ITEMS.some((item) => item.value === department.value)
+    ) {
+      return [department, ...DEPT_ITEMS]
+    }
+    return DEPT_ITEMS
+  }, [department])
+
+  const editDepartmentItems = useMemo(() => {
+    if (
+      editDepartment &&
+      !DEPT_ITEMS.some((item) => item.value === editDepartment.value)
+    ) {
+      return [editDepartment, ...DEPT_ITEMS]
+    }
+    return DEPT_ITEMS
+  }, [editDepartment])
+
+  const sortedSignatories = useMemo(
+    () => [...signatories].sort(compareSignatoriesByRole),
+    [signatories]
   )
 
-  const selectedRole = ROLE_ITEMS.find((item) => item.value === role) ?? null
-
-  const orgRows = useMemo(() => {
-    const byId = new Map(
-      organizations.map((org) => [org.organization_id, org] as const)
-    )
-    const ids = new Set([
-      ...byId.keys(),
-      ...signatories.map((person) => person.organization_id),
-    ])
-
-    return [...ids].map((organizationId) => {
-      const assigned = signatories.filter(
-        (person) => person.organization_id === organizationId
-      )
-      return {
-        organization_id: organizationId,
-        name: byId.get(organizationId)?.name ?? "Unknown organization",
-        adviser: assigned.filter((person) => person.role === "adviser"),
-        cdm: assigned.filter((person) => person.role === "cdm"),
-        dean: assigned.filter((person) => person.role === "dean"),
-      }
-    })
-  }, [organizations, signatories])
-
-  const filteredRows = useMemo(() => {
+  const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
     if (!query) {
-      return orgRows
+      return sortedSignatories
     }
-    return orgRows.filter((row) => {
+    return sortedSignatories.filter((person) => {
       const haystack = [
-        row.name,
-        row.organization_id,
-        ...row.adviser.map((person) => person.name),
-        ...row.cdm.map((person) => person.name),
-        ...row.dean.map((person) => person.name),
+        person.name,
+        person.signatory_id,
+        person.role,
+        signatoryRoleLabel(person.role),
+        person.department ?? "",
+        person.department ? departmentLabel(person.department) : "",
       ]
         .join(" ")
         .toLowerCase()
       return haystack.includes(query)
     })
-  }, [orgRows, search])
+  }, [search, sortedSignatories])
 
-  function buildPayloadsFromCsv(): {
-    payloads: Array<{
-      name: string
-      role: SignatoryRoleValue
-      organization_id: string
-    }>
-    errors: string[]
-  } {
-    const errors: string[] = []
-    const payloads: Array<{
-      name: string
-      role: SignatoryRoleValue
-      organization_id: string
-    }> = []
-
-    if (csvMode === "organizations") {
-      if (!name.trim() || !role) {
-        errors.push(
-          "Enter a signatory name and role first. One-column CSVs assign that person to each organization."
-        )
-        return { payloads, errors }
-      }
-
-      for (const orgValue of csvOrganizations) {
-        const org = resolveOrganization(organizations, orgValue)
-        if (!org) {
-          errors.push(`Unknown organization: ${orgValue}`)
-          continue
-        }
-        payloads.push({
-          name: name.trim(),
-          role,
-          organization_id: org.organization_id,
-        })
-      }
-      return { payloads, errors }
+  const csvPayloads = useMemo(() => {
+    const payloads = []
+    const errors: string[] = [...csvParseErrors]
+    const singletonCounts: Record<string, number> = {
+      admin: takenRoles.has("admin") ? 1 : 0,
+      cdm: takenRoles.has("cdm") ? 1 : 0,
+      osaar: takenRoles.has("osaar") ? 1 : 0,
     }
 
     for (const record of csvRecords) {
-      const org = resolveOrganization(organizations, record.organization)
-      if (!org) {
-        errors.push(`Unknown organization: ${record.organization}`)
-        continue
+      if (record.role in singletonCounts) {
+        singletonCounts[record.role] += 1
+        if (singletonCounts[record.role] > 1) {
+          errors.push(
+            `${record.name}: ${signatoryRoleLabel(record.role)} is already registered. Only one is allowed.`
+          )
+          continue
+        }
       }
-      payloads.push({
-        name: record.name,
-        role: record.role,
-        organization_id: org.organization_id,
-      })
+      payloads.push(
+        buildSignatoryPayload(record.name, record.role, record.department)
+      )
     }
 
     return { payloads, errors }
+  }, [csvParseErrors, csvRecords, takenRoles])
+
+  function openEdit(person: ApiSignatory) {
+    setEditing(person)
+    setEditName(person.name)
+    setEditRole(person.role)
+    setEditDepartment(departmentOption(person.department))
+    setEditError("")
   }
 
   async function handleAddOne(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    if (!name.trim() || !role || !organization) {
-      setFormError("Name, role, and organization are required.")
+    if (!name.trim() || !role) {
+      setFormError("Name and role are required.")
+      return
+    }
+    if (takenRoles.has(role)) {
+      setFormError(
+        `${signatoryRoleLabel(role)} is already registered. Only one is allowed.`
+      )
       return
     }
 
     try {
-      await createSignatory.mutateAsync({
-        name: name.trim(),
-        role,
-        organization_id: organization.value,
-      })
+      await createSignatory.mutateAsync(
+        buildSignatoryPayload(name.trim(), role, department?.value)
+      )
+      const addedName = name.trim()
+      const addedRole = role
       setName("")
       setRole(null)
-      setOrganization(null)
+      setDepartment(null)
       setFormError("")
       toastManager.add({
         title: "Signatory added",
-        description: `${name.trim()} is now ${signatoryRoleLabel(role)} for ${organization.label}.`,
+        description: `${addedName} is now registered as ${signatoryRoleLabel(addedRole)}.`,
         type: "success",
       })
     } catch (error) {
@@ -270,7 +312,7 @@ export function AdminSignatoriesPage() {
   }
 
   async function handleCsvImport() {
-    const { payloads, errors } = buildPayloadsFromCsv()
+    const { payloads, errors } = csvPayloads
     if (errors.length > 0 && payloads.length === 0) {
       setCsvError(errors[0])
       return
@@ -303,36 +345,73 @@ export function AdminSignatoriesPage() {
     }
 
     if (result.created.length > 0) {
-      setCsvOrganizations([])
       setCsvRecords([])
+      setCsvParseErrors([])
       setCsvFileName("")
-      setCsvMode(null)
       setCsvError(errors.length > 0 ? errors.join(" ") : "")
     } else if (errors.length > 0) {
       setCsvError(errors.join(" "))
     }
   }
 
-  const csvPreviewCount =
-    csvMode === "records" ? csvRecords.length : csvOrganizations.length
+  async function handleEditSave(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!editing) {
+      return
+    }
+    if (!editName.trim() || !editRole) {
+      setEditError("Name and role are required.")
+      return
+    }
+
+    const taken = takenSingletonRoles(signatories, editing.signatory_id)
+    if (taken.has(editRole)) {
+      setEditError(
+        `${signatoryRoleLabel(editRole)} is already registered. Only one is allowed.`
+      )
+      return
+    }
+
+    try {
+      await updateSignatory.mutateAsync({
+        signatoryId: editing.signatory_id,
+        ...buildSignatoryPayload(
+          editName.trim(),
+          editRole,
+          editDepartment?.value
+        ),
+      })
+      setEditing(null)
+      toastManager.add({
+        title: "Signatory updated",
+        description: `${editName.trim()} was saved.`,
+        type: "success",
+      })
+    } catch (error) {
+      toastManager.add({
+        title: "Could not update signatory",
+        description: error instanceof Error ? error.message : "Request failed.",
+        type: "error",
+      })
+    }
+  }
 
   return (
     <div className="min-h-full w-full bg-background px-4 py-8 text-foreground sm:px-8 lg:px-12">
       <div className="mx-auto max-w-6xl space-y-8">
         <FormPageHeader
-          subtitle="Register advisers, CDM, and deans. Each record writes GSI4 as ROLE#{ROLE}#ORG#{organization_id}."
+          subtitle="Register deans, advisers, and the shared admin, CDM, and OSAAR accounts. Department applies only to deans."
           title="Signatories"
         />
 
-        {orgsQuery.isError || signatoriesQuery.isError ? (
+        {signatoriesQuery.isError ? (
           <Alert variant="error">
             <CircleAlertIcon />
-            <AlertTitle>Could not load directory</AlertTitle>
+            <AlertTitle>Could not load signatories</AlertTitle>
             <AlertDescription>
-              {(orgsQuery.error instanceof Error && orgsQuery.error.message) ||
-                (signatoriesQuery.error instanceof Error &&
-                  signatoriesQuery.error.message) ||
-                "Organizations or signatories failed to load."}
+              {signatoriesQuery.error instanceof Error
+                ? signatoriesQuery.error.message
+                : "The admin signatories list failed to load."}
             </AlertDescription>
           </Alert>
         ) : null}
@@ -342,8 +421,8 @@ export function AdminSignatoriesPage() {
             <CardHeader>
               <CardTitle>Add signatory</CardTitle>
               <CardDescription>
-                Required fields: <code>name</code>, <code>role</code>, and{" "}
-                <code>organization_id</code>.
+                Required fields: <code>name</code> and <code>role</code>.
+                Department is optional for deans.
               </CardDescription>
             </CardHeader>
             <Form className="contents" onSubmit={handleAddOne}>
@@ -363,19 +442,20 @@ export function AdminSignatoriesPage() {
                     type="text"
                     value={name}
                   />
-                  <FieldDescription>
-                    Matches <code>SIGNATORY.name</code>.
-                  </FieldDescription>
                 </Field>
 
                 <Field>
                   <FieldLabel>Role</FieldLabel>
                   <Select
                     itemToStringValue={(item) => item.value}
-                    items={ROLE_ITEMS}
+                    items={roleItems}
                     name="role"
                     onValueChange={(item) => {
-                      setRole(item?.value ?? null)
+                      const nextRole = item?.value ?? null
+                      setRole(nextRole)
+                      if (nextRole !== "dean") {
+                        setDepartment(null)
+                      }
                       if (formError) setFormError("")
                     }}
                     value={selectedRole}
@@ -384,7 +464,7 @@ export function AdminSignatoriesPage() {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectPopup>
-                      {ROLE_ITEMS.map((item) => (
+                      {roleItems.map((item) => (
                         <SelectItem key={item.value} value={item}>
                           {item.label}
                         </SelectItem>
@@ -392,52 +472,27 @@ export function AdminSignatoriesPage() {
                     </SelectPopup>
                   </Select>
                   <FieldDescription>
-                    <code>adviser</code>, <code>cdm</code>, or <code>dean</code>.
+                    Dean, adviser, admin, CDM, or OSAAR. Admin, CDM, and OSAAR
+                    are limited to one account each.
                   </FieldDescription>
                 </Field>
 
-                <Field>
-                  <FieldLabel>Organization</FieldLabel>
-                  <Combobox
-                    disabled={organizations.length === 0}
-                    itemToStringLabel={(item) => item.label}
-                    itemToStringValue={(item) => item.value}
-                    items={orgItems}
-                    onValueChange={(value) => {
-                      setOrganization(value)
-                      if (formError) setFormError("")
-                    }}
-                    value={organization}
-                  >
-                    <ComboboxInput
-                      placeholder={
-                        organizations.length === 0
-                          ? "Add an organization first"
-                          : "Search organizations"
-                      }
-                      showClear
-                    />
-                    <ComboboxPopup>
-                      <ComboboxEmpty>No organizations found.</ComboboxEmpty>
-                      <ComboboxList>
-                        {(item) => (
-                          <ComboboxItem key={item.value} value={item}>
-                            {item.label}
-                          </ComboboxItem>
-                        )}
-                      </ComboboxList>
-                    </ComboboxPopup>
-                  </Combobox>
-                  <FieldDescription>
-                    Links GSI4 to <code>ORGANIZATION#uuid</code>.
-                  </FieldDescription>
-                </Field>
+                {role === "dean" ? (
+                  <DepartmentSelect
+                    items={departmentItems}
+                    onValueChange={setDepartment}
+                    value={department}
+                  />
+                ) : null}
 
-                {organizations.length === 0 && !orgsQuery.isLoading ? (
-                  <Alert variant="warning">
-                    <AlertTitle>No organizations registered</AlertTitle>
+                {takenRoles.size > 0 ? (
+                  <Alert variant="info">
+                    <AlertTitle>Shared accounts registered</AlertTitle>
                     <AlertDescription>
-                      Add organizations before assigning signatories.
+                      {[...takenRoles]
+                        .map((item) => signatoryRoleLabel(item))
+                        .join(", ")}{" "}
+                      already exist and cannot be added again.
                     </AlertDescription>
                   </Alert>
                 ) : null}
@@ -451,11 +506,7 @@ export function AdminSignatoriesPage() {
                 ) : null}
               </CardPanel>
               <CardFooter className="justify-end">
-                <Button
-                  disabled={organizations.length === 0}
-                  loading={createSignatory.isPending}
-                  type="submit"
-                >
+                <Button loading={createSignatory.isPending} type="submit">
                   <PlusIcon aria-hidden="true" />
                   Add signatory
                 </Button>
@@ -465,44 +516,39 @@ export function AdminSignatoriesPage() {
             <CardHeader>
               <CardTitle>Import CSV</CardTitle>
               <CardDescription>
-                One column of organization names (uses the name and role above),
-                or three columns: name, role, organization.
+                Columns: name, role, and optional department for deans.
               </CardDescription>
             </CardHeader>
             <CardPanel className="flex flex-col gap-4">
               <CsvFileField
-                description="One organization per row, or name,role,organization."
+                description="name, role, department."
                 error={csvError}
                 fileName={csvFileName}
                 id="signatories-csv"
                 onFile={(file, text) => {
                   if (!file) {
-                    setCsvOrganizations([])
                     setCsvRecords([])
+                    setCsvParseErrors([])
                     setCsvFileName("")
-                    setCsvMode(null)
                     setCsvError("")
                     return
                   }
                   const parsed = parseSignatoryCsv(text)
                   setCsvFileName(file.name)
-                  setCsvMode(parsed.mode)
-                  setCsvOrganizations(parsed.organizations)
                   setCsvRecords(parsed.records)
+                  setCsvParseErrors(parsed.errors)
                   setCsvError(parsed.errors[0] ?? "")
                 }}
               />
-              {csvPreviewCount > 0 ? (
+              {csvRecords.length > 0 ? (
                 <Alert variant="info">
                   <AlertTitle>
-                    {csvMode === "records"
-                      ? `${csvRecords.length} signatory row${csvRecords.length === 1 ? "" : "s"}`
-                      : `${csvOrganizations.length} organization${csvOrganizations.length === 1 ? "" : "s"}`}
+                    {csvPayloads.payloads.length} signatory row
+                    {csvPayloads.payloads.length === 1 ? "" : "s"}
                   </AlertTitle>
                   <AlertDescription>
-                    {csvMode === "organizations"
-                      ? "Each organization will receive the name and role entered above."
-                      : "Each row includes its own name, role, and organization."}
+                    Extra admin, CDM, or OSAAR rows are skipped. Department is
+                    ignored unless the role is dean.
                   </AlertDescription>
                 </Alert>
               ) : null}
@@ -510,10 +556,7 @@ export function AdminSignatoriesPage() {
             <CardFooter className="justify-between gap-2">
               <Button
                 onClick={() =>
-                  downloadCsvTemplate(
-                    "signatory-organizations.csv",
-                    "organization\nMapua Computing Society\nIEEE Mapua\n"
-                  )
+                  downloadCsvTemplate("signatories.csv", SIGNATORY_CSV_TEMPLATE)
                 }
                 type="button"
                 variant="ghost"
@@ -522,7 +565,7 @@ export function AdminSignatoriesPage() {
                 Template
               </Button>
               <Button
-                disabled={csvPreviewCount === 0}
+                disabled={csvPayloads.payloads.length === 0}
                 loading={bulkCreate.isPending}
                 onClick={handleCsvImport}
                 type="button"
@@ -535,86 +578,95 @@ export function AdminSignatoriesPage() {
 
           <Card className="min-w-0">
             <CardHeader>
-              <CardTitle>Organizations and roles</CardTitle>
+              <CardTitle>Registered signatories</CardTitle>
               <CardDescription>
-                {orgsQuery.isLoading || signatoriesQuery.isLoading
+                {signatoriesQuery.isLoading
                   ? "Loading…"
-                  : `${organizations.length} organization${
-                      organizations.length === 1 ? "" : "s"
-                    } · ${signatories.length} signator${
+                  : `${signatories.length} signator${
                       signatories.length === 1 ? "y" : "ies"
-                    }`}
+                    } · sorted by role · right-click a row to edit`}
               </CardDescription>
               <CardAction>
                 <Input
-                  aria-label="Search organizations and signatories"
+                  aria-label="Search signatories"
                   className="w-full min-w-0 sm:w-56"
                   onChange={(event) => setSearch(event.currentTarget.value)}
-                  placeholder="Search org or signatory"
+                  placeholder="Search name or role"
                   type="search"
                   value={search}
                 />
               </CardAction>
             </CardHeader>
             <CardPanel className="p-0">
-              {orgsQuery.isLoading || signatoriesQuery.isLoading ? (
+              {signatoriesQuery.isLoading ? (
                 <div className="space-y-2 px-6 pb-6">
                   <Skeleton className="h-9 w-full" />
                   <Skeleton className="h-9 w-full" />
                   <Skeleton className="h-9 w-full" />
                 </div>
-              ) : orgRows.length === 0 ? (
+              ) : signatories.length === 0 ? (
                 <Empty className="py-12">
                   <EmptyHeader>
                     <EmptyMedia variant="icon">
                       <StampIcon aria-hidden="true" />
                     </EmptyMedia>
-                    <EmptyTitle>No organizations yet</EmptyTitle>
+                    <EmptyTitle>No signatories yet</EmptyTitle>
                     <EmptyDescription>
-                      Register organizations first, then assign adviser, CDM, and
-                      dean roles.
+                      Add a name and role on the left. Organizations need
+                      shared admin, CDM, and OSAAR accounts before they can be
+                      registered.
                     </EmptyDescription>
                   </EmptyHeader>
-                  <EmptyContent>
-                    <Button render={<Link to="/admin/organizations" />}>
-                      Add organizations
-                    </Button>
-                  </EmptyContent>
                 </Empty>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Organization</TableHead>
-                      <TableHead>Adviser</TableHead>
-                      <TableHead>CDM</TableHead>
-                      <TableHead>Dean</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Department</TableHead>
+                      <TableHead>Signatory ID</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredRows.length === 0 ? (
+                    {filtered.length === 0 ? (
                       <TableRow>
                         <TableCell className="text-muted-foreground" colSpan={4}>
-                          No rows match “{search}”.
+                          No signatories match “{search}”.
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredRows.map((row) => (
-                        <TableRow key={row.organization_id}>
-                          <TableCell className="whitespace-normal">
-                            <div className="font-medium">{row.name}</div>
-                            <Badge className="mt-1" variant="outline">
-                              {row.organization_id}
+                      filtered.map((person) => (
+                        <TableRow
+                          className="cursor-context-menu"
+                          key={person.signatory_id}
+                          onContextMenu={(event) => {
+                            event.preventDefault()
+                            openEdit(person)
+                          }}
+                          title="Right-click to edit"
+                        >
+                          <TableCell className="font-medium whitespace-normal">
+                            {person.name}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {signatoryRoleLabel(person.role)}
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <RoleCell people={row.adviser} />
+                            {person.role === "dean" && person.department ? (
+                              <Badge variant="outline">
+                                {person.department.toUpperCase()}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
                           </TableCell>
                           <TableCell>
-                            <RoleCell people={row.cdm} />
-                          </TableCell>
-                          <TableCell>
-                            <RoleCell people={row.dean} />
+                            <Badge variant="outline">
+                              {person.signatory_id}
+                            </Badge>
                           </TableCell>
                         </TableRow>
                       ))
@@ -626,6 +678,105 @@ export function AdminSignatoriesPage() {
           </Card>
         </div>
       </div>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null)
+            setEditError("")
+          }
+        }}
+        open={editing !== null}
+      >
+        <DialogPopup>
+          <DialogHeader>
+            <DialogTitle>Edit signatory</DialogTitle>
+            <DialogDescription>
+              The signatory ID cannot be changed.
+            </DialogDescription>
+          </DialogHeader>
+          <Form className="contents" onSubmit={handleEditSave}>
+            <DialogPanel className="flex flex-col gap-4">
+              <Field>
+                <FieldLabel htmlFor="edit-signatory-id">
+                  Signatory ID
+                </FieldLabel>
+                <Input
+                  disabled
+                  id="edit-signatory-id"
+                  readOnly
+                  type="text"
+                  value={editing?.signatory_id ?? ""}
+                />
+                <FieldDescription>Generated by the API.</FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="edit-signatory-name">Name</FieldLabel>
+                <Input
+                  autoComplete="off"
+                  id="edit-signatory-name"
+                  onChange={(event) => {
+                    setEditName(event.currentTarget.value)
+                    if (editError) setEditError("")
+                  }}
+                  required
+                  type="text"
+                  value={editName}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Role</FieldLabel>
+                <Select
+                  itemToStringValue={(item) => item.value}
+                  items={editRoleItems}
+                  onValueChange={(item) => {
+                    const nextRole = item?.value ?? null
+                    setEditRole(nextRole)
+                    if (nextRole !== "dean") {
+                      setEditDepartment(null)
+                    }
+                    if (editError) setEditError("")
+                  }}
+                  value={selectedEditRole}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select role" />
+                  </SelectTrigger>
+                  <SelectPopup>
+                    {editRoleItems.map((item) => (
+                      <SelectItem key={item.value} value={item}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectPopup>
+                </Select>
+              </Field>
+              {editRole === "dean" ? (
+                <DepartmentSelect
+                  items={editDepartmentItems}
+                  onValueChange={setEditDepartment}
+                  value={editDepartment}
+                />
+              ) : null}
+              {editError ? (
+                <Alert variant="error">
+                  <CircleAlertIcon />
+                  <AlertTitle>Could not save</AlertTitle>
+                  <AlertDescription>{editError}</AlertDescription>
+                </Alert>
+              ) : null}
+            </DialogPanel>
+            <DialogFooter>
+              <DialogClose render={<Button type="button" variant="ghost" />}>
+                Cancel
+              </DialogClose>
+              <Button loading={updateSignatory.isPending} type="submit">
+                Save changes
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogPopup>
+      </Dialog>
     </div>
   )
 }

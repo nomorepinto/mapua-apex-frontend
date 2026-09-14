@@ -133,16 +133,60 @@ export interface ApiDeadline {
   deadline: string
 }
 
+export type ApiSignatoryRole =
+  | "adviser"
+  | "admin"
+  | "cdm"
+  | "dean"
+  | "osaar"
+
+export type OrganizationDeskRole = "adviser" | "admin" | "cdm" | "dean"
+export type OrganizationAssignableDeskRole = "dean" | "adviser"
+export type SharedSignatoryRole = "admin" | "cdm" | "osaar"
+
+export interface ApiOrganizationSignatory {
+  role: OrganizationDeskRole
+  signatory_id: string
+}
+
 export interface ApiSignatory {
   signatory_id: string
   name: string
-  role: "adviser" | "cdm" | "dean"
-  organization_id: string
+  role: ApiSignatoryRole
+  department?: string
+  organization_id?: string
 }
 
 export interface ApiOrganization {
   organization_id: string
   name: string
+  signatories?: ApiOrganizationSignatory[]
+}
+
+export type CreateOrganizationPayload = {
+  name: string
+  signatories: ApiOrganizationSignatory[]
+}
+
+export type CreateSignatoryPayload = {
+  name: string
+  role: ApiSignatoryRole
+  department?: string
+}
+
+export function buildSignatoryPayload(
+  name: string,
+  role: ApiSignatoryRole,
+  department?: string | null
+): CreateSignatoryPayload {
+  const payload: CreateSignatoryPayload = { name, role }
+  if (role === "dean") {
+    const normalized = department?.trim().toUpperCase()
+    if (normalized) {
+      payload.department = normalized
+    }
+  }
+  return payload
 }
 
 /**

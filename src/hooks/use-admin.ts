@@ -6,6 +6,8 @@ import type {
   ApiSignatory,
   ApiAppeal,
   ApiNotification,
+  CreateOrganizationPayload,
+  CreateSignatoryPayload,
 } from "@/lib/dynamodb-adapters"
 
 function mutationErrorMessage(error: unknown, fallback: string): string {
@@ -86,9 +88,30 @@ export function useCreateOrganizationMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: { name: string }) => {
+    mutationFn: async (payload: CreateOrganizationPayload) => {
       const res = await apiClient.post<{ data: ApiOrganization }>(
         "/admins/organizations",
+        payload
+      )
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.organizations })
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.signatories })
+    },
+  })
+}
+
+export function useUpdateOrganizationMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      organizationId,
+      ...payload
+    }: CreateOrganizationPayload & { organizationId: string }) => {
+      const res = await apiClient.put<{ data: ApiOrganization }>(
+        `/admins/organizations/${organizationId}`,
         payload
       )
       return res.data
@@ -111,20 +134,22 @@ export function useBulkCreateOrganizationsMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (names: string[]): Promise<BulkCreateResult<ApiOrganization>> => {
+    mutationFn: async (
+      payloads: CreateOrganizationPayload[]
+    ): Promise<BulkCreateResult<ApiOrganization>> => {
       const created: ApiOrganization[] = []
       const failed: Array<{ name: string; error: string }> = []
 
-      for (const name of names) {
+      for (const payload of payloads) {
         try {
           const res = await apiClient.post<{ data: ApiOrganization }>(
             "/admins/organizations",
-            { name }
+            payload
           )
           created.push(res.data)
         } catch (error) {
           failed.push({
-            name,
+            name: payload.name,
             error: mutationErrorMessage(error, "Could not create organization."),
           })
         }
@@ -158,11 +183,7 @@ export function useCreateSignatoryMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (payload: {
-      name: string
-      role: "adviser" | "cdm" | "dean"
-      organization_id: string
-    }) => {
+    mutationFn: async (payload: CreateSignatoryPayload) => {
       const res = await apiClient.post<{ data: ApiSignatory }>(
         "/admins/signatories",
         payload
@@ -171,6 +192,7 @@ export function useCreateSignatoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.signatories })
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.organizations })
     },
   })
 }
@@ -187,10 +209,7 @@ export function useUpdateSignatoryMutation() {
       ...payload
     }: {
       signatoryId: string
-      name: string
-      role: "adviser" | "cdm" | "dean"
-      organization_id: string
-    }) => {
+    } & CreateSignatoryPayload) => {
       const res = await apiClient.put<{ data: ApiSignatory }>(
         `/admins/signatories/${signatoryId}`,
         payload
@@ -199,6 +218,7 @@ export function useUpdateSignatoryMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.signatories })
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.organizations })
     },
   })
 }
@@ -211,11 +231,7 @@ export function useBulkCreateSignatoriesMutation() {
 
   return useMutation({
     mutationFn: async (
-      payloads: Array<{
-        name: string
-        role: ApiSignatory["role"]
-        organization_id: string
-      }>
+      payloads: CreateSignatoryPayload[]
     ): Promise<BulkCreateResult<ApiSignatory>> => {
       const created: ApiSignatory[] = []
       const failed: Array<{ name: string; error: string }> = []
