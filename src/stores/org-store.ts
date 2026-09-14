@@ -40,11 +40,18 @@ export interface Submission {
   activity_classification: string;
   current_signatory: string;
   target_date: string;
+  requires_venue?: boolean;
+  submitted_date?: string;
   activity_details: {
     title: string;
     description: string;
     venue: string;
     date: string;
+    time?: string;
+    expected_attendees?: number;
+    budget?: string;
+    proponent?: string;
+    requirements?: string[];
   };
   status: SubmissionStatus;
   statusColor: string;
@@ -56,6 +63,29 @@ export interface ActivityLog {
   description: string;
   type: 'success' | 'warning' | 'error' | 'info';
   timestamp: Date;
+}
+
+export interface Announcement {
+  id: string;
+  title: string;
+  content: string;
+  category: 'Policy' | 'System' | 'General';
+  dateRange: string;
+  author: string;
+  authorRole: string;
+  memoNumber?: string;
+  isImportant: boolean;
+}
+
+/**
+ * Returns the signatory routing sequence for a submission.
+ * Submissions requiring a venue go through CDM; others skip it.
+ */
+export function getSignatorySequence(submission: Submission): string[] {
+  if (submission.requires_venue) {
+    return ['Adviser', 'Dean', 'CDM', 'OSAAR'];
+  }
+  return ['Adviser', 'Dean', 'OSAAR'];
 }
 
 interface OrgState {
@@ -80,6 +110,9 @@ interface OrgState {
   addChecklistItem: (taskId: string) => void;
   updateChecklistItem: (taskId: string, index: number, field: keyof ChecklistItem, value: string | boolean) => void;
   removeChecklistItem: (taskId: string, index: number) => void;
+
+  // Announcements
+  announcements: Announcement[];
 
   // Appeals
   appeals: Appeal[];
@@ -330,6 +363,9 @@ export const useOrgStore = create<OrgState>()(
     }
     return newState;
   }),
+
+  // Announcements
+  announcements: [],
 
   // Appeals
   searchQuery: '',
