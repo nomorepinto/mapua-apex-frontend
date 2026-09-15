@@ -1,13 +1,14 @@
 import { memo } from "react"
 import { PlusIcon, Trash2Icon } from "lucide-react"
 
-import { TABLE_INPUT_CLASS } from "@/components/submission/constants"
 import type { BudgetItem } from "@/components/submission/types"
 import {
   blockNonDecimalKeys,
   blockNonIntegerKeys,
   calculateRowTotal,
   formatPeso,
+  sanitizeDecimalInput,
+  sanitizeIntegerInput,
 } from "@/lib/numeric-input"
 
 const BudgetRow = memo(function BudgetRow({
@@ -32,53 +33,72 @@ const BudgetRow = memo(function BudgetRow({
           type="text"
           name={`budgetItem_${index}_name`}
           value={item.item}
+          maxLength={40}
+          placeholder="Item Name"
           style={{ color: "#171717" }}
           onChange={(e) => onUpdate(item.id, "item", e.target.value)}
-          className={TABLE_INPUT_CLASS}
+          className="w-full rounded border border-transparent bg-transparent px-3 py-1 text-center !text-neutral-900 placeholder:text-neutral-400 focus:border-neutral-300 focus:bg-white focus:outline-none"
         />
       </td>
-      <td className="border-r border-neutral-300 p-2">
+      <td className="border-r border-neutral-300 p-2 text-center">
         <input
-          type="number"
-          min="0"
-          step="1"
+          type="text"
           inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={7}
           name={`budgetItem_${index}_unit`}
           value={item.unit}
           onKeyDown={blockNonIntegerKeys}
-          onChange={(e) => onUpdate(item.id, "unit", e.target.value)}
+          onChange={(e) =>
+            onUpdate(
+              item.id,
+              "unit",
+              sanitizeIntegerInput(e.target.value).slice(0, 7)
+            )
+          }
           style={{ color: "#171717" }}
-          className={TABLE_INPUT_CLASS}
+          className="w-full rounded border border-transparent bg-transparent py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"
         />
       </td>
-      <td className="border-r border-neutral-300 p-2">
+      <td className="border-r border-neutral-300 p-2 text-center">
         <input
-          type="number"
-          min="0"
-          step="1"
+          type="text"
           inputMode="numeric"
+          pattern="[0-9]*"
+          maxLength={7}
           name={`budgetItem_${index}_quantity`}
           value={item.quantity}
           onKeyDown={blockNonIntegerKeys}
-          onChange={(e) => onUpdate(item.id, "quantity", e.target.value)}
+          onChange={(e) =>
+            onUpdate(
+              item.id,
+              "quantity",
+              sanitizeIntegerInput(e.target.value).slice(0, 7)
+            )
+          }
           style={{ color: "#171717" }}
-          className={TABLE_INPUT_CLASS}
+          className="w-full rounded border border-transparent bg-transparent py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"
         />
       </td>
       <td className="border-r border-neutral-300 p-2">
         <div className="flex items-center justify-center gap-1">
           <span className="font-semibold text-neutral-500 select-none">₱</span>
           <input
-            type="number"
-            min="0"
-            step="1"
+            type="text"
             inputMode="decimal"
+            maxLength={8}
             name={`budgetItem_${index}_pricePerUnit`}
             value={item.pricePerUnit}
             onKeyDown={blockNonDecimalKeys}
-            onChange={(e) => onUpdate(item.id, "pricePerUnit", e.target.value)}
+            onChange={(e) =>
+              onUpdate(
+                item.id,
+                "pricePerUnit",
+                sanitizeDecimalInput(e.target.value).slice(0, 8)
+              )
+            }
             style={{ color: "#171717" }}
-            className="w-28 rounded border border-transparent bg-transparent px-1 py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"
+            className="w-20 rounded border border-transparent bg-transparent py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"
           />
         </div>
       </td>
@@ -128,23 +148,25 @@ export function BudgetProposalSection({
 
       <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
+          <table className="w-full table-fixed border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
-                <th className="w-24 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-[32%] border-r border-neutral-300 px-4 py-3 text-center">
                   Item
                 </th>
-                <th className="w-36 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-[14%] border-r border-neutral-300 px-3 py-3 text-center">
                   Unit
                 </th>
-                <th className="w-32 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-[14%] border-r border-neutral-300 px-3 py-3 text-center">
                   Quantity
                 </th>
-                <th className="w-44 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-[20%] border-r border-neutral-300 px-4 py-3 text-center">
                   Price per Unit (₱)
                 </th>
-                <th className="w-40 px-4 py-3 text-center">Total (₱)</th>
-                {canRemove ? <th className="w-12 px-2 py-3 text-center" /> : null}
+                <th className="w-[16%] px-3 py-3 text-center">
+                  Total (₱)
+                </th>
+                {canRemove ? <th className="w-[4%] px-1 py-3 text-center" /> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">

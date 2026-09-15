@@ -19,6 +19,13 @@ export function InstitutionalAlignmentSection({
   values: AlignmentFields
   onChange: <K extends keyof SaafDraft>(key: K, value: SaafDraft[K]) => void
 }) {
+  const atLeastOneSelected =
+    Boolean(values.mission1) || Boolean(values.mission2) || Boolean(values.mission3)
+
+  const coreValuesLen = (values.coreValuesExplanation || "").length
+  const peoLen = (values.peoExplanation || "").length
+  const sdgLen = (values.sdgExplanation || "").length
+
   return (
     <div className="space-y-6 pt-4">
       <div className="border-b border-neutral-200 pb-2">
@@ -28,9 +35,17 @@ export function InstitutionalAlignmentSection({
       </div>
 
       <div className="space-y-4">
-        <p className="text-sm font-semibold text-neutral-800">
-          Check the mission statement(s) satisfied by the nature of your activity.
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-neutral-800">
+            Check the mission statement(s) satisfied by the nature of your activity:{" "}
+            <span className="text-red-500">*</span>
+          </p>
+          {!atLeastOneSelected ? (
+            <span className="text-xs font-semibold text-red-500">
+              Select at least 1
+            </span>
+          ) : null}
+        </div>
 
         <div className="space-y-3 pl-1">
           {MISSION_STATEMENTS.map((mission) => {
@@ -43,6 +58,7 @@ export function InstitutionalAlignmentSection({
                 <input
                   type="checkbox"
                   checked={checked}
+                  required={!atLeastOneSelected}
                   onChange={(e) => onChange(mission.key, e.target.checked)}
                   className="mt-0.5 h-4 w-4 cursor-pointer rounded border border-neutral-400 text-red-700 accent-red-700 focus:ring-red-700"
                 />
@@ -58,10 +74,18 @@ export function InstitutionalAlignmentSection({
         </div>
 
         <div className="space-y-1.5 pt-3">
-          <label className="block text-sm font-semibold text-neutral-900">
-            Enumerate and briefly explain the applicable Mapua Core Values honed
-            or formed by reason of your activity
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-semibold text-neutral-900">
+              Enumerate and briefly explain the applicable Mapua Core Values honed
+              or formed by reason of your activity
+            </label>
+            <span
+              className={`text-[11px] ${coreValuesLen < 30 ? "font-medium text-amber-600" : "text-neutral-400"
+                }`}
+            >
+              {coreValuesLen}/30 min
+            </span>
+          </div>
           <p className="text-xs font-normal text-neutral-500">
             (Discipline, Excellence, Commitment, Integrity and Relevance){" "}
             <span className="text-red-500">*</span>
@@ -69,47 +93,66 @@ export function InstitutionalAlignmentSection({
           <Textarea
             name="coreValuesExplanation"
             value={values.coreValuesExplanation}
+            minLength={30}
             onChange={(e) => onChange("coreValuesExplanation", e.target.value)}
-            placeholder="Discuss how the activity fosters these core values..."
+            placeholder="Discuss how the activity fosters these core values (minimum 30 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
+            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
             required
           />
         </div>
 
         <div className="space-y-1.5 pt-2">
-          <label className="block text-sm font-semibold text-neutral-900">
-            If and when applicable, enumerate the Program Educational Objectives
-            (PEO) or Program Objectives (PO) Satisfied in this Activity{" "}
-            <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-semibold text-neutral-900">
+              If and when applicable, enumerate the Program Educational Objectives
+              (PEO) or Program Objectives (PO) Satisfied in this Activity (Optional)
+            </label>
+            <span
+              className={`text-[11px] ${peoLen > 0 && peoLen < 30
+                  ? "font-medium text-amber-600"
+                  : "text-neutral-400"
+                }`}
+            >
+              {peoLen}/30 min
+            </span>
+          </div>
           <Textarea
             name="peoExplanation"
             value={values.peoExplanation}
+            minLength={30}
             onChange={(e) => onChange("peoExplanation", e.target.value)}
-            placeholder="Indicate which academic objectives are satisfied..."
+            placeholder="Indicate which academic objectives are satisfied (if applicable, minimum 30 characters)..."
             rows={4}
             style={{ color: "#171717" }}
             className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
-            required
           />
         </div>
 
         <div className="space-y-1.5 pt-2">
-          <label className="block text-sm font-semibold text-neutral-900">
-            Include the United Nation Sustainability Goals and How is the
-            Organization going to implement, and Audit the impact{" "}
-            <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-semibold text-neutral-900">
+              Include the United Nation Sustainability Goals and How is the
+              Organization going to implement, and Audit the impact{" "}
+              <span className="text-red-500">*</span>
+            </label>
+            <span
+              className={`text-[11px] ${sdgLen < 30 ? "font-medium text-amber-600" : "text-neutral-400"
+                }`}
+            >
+              {sdgLen}/30 min
+            </span>
+          </div>
           <Textarea
             name="sdgExplanation"
             value={values.sdgExplanation}
+            minLength={30}
             onChange={(e) => onChange("sdgExplanation", e.target.value)}
-            placeholder="Specify targeted SDGs and your audit methodology..."
+            placeholder="Specify targeted SDGs and your audit methodology (minimum 30 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
+            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
             required
           />
         </div>
