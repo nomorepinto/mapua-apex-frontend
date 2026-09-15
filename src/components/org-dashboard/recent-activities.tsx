@@ -2,6 +2,8 @@ import { AlertTriangle, CheckCircle, Volume2 } from "lucide-react"
 
 import { formatRelativeTime } from "@/lib/progress-color"
 import type { ActivityLog } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 const ACTIVITY_STYLES = {
   success: {
@@ -28,7 +30,7 @@ const ACTIVITY_STYLES = {
 
 export function RecentActivities({ activities }: { activities: ActivityLog[] }) {
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm md:p-7 xl:col-span-1">
+    <div className={cn(layout.section, "xl:col-span-1")}>
       <h2 className="mb-4 text-xl font-bold text-[#1E293B]">Recent Activities</h2>
 
       <div className="flex flex-col gap-3">

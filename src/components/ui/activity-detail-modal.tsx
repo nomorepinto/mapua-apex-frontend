@@ -13,15 +13,13 @@ import { ReturnProposalModal } from "./return-proposal-modal"
 import type { Activity } from "./activity.types"
 import { useActivityDetail } from "@/hooks/use-activity-detail"
 
-// ─── ActivityDetailModal ──────────────────────────────────────────────────────
-
 export interface ActivityDetailModalProps {
   activity: Activity | null
   onClose: () => void
   isActing?: boolean
   actionError?: string | null
   onAction?: (
-    action: "approve" | "return" | "defer",
+    action: "approve" | "return" | "reject" | "defer",
     activityId: string,
     details?: { title: string; message: string }
   ) => void | Promise<void>
@@ -35,19 +33,18 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   onAction,
 }: ActivityDetailModalProps) {
   const {
-    returnModalOpen,
-    setReturnModalOpen,
+    commentAction,
+    setCommentAction,
     handleOpenChange,
     handleApprove,
     handleDefer,
-    handleReturnSubmit,
+    handleCommentSubmit,
   } = useActivityDetail({ activity, onClose, onAction })
 
   return (
     <>
       <Dialog open={activity !== null} onOpenChange={handleOpenChange}>
         <DialogPopup className="flex max-h-[90dvh] w-full max-w-4xl flex-col">
-          {/* Top Dark Banner Header matching Figma 11849-2751 */}
           <DialogHeader className="bg-[#2B2E35] text-white px-6 sm:px-8 py-6 shrink-0 rounded-t-2xl">
             <div className="w-full pr-10">
               <div className="flex items-center gap-2 mb-2.5 flex-wrap">
@@ -67,11 +64,9 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             </div>
           </DialogHeader>
 
-          {/* Scrollable Content Body */}
           <DialogPanel className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 bg-white text-neutral-800">
             {activity && (
               <div className="space-y-6">
-                {/* 1. Proponents Section */}
                 <div className="space-y-3">
                   <h3 className="text-center text-xs font-bold text-neutral-500 uppercase tracking-widest">
                     Proponents
@@ -91,7 +86,6 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
 
                 <hr className="border-neutral-200" />
 
-                {/* 2. Key Metadata Grid */}
                 <div className="grid grid-cols-1 gap-x-8 gap-y-3 text-sm md:grid-cols-2">
                   <div className="flex flex-col gap-1 border-b border-neutral-100 py-1 sm:flex-row sm:items-center sm:justify-between">
                     <span className="font-bold text-neutral-900">Event Date & Time</span>
@@ -123,7 +117,6 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
                   </div>
                 </div>
 
-                {/* 3. Description of the Activity */}
                 <div className="space-y-2 pt-2">
                   <h4 className="text-sm font-bold text-neutral-900">
                     Description of the Activity
@@ -133,7 +126,6 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
                   </p>
                 </div>
 
-                {/* 4. Objectives of the Activity */}
                 <div className="space-y-3 pt-2">
                   <h4 className="text-sm font-bold text-neutral-900">
                     Objectives of the Activity
@@ -154,7 +146,6 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             )}
           </DialogPanel>
 
-          {/* Action Footer matching Figma 11849-2751 */}
           <DialogFooter className="border-t border-neutral-200 px-6 sm:px-8 py-4 bg-white shrink-0 rounded-b-2xl">
             <div className="flex w-full flex-col items-stretch justify-end gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {actionError ? (
@@ -172,7 +163,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
               <Button
                 type="button"
                 disabled={isActing}
-                onClick={() => setReturnModalOpen(true)}
+                onClick={() => setCommentAction("return")}
                 className="min-h-11 cursor-pointer rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-black disabled:opacity-50"
               >
                 Return Proposal
@@ -181,8 +172,17 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
               <Button
                 type="button"
                 disabled={isActing}
-                onClick={handleDefer}
+                onClick={() => setCommentAction("reject")}
                 className="min-h-11 cursor-pointer rounded-xl bg-[#800000] px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-[#660000] disabled:opacity-50"
+              >
+                Reject Proposal
+              </Button>
+
+              <Button
+                type="button"
+                disabled={isActing}
+                onClick={handleDefer}
+                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50 disabled:opacity-50"
               >
                 Close
               </Button>
@@ -191,12 +191,12 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
         </DialogPopup>
       </Dialog>
 
-      {/* Return Sub-Modal */}
       <ReturnProposalModal
         activity={activity}
-        open={returnModalOpen}
-        onClose={() => setReturnModalOpen(false)}
-        onSubmit={handleReturnSubmit}
+        variant={commentAction ?? "return"}
+        open={commentAction !== null}
+        onClose={() => setCommentAction(null)}
+        onSubmit={handleCommentSubmit}
       />
     </>
   )

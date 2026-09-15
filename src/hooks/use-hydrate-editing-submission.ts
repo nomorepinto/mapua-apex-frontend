@@ -34,6 +34,9 @@ export function useHydrateEditingSubmission() {
       drafts.saaf.activityTitle,
       drafts.hasReservation ? "yes" : "no"
     )
+    if (drafts.hasReservation) {
+      state.setSaafValidated(true)
+    }
   }, [detailQuery.data, eventId, submissionId])
 
   return { eventId, submissionId, isHydrating: detailQuery.isLoading }

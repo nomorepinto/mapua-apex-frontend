@@ -1,13 +1,14 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ApiError, apiClient } from "@/lib/api-client"
-import type {
-  ApiSubmission,
-  ApiOrganization,
-  ApiSignatory,
-  ApiAppeal,
-  ApiNotification,
-  CreateOrganizationPayload,
-  CreateSignatoryPayload,
+import {
+  announcementPath,
+  type ApiAnnouncement,
+  type ApiNotification,
+  type ApiOrganization,
+  type ApiSignatory,
+  type ApiSubmission,
+  type CreateOrganizationPayload,
+  type CreateSignatoryPayload,
 } from "@/lib/dynamodb-adapters"
 
 function mutationErrorMessage(error: unknown, fallback: string): string {
@@ -27,14 +28,14 @@ export const ADMIN_KEYS = {
     ["admin-submission-detail", eventId, submissionId] as const,
   organizations: ["admin-organizations"] as const,
   signatories: ["admin-signatories"] as const,
-  appeals: ["admin-appeals"] as const,
+  announcements: ["admin-announcements"] as const,
 }
 
 /**
  * Fetch all submissions system-wide with optional filters
  */
 export function useAdminSubmissionsQuery(params?: {
-  status?: "pending" | "approved" | "denied"
+  status?: "pending" | "approved" | "denied" | "returned"
   activity_type?: string
 }) {
   return useQuery({
@@ -49,7 +50,7 @@ export function useAdminSubmissionsQuery(params?: {
 }
 
 /**
- * Fetch full submission document + notifications + appeals for admin
+ * Fetch full submission document + notifications for admin
  */
 export function useAdminSubmissionDetailQuery(eventId?: string, submissionId?: string) {
   return useQuery({
@@ -59,7 +60,6 @@ export function useAdminSubmissionDetailQuery(eventId?: string, submissionId?: s
       const res = await apiClient.get<{
         data: ApiSubmission & {
           notifications: ApiNotification[]
-          appeals: ApiAppeal[]
         }
       }>(`/admins/events/${eventId}/submissions/${submissionId}`)
       return res.data
@@ -68,15 +68,58 @@ export function useAdminSubmissionDetailQuery(eventId?: string, submissionId?: s
   })
 }
 
-/**
- * Fetch all appeals system-wide
- */
-export function useAdminAppealsQuery() {
+export function useAdminAnnouncementsQuery() {
   return useQuery({
-    queryKey: ADMIN_KEYS.appeals,
+    queryKey: ADMIN_KEYS.announcements,
     queryFn: async () => {
-      const res = await apiClient.get<{ data: ApiAppeal[] }>("/admins/appeals")
+      const res = await apiClient.get<{ data: ApiAnnouncement[] }>("/admins/announcements")
       return res.data || []
+    },
+  })
+}
+
+export function useCreateAnnouncementMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (content: string) => {
+      const res = await apiClient.post<{ data: ApiAnnouncement }>("/admins/announcements", {
+        content,
+      })
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.announcements })
+    },
+  })
+}
+
+export function useUpdateAnnouncementMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ sentAt, content }: { sentAt: string; content: string }) => {
+      const res = await apiClient.put<{ data: ApiAnnouncement }>(
+        announcementPath(sentAt),
+        { content }
+      )
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.announcements })
+    },
+  })
+}
+
+export function useDeleteAnnouncementMutation() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (sentAt: string) => {
+      await apiClient.delete(announcementPath(sentAt))
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ADMIN_KEYS.announcements })
     },
   })
 }

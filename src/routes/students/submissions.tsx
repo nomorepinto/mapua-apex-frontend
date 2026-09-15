@@ -7,6 +7,8 @@ import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
 import { useOrgStore } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function SubmissionsStart() {
   const navigate = useNavigate()
@@ -47,8 +49,8 @@ export function SubmissionsStart() {
   }
 
   return (
-    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-xl space-y-8">
+    <div className={cn("relative", layout.page)}>
+      <div className={cn(layout.containerNarrow, layout.stack)}>
         <FormPageHeader
           title="New submission"
           subtitle="Academic Term: 2026 - 2027 • Start your activity proposal"
@@ -56,7 +58,7 @@ export function SubmissionsStart() {
 
         <form
           onSubmit={handleSubmit}
-          className="space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs"
+          className={cn(layout.section, "space-y-6")}
         >
           <Field>
             <FieldLabel htmlFor="eventName">Event name</FieldLabel>

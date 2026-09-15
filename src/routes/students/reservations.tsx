@@ -8,18 +8,22 @@ import { ReservationActions } from "@/components/reservation/reservation-actions
 import { RoomTable } from "@/components/reservation/room-table"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
+import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
 import { useOrgStore } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function Reservation() {
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  const saafValidated = useOrgStore((state) => state.saafValidated)
   const [searchParams] = useSearchParams()
   const formRef = useRef<HTMLFormElement>(null)
   const form = useReservationForm()
   const { draft } = form
 
-  if (reserveFacilities !== "yes") {
+  if (reserveFacilities !== "yes" || !saafValidated) {
     const query = searchParams.toString()
     return (
       <Navigate
@@ -30,8 +34,8 @@ export function Reservation() {
   }
 
   return (
-    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-6 font-sans text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-4">
+    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 font-sans text-neutral-900 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-6xl space-y-7">
         <FormPageHeader
           title="Reservation of Facilities"
           subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"
@@ -49,7 +53,7 @@ export function Reservation() {
         <form
           ref={formRef}
           onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-          className="space-y-5"
+          className="space-y-8"
         >
           <EquipmentSection
             equipment={draft.equipment}
@@ -88,6 +92,8 @@ export function Reservation() {
             onRemove={form.handleRemoveAvItem}
             onAdd={form.handleAddAvItem}
           />
+
+          <SubmissionErrorAlert message={form.submitError} />
 
           <ReservationActions
             onSavePdf={form.handleSavePdf}

@@ -26,6 +26,8 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 import {
   Dialog,
   DialogClose,
@@ -397,8 +399,8 @@ export function AdminSignatoriesPage() {
   }
 
   return (
-    <div className="min-h-full w-full bg-background px-4 py-8 text-foreground sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <div className={layout.page}>
+      <div className={cn(layout.container, layout.stack)}>
         <FormPageHeader
           subtitle="Register deans, advisers, and the shared admin, CDM, and OSAAR accounts. Department applies only to deans."
           title="Signatories"
@@ -416,8 +418,8 @@ export function AdminSignatoriesPage() {
           </Alert>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]">
-          <Card>
+        <div className={cn("grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]", layout.gap)}>
+          <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add signatory</CardTitle>
               <CardDescription>
@@ -576,7 +578,7 @@ export function AdminSignatoriesPage() {
             </CardFooter>
           </Card>
 
-          <Card className="min-w-0">
+          <Card className={cn(layout.card, "min-w-0")}>
             <CardHeader>
               <CardTitle>Registered signatories</CardTitle>
               <CardDescription>

@@ -3,6 +3,7 @@ import { Outlet } from "react-router"
 
 import { AuthGuard } from "@/components/auth/AuthGuard"
 import { AppSidebar } from "@/components/layout/app-sidebar"
+import { layout } from "@/config"
 
 const ADMIN_NAV = [
   {
@@ -31,7 +32,7 @@ const ADMIN_NAV = [
 export function AdminLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar"]}>
-      <div className="flex h-dvh w-full flex-col overflow-hidden bg-background text-foreground lg:flex-row">
+      <div className={layout.frame}>
         <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} showSettings />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />
