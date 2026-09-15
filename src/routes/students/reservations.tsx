@@ -15,12 +15,13 @@ import { useOrgStore } from "@/stores/org-store"
 
 export function Reservation() {
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
+  const saafValidated = useOrgStore((state) => state.saafValidated)
   const [searchParams] = useSearchParams()
   const formRef = useRef<HTMLFormElement>(null)
   const form = useReservationForm()
   const { draft } = form
 
-  if (reserveFacilities !== "yes") {
+  if (reserveFacilities !== "yes" || !saafValidated) {
     const query = searchParams.toString()
     return (
       <Navigate

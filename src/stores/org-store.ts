@@ -130,6 +130,8 @@ interface OrgState {
   // Submissions wizard start
   eventName: string
   reserveFacilities: "yes" | "no" | null
+  saafValidated: boolean
+  setSaafValidated: (value: boolean) => void
   setSubmissionStart: (eventName: string, reserveFacilities: "yes" | "no") => void
   clearSubmissionStart: () => void
 
@@ -398,9 +400,11 @@ export const useOrgStore = create<OrgState>()(
 
   eventName: "",
   reserveFacilities: null,
+  saafValidated: false,
+  setSaafValidated: (value) => set({ saafValidated: value }),
   setSubmissionStart: (eventName, reserveFacilities) =>
-    set({ eventName, reserveFacilities }),
-  clearSubmissionStart: () => set({ eventName: "", reserveFacilities: null }),
+    set({ eventName, reserveFacilities, saafValidated: false }),
+  clearSubmissionStart: () => set({ eventName: "", reserveFacilities: null, saafValidated: false }),
 
   // SAAF Draft
   saafDraft: null,
@@ -433,6 +437,7 @@ export const useOrgStore = create<OrgState>()(
       partialize: (state) => ({
         eventName: state.eventName,
         reserveFacilities: state.reserveFacilities,
+        saafValidated: state.saafValidated,
         saafDraft: state.saafDraft,
         reservationDraft: state.reservationDraft,
         editingEventId: state.editingEventId,

@@ -152,6 +152,7 @@ export function useSaafForm() {
   const handleGoToReservation = useCallback(
     (form: HTMLFormElement | null) => {
       if (form && !form.reportValidity()) return
+      useOrgStore.getState().setSaafValidated(true)
       const query = searchParams.toString()
       navigate(`/students/submissions/saaf/reservations${query ? `?${query}` : ""}`)
     },

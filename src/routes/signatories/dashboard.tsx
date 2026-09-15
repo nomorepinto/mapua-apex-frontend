@@ -27,12 +27,6 @@ export function Dashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
-          {dashboard.stats.map((stat) => (
-            <StatCard key={stat.label} {...stat} />
-          ))}
-        </div>
-
         <div className="flex items-center justify-end">
           <ActivityFilter
             departments={dashboard.departments}
