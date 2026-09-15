@@ -8,6 +8,7 @@ import { ReservationActions } from "@/components/reservation/reservation-actions
 import { RoomTable } from "@/components/reservation/room-table"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
+import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
 import { useOrgStore } from "@/stores/org-store"
@@ -87,6 +88,8 @@ export function Reservation() {
             onRemove={form.handleRemoveAvItem}
             onAdd={form.handleAddAvItem}
           />
+
+          <SubmissionErrorAlert message={form.submitError} />
 
           <ReservationActions
             onSavePdf={form.handleSavePdf}

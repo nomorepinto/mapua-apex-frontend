@@ -2,6 +2,7 @@ import { useRef } from "react"
 
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
+import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { ActivityClassificationSection } from "@/components/submission/activity-classification-section"
 import { ActivityDetailsSection } from "@/components/submission/activity-details-section"
@@ -60,6 +61,8 @@ export function Submission() {
             onRemove={form.handleRemoveBudgetItem}
             onAdd={form.handleAddBudgetItem}
           />
+
+          <SubmissionErrorAlert message={form.submitError} />
 
           <SubmissionActions
             isSubmitting={form.isSubmitting}

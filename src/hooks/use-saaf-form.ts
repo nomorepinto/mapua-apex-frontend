@@ -34,6 +34,12 @@ export function useSaafForm() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [successDismissed, setSuccessDismissed] = useState(false)
   const showSuccessModal = Boolean(fetcher.data?.success) && !successDismissed
+  const submitError =
+    fetcher.data && fetcher.data.success === false
+      ? fetcher.data.message ||
+        Object.values(fetcher.data.errors ?? {})[0] ||
+        "Failed to submit application. Please try again."
+      : null
 
   // Directly select draft from Zustand with fallback to default
   const saafDraft = useOrgStore((state) => state.saafDraft)
@@ -186,6 +192,7 @@ export function useSaafForm() {
     isSubmitting,
     showConfirmModal,
     showSuccessModal,
+    submitError,
     grandTotal,
     reserveFacilities,
     updateField,
