@@ -16,7 +16,7 @@ export interface ApiSubmission {
   submission_id: string
   submission_type: string
   sent_at: string
-  status: "pending" | "approved" | "denied"
+  status: "pending" | "approved" | "denied" | "returned"
   current_signatory?: string
   activity_classification?: {
     activity_type?: string
@@ -116,21 +116,8 @@ export interface ApiNotification {
   submission_id: string
   sent_at: string
   signatory: string
-  notif_type: "approved" | "fully approved" | "denied"
+  notif_type: "approved" | "fully approved" | "denied" | "returned"
   comment?: string
-}
-
-export interface ApiAppeal {
-  submission_id: string
-  appeal_id: string
-  event_id: string
-  sent_at: string
-  signatory_destination: string
-  comment: string
-  status: "open" | "resolved"
-  resolution?: "upheld" | "overturned" | null
-  resolved_at?: string | null
-  resolved_comment?: string | null
 }
 
 export interface ApiDeadline {
@@ -138,6 +125,11 @@ export interface ApiDeadline {
   deadline_id: string
   sent_at: string
   deadline: string
+}
+
+export interface ApiAnnouncement {
+  sent_at: string
+  content: string
 }
 
 export type ApiSignatoryRole =
@@ -323,14 +315,16 @@ export function getSubmissionStatusMeta(status: string) {
     case "approved":
       return { label: "Approved", color: "bg-emerald-500/10 text-emerald-600 border-emerald-200" }
     case "denied":
-      return { label: "Returned", color: "bg-rose-500/10 text-rose-600 border-rose-200" }
+      return { label: "Denied", color: "bg-rose-500/10 text-rose-600 border-rose-200" }
+    case "returned":
+      return { label: "Returned", color: "bg-amber-500/10 text-amber-600 border-amber-200" }
     case "pending":
     default:
       return { label: "Under Review", color: "bg-amber-500/10 text-amber-600 border-amber-200" }
   }
 }
 
-export type DashboardSubmissionStatus = "Under Review" | "Approved" | "Returned"
+export type DashboardSubmissionStatus = "Under Review" | "Approved" | "Returned" | "Denied"
 
 export interface DashboardSubmissionRow {
   event_id: string
@@ -341,7 +335,7 @@ export interface DashboardSubmissionRow {
   target_date: string
   requires_venue: boolean
   submitted_date: string
-  api_status: "pending" | "approved" | "denied"
+  api_status: "pending" | "approved" | "denied" | "returned"
   activity_details: {
     title: string
     description: string
@@ -355,20 +349,6 @@ export interface DashboardSubmissionRow {
   }
   status: DashboardSubmissionStatus
   statusColor: string
-}
-
-export interface AppealRow {
-  id: string
-  appeal_id: string
-  event_id: string
-  submission_id: string
-  title: string
-  date: string
-  department: string
-  status: string
-  statusColor: string
-  comment: string
-  resolution?: string | null
 }
 
 export interface TrackerAssignee {
@@ -407,6 +387,23 @@ export function formatDisplayDate(value?: string | null): string {
     month: "short",
     day: "numeric",
   })
+}
+
+export function formatDisplayDateTime(value?: string | null): string {
+  if (!value) return "—"
+  const parsed = new Date(value)
+  if (Number.isNaN(parsed.getTime())) return value
+  return parsed.toLocaleString("en-PH", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  })
+}
+
+export function announcementPath(sentAt: string): string {
+  return `/admins/announcements/${encodeURIComponent(sentAt)}`
 }
 
 function formatProponentName(
@@ -471,19 +468,21 @@ export function apiSubmissionToActivity(submission: ApiSubmission): Activity {
       return { title: "Objective", description: line }
     })
 
-  const decision =
+  const decision: Activity["decision"] =
     submission.status === "denied"
-      ? "Return"
-      : submission.status === "approved"
-        ? "Review"
+      ? "Reject"
+      : submission.status === "returned"
+        ? "Return"
         : "Review"
 
-  const status =
+  const status: Activity["status"] =
     submission.status === "approved"
       ? "Accepted"
       : submission.status === "denied"
-        ? "Returned"
-        : "Review"
+        ? "Rejected"
+        : submission.status === "returned"
+          ? "Returned"
+          : "Review"
 
   return {
     id: `${submission.event_id}:${submission.submission_id}`,
@@ -547,8 +546,10 @@ export function apiNotificationsToStepper(
   if (isAllApproved) {
     currentStepIdx = roles.length
   } else if (currentStepIdx === -1) {
-    const denied = [...sorted].reverse().find((item) => item.notif_type === "denied")
-    currentStepIdx = denied ? Math.max(0, roles.indexOf(denied.signatory)) : 0
+    const blocked = [...sorted].reverse().find(
+      (item) => item.notif_type === "denied" || item.notif_type === "returned"
+    )
+    currentStepIdx = blocked ? Math.max(0, roles.indexOf(blocked.signatory)) : 0
   }
 
   const assigneesList: TrackerAssignee[] = roles.map((role, idx) => {
@@ -564,6 +565,10 @@ export function apiNotificationsToStepper(
     } else if (idx === currentStepIdx) {
       state = "current"
       if (latest?.notif_type === "denied" || apiStatus === "denied") {
+        statusText = latest?.comment
+          ? `Denied — ${latest.comment}`
+          : "Denied"
+      } else if (latest?.notif_type === "returned" || apiStatus === "returned") {
         statusText = latest?.comment
           ? `Returned for revision — ${latest.comment}`
           : "Returned for revision"
@@ -592,32 +597,6 @@ export function apiNotificationsToStepper(
     progressPercent: Math.round((completedCount / roles.length) * 100),
     remainingSteps,
     assigneesList,
-  }
-}
-
-export function apiAppealToRow(appeal: ApiAppeal, title?: string): AppealRow {
-  const resolved = appeal.status === "resolved"
-  const statusLabel = resolved
-    ? appeal.resolution === "overturned"
-      ? "Approved"
-      : "Returned"
-    : "Under Review"
-  const meta = getSubmissionStatusMeta(
-    resolved ? (appeal.resolution === "overturned" ? "approved" : "denied") : "pending"
-  )
-
-  return {
-    id: appeal.appeal_id,
-    appeal_id: appeal.appeal_id,
-    event_id: appeal.event_id,
-    submission_id: appeal.submission_id,
-    title: title || appeal.submission_id,
-    date: formatDisplayDate(appeal.sent_at),
-    department: appeal.signatory_destination || "Dean",
-    status: statusLabel,
-    statusColor: meta.color,
-    comment: appeal.comment,
-    resolution: appeal.resolution ?? null,
   }
 }
 

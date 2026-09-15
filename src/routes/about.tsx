@@ -1,5 +1,7 @@
 import { Building2Icon, Code2Icon, ShieldCheckIcon } from "lucide-react"
 import { Card, CardContent } from "@/components/ui/card"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 import AgathaPhoto from "@/assets/Agatha.png"
 import AvielPhoto from "@/assets/Aviel.png"
@@ -38,7 +40,7 @@ const TEAM_MEMBERS: TeamMember[] = [
 
 function DevCard({ member }: { member: TeamMember }) {
   return (
-    <Card className="group overflow-hidden transition-shadow duration-300 hover:shadow-lg">
+    <Card className={cn(layout.card, "group overflow-hidden transition-shadow duration-300 hover:shadow-lg")}>
       <div className="relative h-52 w-full overflow-hidden bg-neutral-100">
         <img
           src={member.photo}
@@ -59,9 +61,9 @@ function DevCard({ member }: { member: TeamMember }) {
 
 export function About() {
   return (
-    <div className="min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="border-b border-neutral-200 pb-5">
+    <div className={layout.page}>
+      <div className={cn(layout.container, layout.stack)}>
+        <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
             About the Developers &amp; APEX
           </h1>
@@ -70,8 +72,8 @@ export function About() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs">
+        <div className={cn("grid grid-cols-1 md:grid-cols-2", layout.gap)}>
+          <div className={cn(layout.section, "space-y-3")}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-red-200 bg-red-50 text-red-800">
               <Building2Icon className="h-5 w-5" />
             </div>
@@ -85,7 +87,7 @@ export function About() {
             </p>
           </div>
 
-          <div className="space-y-3 rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs">
+          <div className={cn(layout.section, "space-y-3")}>
             <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-amber-200 bg-amber-50 text-amber-800">
               <ShieldCheckIcon className="h-5 w-5" />
             </div>
@@ -100,8 +102,8 @@ export function About() {
           </div>
         </div>
 
-        <div className="space-y-4 rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs">
-          <div className="flex items-center gap-3 border-b border-neutral-100 pb-3">
+        <div className={cn(layout.section, "space-y-4")}>
+          <div className="flex items-center gap-3 pb-3">
             <Code2Icon className="h-5 w-5 text-neutral-700" />
             <h3 className="text-base font-bold text-neutral-900">
               Development Team
@@ -114,7 +116,7 @@ export function About() {
         </div>
 
         {/* Developer Cards Grid */}
-        <div className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-4">
+        <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4", layout.gap)}>
           {TEAM_MEMBERS.map((member) => (
             <DevCard key={member.name} member={member} />
           ))}

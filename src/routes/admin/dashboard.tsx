@@ -1,14 +1,33 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, type FormEvent } from "react"
+import { CircleAlertIcon, PlusIcon } from "lucide-react"
 
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/ui/alert"
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogPopup,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogClose,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogPanel,
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
+import { Form } from "@/components/ui/form"
 import {
   Table,
   TableBody,
@@ -17,23 +36,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table"
+import { Textarea } from "@/components/ui/textarea"
+import { toastManager } from "@/components/ui/toast"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 import {
-  useAdminAppealsQuery,
+  useAdminAnnouncementsQuery,
   useAdminSubmissionDetailQuery,
   useAdminSubmissionsQuery,
+  useCreateAnnouncementMutation,
+  useDeleteAnnouncementMutation,
+  useUpdateAnnouncementMutation,
 } from "@/hooks/use-admin"
 import {
-  apiAppealToRow,
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
-  formatDisplayDate,
+  formatDisplayDateTime,
+  type ApiAnnouncement,
 } from "@/lib/dynamodb-adapters"
 
 const STATUS_FILTERS = [
   { value: "", label: "All statuses" },
   { value: "pending", label: "Under Review" },
+  { value: "returned", label: "Returned" },
   { value: "approved", label: "Approved" },
-  { value: "denied", label: "Returned" },
+  { value: "denied", label: "Denied" },
 ] as const
 
 const TYPE_FILTERS = [
@@ -43,32 +70,42 @@ const TYPE_FILTERS = [
   { value: "curricular", label: "Curricular" },
 ] as const
 
+const ANNOUNCEMENT_MAX = 5000
+
 export function AdminOsaPanel() {
-  const [status, setStatus] = useState<"" | "pending" | "approved" | "denied">("")
+  const [status, setStatus] = useState<"" | "pending" | "approved" | "denied" | "returned">("")
   const [activityType, setActivityType] = useState("")
   const [selectedKeys, setSelectedKeys] = useState<{
     eventId: string
     submissionId: string
   } | null>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [createContent, setCreateContent] = useState("")
+  const [createError, setCreateError] = useState("")
+  const [editing, setEditing] = useState<ApiAnnouncement | null>(null)
+  const [editContent, setEditContent] = useState("")
+  const [editError, setEditError] = useState("")
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState("")
 
   const submissionsQuery = useAdminSubmissionsQuery({
     status: status || undefined,
     activity_type: activityType || undefined,
   })
-  const appealsQuery = useAdminAppealsQuery()
+  const announcementsQuery = useAdminAnnouncementsQuery()
   const detailQuery = useAdminSubmissionDetailQuery(
     selectedKeys?.eventId,
     selectedKeys?.submissionId
   )
+  const createAnnouncement = useCreateAnnouncementMutation()
+  const updateAnnouncement = useUpdateAnnouncementMutation()
+  const deleteAnnouncement = useDeleteAnnouncementMutation()
 
   const rows = useMemo(
     () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
     [submissionsQuery.data]
   )
-  const appealRows = useMemo(
-    () => (appealsQuery.data || []).map((appeal) => apiAppealToRow(appeal)),
-    [appealsQuery.data]
-  )
+  const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
     ? apiSubmissionToDashboardRow(detailQuery.data)
@@ -79,180 +116,263 @@ export function AdminOsaPanel() {
     selectedRow?.api_status
   )
 
+  function openCreate() {
+    setCreateContent("")
+    setCreateError("")
+    setCreateOpen(true)
+  }
+
+  function openEdit(announcement: ApiAnnouncement) {
+    setEditing(announcement)
+    setEditContent(announcement.content)
+    setEditError("")
+    setDeleteError("")
+  }
+
+  function closeEdit() {
+    setEditing(null)
+    setEditContent("")
+    setEditError("")
+    setDeleteOpen(false)
+    setDeleteError("")
+  }
+
+  async function handleCreate(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const content = createContent.trim()
+    if (!content) {
+      setCreateError("Content is required.")
+      return
+    }
+
+    try {
+      await createAnnouncement.mutateAsync(content)
+      toastManager.add({
+        title: "Announcement posted",
+        description: "The notice is now on the bulletin.",
+        type: "success",
+      })
+      setCreateOpen(false)
+      setCreateContent("")
+      setCreateError("")
+    } catch (error) {
+      setCreateError(
+        error instanceof Error ? error.message : "Could not post this announcement."
+      )
+    }
+  }
+
+  async function handleEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    if (!editing) return
+    const content = editContent.trim()
+    if (!content) {
+      setEditError("Content is required.")
+      return
+    }
+
+    try {
+      await updateAnnouncement.mutateAsync({ sentAt: editing.sent_at, content })
+      toastManager.add({
+        title: "Announcement updated",
+        description: "The notice content was replaced.",
+        type: "success",
+      })
+      closeEdit()
+    } catch (error) {
+      setEditError(
+        error instanceof Error ? error.message : "Could not save this announcement."
+      )
+    }
+  }
+
+  async function handleDelete() {
+    if (!editing) return
+
+    try {
+      await deleteAnnouncement.mutateAsync(editing.sent_at)
+      toastManager.add({
+        title: "Announcement deleted",
+        description: "The notice was removed from the bulletin.",
+        type: "success",
+      })
+      closeEdit()
+    } catch (error) {
+      setDeleteOpen(false)
+      setDeleteError(
+        error instanceof Error ? error.message : "Could not delete this announcement."
+      )
+    }
+  }
+
   return (
-    <div className="min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-8">
-        <div className="border-b border-neutral-200 pb-5">
+    <div className={layout.page}>
+      <div className={cn(layout.container, layout.stack)}>
+        <div>
           <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
             Admin Panel — Office of Student Affairs
           </h1>
           <p className="mt-1 text-xs font-normal text-neutral-500 sm:text-sm">
-            Global submissions and appeals across every organization.
+            Global submissions and announcements across every organization.
           </p>
         </div>
 
-        <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs">
+        <section className={layout.section}>
+            <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
+                <p className="text-xs text-neutral-500">
+                  Filter by status or activity type, then open a row for the full SAAF record.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                  Status
+                  <select
+                    value={status}
+                    onChange={(event) =>
+                      setStatus(
+                        event.target.value as "" | "pending" | "approved" | "denied" | "returned"
+                      )
+                    }
+                    className="h-10 min-w-40 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                  >
+                    {STATUS_FILTERS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                  Activity type
+                  <select
+                    value={activityType}
+                    onChange={(event) => setActivityType(event.target.value)}
+                    className="h-10 min-w-44 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                  >
+                    {TYPE_FILTERS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div className="min-h-0 flex-1 overflow-x-auto">
+              <Table className="min-w-[28rem]">
+                <TableHeader>
+                  <TableRow className="border-b border-neutral-100 text-neutral-500">
+                    <TableHead className="text-xs font-bold uppercase">Event</TableHead>
+                    <TableHead className="text-xs font-bold uppercase">Type</TableHead>
+                    <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
+                    <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {submissionsQuery.isLoading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                        Loading submissions…
+                      </TableCell>
+                    </TableRow>
+                  ) : submissionsQuery.isError ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-12 text-center text-sm text-rose-600">
+                        Could not load submissions.
+                      </TableCell>
+                    </TableRow>
+                  ) : rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                        No submissions match these filters.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    rows.map((row) => (
+                      <TableRow
+                        key={`${row.event_id}:${row.submission_id}`}
+                        className="cursor-pointer hover:bg-neutral-50"
+                        onClick={() =>
+                          setSelectedKeys({
+                            eventId: row.event_id,
+                            submissionId: row.submission_id,
+                          })
+                        }
+                      >
+                        <TableCell className="text-sm font-semibold">
+                          {row.activity_details.title}
+                        </TableCell>
+                        <TableCell className="text-xs capitalize text-neutral-500">
+                          {row.activity_classification}
+                        </TableCell>
+                        <TableCell className="text-sm text-neutral-500">
+                          {row.submitted_date}
+                        </TableCell>
+                        <TableCell className="text-right text-xs font-bold">{row.status}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </section>
+
+        <section className={layout.section}>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
+              <h2 className="text-lg font-extrabold text-neutral-900">Announcements</h2>
               <p className="text-xs text-neutral-500">
-                Filter by status or activity type, then open a row for the full SAAF record.
+                Post a notice, or open a row to edit or delete it.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                Status
-                <select
-                  value={status}
-                  onChange={(event) =>
-                    setStatus(event.target.value as "" | "pending" | "approved" | "denied")
-                  }
-                  className="h-10 min-w-40 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                >
-                  {STATUS_FILTERS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                Activity type
-                <select
-                  value={activityType}
-                  onChange={(event) => setActivityType(event.target.value)}
-                  className="h-10 min-w-44 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                >
-                  {TYPE_FILTERS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
+            <Button onClick={openCreate} type="button">
+              <PlusIcon aria-hidden="true" />
+              New announcement
+            </Button>
           </div>
-
           <div className="overflow-x-auto">
-            <Table className="min-w-[44rem]">
+            <Table className="min-w-[32rem]">
               <TableHeader>
                 <TableRow className="border-b border-neutral-100 text-neutral-500">
-                  <TableHead className="text-xs font-bold uppercase">Document</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Event</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Type</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
-                  <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Posted</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Notice</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {submissionsQuery.isLoading ? (
+                {announcementsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
-                      Loading submissions…
+                    <TableCell colSpan={2} className="py-12 text-center text-sm text-neutral-400">
+                      Loading announcements…
                     </TableCell>
                   </TableRow>
-                ) : submissionsQuery.isError ? (
+                ) : announcementsQuery.isError ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-rose-600">
-                      Could not load submissions.
+                    <TableCell colSpan={2} className="py-12 text-center text-sm text-rose-600">
+                      Could not load announcements.
                     </TableCell>
                   </TableRow>
-                ) : rows.length === 0 ? (
+                ) : announcements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
-                      No submissions match these filters.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  rows.map((row) => (
-                    <TableRow
-                      key={`${row.event_id}:${row.submission_id}`}
-                      className="cursor-pointer hover:bg-neutral-50"
-                      onClick={() =>
-                        setSelectedKeys({
-                          eventId: row.event_id,
-                          submissionId: row.submission_id,
-                        })
-                      }
-                    >
-                      <TableCell className="font-mono text-xs font-bold">
-                        {row.submission_id}
-                      </TableCell>
-                      <TableCell className="text-sm font-semibold">
-                        {row.activity_details.title}
-                      </TableCell>
-                      <TableCell className="text-xs capitalize text-neutral-500">
-                        {row.activity_classification}
-                      </TableCell>
-                      <TableCell className="text-sm text-neutral-500">
-                        {row.submitted_date}
-                      </TableCell>
-                      <TableCell className="text-right text-xs font-bold">{row.status}</TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-neutral-200 bg-white p-6 shadow-2xs">
-          <div className="mb-5">
-            <h2 className="text-lg font-extrabold text-neutral-900">Appeals</h2>
-            <p className="text-xs text-neutral-500">
-              All appeals filed against returned submissions.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[40rem]">
-              <TableHeader>
-                <TableRow className="border-b border-neutral-100 text-neutral-500">
-                  <TableHead className="text-xs font-bold uppercase">Appeal</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Submission</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Filed</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Desk</TableHead>
-                  <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {appealsQuery.isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
-                      Loading appeals…
-                    </TableCell>
-                  </TableRow>
-                ) : appealRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
-                      No appeals have been filed.
+                    <TableCell colSpan={2} className="py-12 text-center text-sm text-neutral-400">
+                      No announcements have been posted.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  appealRows.map((appeal) => (
+                  announcements.map((announcement) => (
                     <TableRow
-                      key={appeal.appeal_id}
+                      key={announcement.sent_at}
                       className="cursor-pointer hover:bg-neutral-50"
-                      onClick={() =>
-                        setSelectedKeys({
-                          eventId: appeal.event_id,
-                          submissionId: appeal.submission_id,
-                        })
-                      }
+                      onClick={() => openEdit(announcement)}
                     >
-                      <TableCell className="font-mono text-xs font-bold">
-                        {appeal.appeal_id}
+                      <TableCell className="whitespace-nowrap text-sm text-neutral-500">
+                        {formatDisplayDateTime(announcement.sent_at)}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        {appeal.title}
-                        {appeal.comment ? (
-                          <p className="mt-1 text-xs font-normal text-neutral-500">
-                            {appeal.comment}
-                          </p>
-                        ) : null}
+                        <p className="line-clamp-2 whitespace-normal">{announcement.content}</p>
                       </TableCell>
-                      <TableCell className="text-sm text-neutral-500">{appeal.date}</TableCell>
-                      <TableCell className="text-sm text-neutral-500">{appeal.department}</TableCell>
-                      <TableCell className="text-right text-xs font-bold">{appeal.status}</TableCell>
                     </TableRow>
                   ))
                 )}
@@ -273,11 +393,11 @@ export function AdminOsaPanel() {
             <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
             <DialogDescription>
               {selectedRow
-                ? `${selectedRow.submission_id} • ${selectedRow.status} • ${selectedRow.current_signatory}`
-                : "Loading the full SAAF record, notifications, and appeals."}
+                ? `${selectedRow.status} • ${selectedRow.current_signatory}`
+                : "Loading the full SAAF record and notifications."}
             </DialogDescription>
           </DialogHeader>
-          <DialogPanel className="space-y-5 text-sm">
+          <DialogPanel className="flex flex-col gap-5 text-sm">
             {detailQuery.isLoading ? (
               <p className="text-neutral-500">Loading record…</p>
             ) : detailQuery.isError ? (
@@ -308,34 +428,11 @@ export function AdminOsaPanel() {
                   {stepper.assigneesList.length === 0 ? (
                     <p className="text-neutral-400">No review notifications yet.</p>
                   ) : (
-                    <ul className="space-y-2">
+                    <ul className="flex flex-col gap-2">
                       {stepper.assigneesList.map((item, index) => (
                         <li key={`${item.role}-${index}`}>
                           <span className="font-semibold">{item.name}</span>
                           <span className="text-neutral-500"> — {item.statusText}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-                <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
-                    Appeals
-                  </h3>
-                  {(detailQuery.data?.appeals || []).length === 0 ? (
-                    <p className="text-neutral-400">No appeals on this submission.</p>
-                  ) : (
-                    <ul className="space-y-2">
-                      {detailQuery.data?.appeals.map((appeal) => (
-                        <li key={appeal.appeal_id}>
-                          <span className="font-semibold">{appeal.appeal_id}</span>
-                          <span className="text-neutral-500">
-                            {" "}
-                            — {appeal.status}
-                            {appeal.resolution ? ` (${appeal.resolution})` : ""} •{" "}
-                            {formatDisplayDate(appeal.sent_at)}
-                          </span>
-                          <p className="text-neutral-600">{appeal.comment}</p>
                         </li>
                       ))}
                     </ul>
@@ -351,6 +448,151 @@ export function AdminOsaPanel() {
           </div>
         </DialogPopup>
       </Dialog>
+
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) {
+            setCreateContent("")
+            setCreateError("")
+          }
+        }}
+      >
+        <DialogPopup className="w-full max-w-lg">
+          <Form className="contents" onSubmit={handleCreate}>
+            <DialogHeader>
+              <DialogTitle>New announcement</DialogTitle>
+              <DialogDescription>
+                Posted notices are visible on the institutional bulletin.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogPanel className="flex flex-col gap-4">
+              <Field data-invalid={createError ? true : undefined}>
+                <FieldLabel htmlFor="announcement-content">Content</FieldLabel>
+                <Textarea
+                  aria-invalid={createError ? true : undefined}
+                  id="announcement-content"
+                  maxLength={ANNOUNCEMENT_MAX}
+                  onChange={(event) => {
+                    setCreateContent(event.currentTarget.value)
+                    if (createError) setCreateError("")
+                  }}
+                  required
+                  rows={6}
+                  value={createContent}
+                />
+                <FieldDescription>
+                  {createContent.length}/{ANNOUNCEMENT_MAX}
+                </FieldDescription>
+                {createError ? <FieldError>{createError}</FieldError> : null}
+              </Field>
+            </DialogPanel>
+            <DialogFooter>
+              <DialogClose render={<Button type="button" variant="ghost" />}>
+                Cancel
+              </DialogClose>
+              <Button loading={createAnnouncement.isPending} type="submit">
+                Post announcement
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogPopup>
+      </Dialog>
+
+      <Dialog
+        open={editing !== null}
+        onOpenChange={(open) => {
+          if (!open) closeEdit()
+        }}
+      >
+        <DialogPopup className="w-full max-w-lg">
+          <Form className="contents" onSubmit={handleEdit}>
+            <DialogHeader>
+              <DialogTitle>Edit announcement</DialogTitle>
+              <DialogDescription>
+                {editing ? `Posted ${formatDisplayDateTime(editing.sent_at)}` : "Update this notice."}
+              </DialogDescription>
+            </DialogHeader>
+            <DialogPanel className="flex flex-col gap-4">
+              <Field data-invalid={editError ? true : undefined}>
+                <FieldLabel htmlFor="edit-announcement-content">Content</FieldLabel>
+                <Textarea
+                  aria-invalid={editError ? true : undefined}
+                  id="edit-announcement-content"
+                  maxLength={ANNOUNCEMENT_MAX}
+                  onChange={(event) => {
+                    setEditContent(event.currentTarget.value)
+                    if (editError) setEditError("")
+                  }}
+                  required
+                  rows={6}
+                  value={editContent}
+                />
+                <FieldDescription>
+                  {editContent.length}/{ANNOUNCEMENT_MAX}
+                </FieldDescription>
+                {editError ? <FieldError>{editError}</FieldError> : null}
+              </Field>
+              {deleteError ? (
+                <Alert variant="error">
+                  <CircleAlertIcon />
+                  <AlertTitle>Could not delete</AlertTitle>
+                  <AlertDescription>{deleteError}</AlertDescription>
+                </Alert>
+              ) : null}
+            </DialogPanel>
+            <DialogFooter>
+              <Button
+                onClick={() => {
+                  setDeleteError("")
+                  setDeleteOpen(true)
+                }}
+                type="button"
+                variant="destructive-outline"
+              >
+                Delete
+              </Button>
+              <DialogClose render={<Button type="button" variant="ghost" />}>
+                Cancel
+              </DialogClose>
+              <Button loading={updateAnnouncement.isPending} type="submit">
+                Save changes
+              </Button>
+            </DialogFooter>
+          </Form>
+        </DialogPopup>
+      </Dialog>
+
+      <AlertDialog
+        open={deleteOpen}
+        onOpenChange={(open) => {
+          setDeleteOpen(open)
+          if (!open) setDeleteError("")
+        }}
+      >
+        <AlertDialogPopup>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This notice will be removed from the bulletin. This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose render={<Button type="button" variant="ghost" />}>
+              Keep
+            </AlertDialogClose>
+            <Button
+              loading={deleteAnnouncement.isPending}
+              onClick={handleDelete}
+              type="button"
+              variant="destructive"
+            >
+              Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogPopup>
+      </AlertDialog>
     </div>
   )
 }

@@ -16,6 +16,7 @@ export async function action({
   if (!data.activityType) {
     return {
       success: false,
+      message: "Please select an activity classification",
       errors: { activityType: "Please select an activity classification" },
     }
   }
@@ -28,6 +29,7 @@ export async function action({
   if (!saafDraft) {
     return {
       success: false,
+      message: "Form draft is missing. Please complete the activity application before submitting.",
       errors: { activityType: "Form draft is missing" },
     }
   }

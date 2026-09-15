@@ -2,6 +2,7 @@ import { CheckCircle } from "lucide-react"
 
 import { useMilestoneStats } from "@/hooks/use-milestone-stats"
 import type { Task } from "@/stores/org-store"
+import { layout } from "@/config"
 
 export function MilestonePreview({
   tasks,
@@ -13,7 +14,7 @@ export function MilestonePreview({
   const { progressPercent, progressColor } = useMilestoneStats(tasks)
 
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm md:p-7">
+    <div className={layout.section}>
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-lg font-bold text-[#1E293B] sm:text-xl">
           Semestral Milestone

@@ -1,5 +1,7 @@
 import { X, Megaphone, Calendar, AlertCircle, Bookmark } from "lucide-react"
 import { useOrgStore, type Announcement } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 interface AnnouncementModalProps {
   isOpen: boolean
@@ -49,9 +51,9 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
         </div>
 
         {/* Scrollable Bulletin Board Posts */}
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8 bg-[#F1F3F7] space-y-6">
+        <div className={cn("flex-1 overflow-y-auto bg-page p-6 sm:p-8", layout.stack)}>
           {displayAnnouncements.length === 0 ? (
-            <div className="bg-white rounded-2xl p-12 text-center text-[#94A3B8] border border-neutral-200 shadow-xs flex flex-col items-center justify-center">
+            <div className={cn(layout.section, "flex flex-col items-center justify-center p-12 text-center text-[#94A3B8]")}>
               <Megaphone className="w-8 h-8 text-neutral-300 mb-3" />
               <h3 className="text-sm font-bold text-[#1E293B] mb-1">No announcements at this time</h3>
               <p className="text-xs text-[#64748B]">Official administrative notices and memorandums will appear here.</p>
@@ -60,7 +62,7 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
             displayAnnouncements.map((post) => (
               <div
                 key={post.id}
-                className="bg-white rounded-2xl shadow-xs border border-neutral-200/90 overflow-hidden transition-all hover:shadow-md"
+                className={cn(layout.sectionFlush, "transition-all hover:shadow-md")}
               >
                 {/* Post Header Line */}
                 <div className="px-7 pt-5 pb-3 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-neutral-50/50">

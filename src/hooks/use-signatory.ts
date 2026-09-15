@@ -1,13 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
-import type { ApiSubmission, ApiAppeal, ApiSignatory } from "@/lib/dynamodb-adapters"
+import type { ApiSubmission, ApiSignatory } from "@/lib/dynamodb-adapters"
 
 export const SIGNATORY_KEYS = {
   me: ["signatory-me"] as const,
   queue: ["signatory-queue"] as const,
   detail: (eventId: string, submissionId: string) =>
     ["signatory-submission-detail", eventId, submissionId] as const,
-  appeals: ["signatory-appeals"] as const,
 }
 
 /**
@@ -24,7 +23,7 @@ export function useCurrentSignatoryQuery() {
 }
 
 /**
- * Fetch all pending submissions currently in this signatory's queue (GSI2)
+ * Fetch submissions currently in this signatory's queue (GSI2), including returned papers.
  */
 export function useSignatoryQueueQuery() {
   return useQuery({
@@ -54,19 +53,6 @@ export function useSignatorySubmissionDetailQuery(eventId?: string, submissionId
 }
 
 /**
- * Fetch open appeals routed to this signatory
- */
-export function useSignatoryAppealsQuery() {
-  return useQuery({
-    queryKey: SIGNATORY_KEYS.appeals,
-    queryFn: async () => {
-      const res = await apiClient.get<{ data: ApiAppeal[] }>("/signatories/appeals")
-      return res.data || []
-    },
-  })
-}
-
-/**
  * Mutation to approve a submission
  */
 export function useApproveSubmissionMutation() {
@@ -91,28 +77,32 @@ export function useApproveSubmissionMutation() {
   })
 }
 
+function commentMutation(path: string) {
+  return async ({
+    eventId,
+    submissionId,
+    comment,
+  }: {
+    eventId: string
+    submissionId: string
+    comment: string
+  }) => {
+    const res = await apiClient.post<{ data?: unknown }>(
+      `/signatories/events/${eventId}/submissions/${submissionId}/${path}`,
+      { comment }
+    )
+    return res
+  }
+}
+
 /**
- * Mutation to deny a submission with required comment
+ * Return a submission for revision. It stays on this desk.
  */
-export function useDenySubmissionMutation() {
+export function useReturnSubmissionMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      eventId,
-      submissionId,
-      comment,
-    }: {
-      eventId: string
-      submissionId: string
-      comment: string
-    }) => {
-      const res = await apiClient.post<{ data?: unknown }>(
-        `/signatories/events/${eventId}/submissions/${submissionId}/deny`,
-        { comment }
-      )
-      return res
-    },
+    mutationFn: commentMutation("return"),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: SIGNATORY_KEYS.queue })
     },
@@ -120,33 +110,14 @@ export function useDenySubmissionMutation() {
 }
 
 /**
- * Mutation to resolve an appeal (upheld or overturned)
+ * Deny a submission. It leaves the desk queue and cannot be edited.
  */
-export function useResolveAppealMutation() {
+export function useDenySubmissionMutation() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({
-      eventId,
-      submissionId,
-      appealId,
-      resolution,
-      comment,
-    }: {
-      eventId: string
-      submissionId: string
-      appealId: string
-      resolution: "upheld" | "overturned"
-      comment?: string
-    }) => {
-      const res = await apiClient.post<{ data: ApiAppeal }>(
-        `/signatories/events/${eventId}/submissions/${submissionId}/appeals/${appealId}/resolve`,
-        { resolution, comment }
-      )
-      return res.data
-    },
+    mutationFn: commentMutation("deny"),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: SIGNATORY_KEYS.appeals })
       queryClient.invalidateQueries({ queryKey: SIGNATORY_KEYS.queue })
     },
   })

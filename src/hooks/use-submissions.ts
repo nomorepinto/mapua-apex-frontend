@@ -1,11 +1,11 @@
-import { useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
 import type {
   ApiSubmission,
   ApiNotification,
-  ApiAppeal,
   ApiDeadline,
   ApiOrganization,
+  ApiAnnouncement,
 } from "@/lib/dynamodb-adapters"
 
 export const SUBMISSION_KEYS = {
@@ -14,10 +14,9 @@ export const SUBMISSION_KEYS = {
     ["submission-detail", eventId, submissionId] as const,
   notifications: (eventId: string, submissionId: string) =>
     ["submission-notifications", eventId, submissionId] as const,
-  appeals: (eventId: string, submissionId: string) =>
-    ["submission-appeals", eventId, submissionId] as const,
   deadlines: ["org-deadlines"] as const,
   organization: ["org-organization"] as const,
+  announcements: ["org-announcements"] as const,
 }
 
 /**
@@ -69,23 +68,6 @@ export function useSubmissionNotificationsQuery(eventId?: string, submissionId?:
 }
 
 /**
- * Fetch appeals for a submission
- */
-export function useSubmissionAppealsQuery(eventId?: string, submissionId?: string) {
-  return useQuery({
-    queryKey: SUBMISSION_KEYS.appeals(eventId || "", submissionId || ""),
-    queryFn: async () => {
-      if (!eventId || !submissionId) return []
-      const res = await apiClient.get<{ data: ApiAppeal[] }>(
-        `/students/events/${eventId}/submissions/${submissionId}/appeals`
-      )
-      return res.data || []
-    },
-    enabled: Boolean(eventId && submissionId),
-  })
-}
-
-/**
  * Fetch the logged-in student's organization (JWT custom:organization_id).
  */
 export function useCurrentOrganizationQuery() {
@@ -112,6 +94,19 @@ export function useOrgDeadlinesQuery() {
 }
 
 /**
+ * Fetch official bulletin announcements (global, newest first).
+ */
+export function useOrgAnnouncementsQuery() {
+  return useQuery({
+    queryKey: SUBMISSION_KEYS.announcements,
+    queryFn: async () => {
+      const res = await apiClient.get<{ data: ApiAnnouncement[] }>("/students/announcements")
+      return res.data || []
+    },
+  })
+}
+
+/**
  * Mutation to create a new SAAF submission
  */
 export function useCreateSubmissionMutation() {
@@ -132,33 +127,7 @@ export function useCreateSubmissionMutation() {
 }
 
 /**
- * Fetch appeals for every denied submission in parallel.
- */
-export function useDeniedSubmissionAppealsQuery(
-  submissions: ApiSubmission[],
-  enabled = true
-) {
-  const denied = submissions.filter((submission) => submission.status === "denied")
-
-  return useQueries({
-    queries: denied.map((submission) => ({
-      queryKey: SUBMISSION_KEYS.appeals(submission.event_id, submission.submission_id),
-      queryFn: async () => {
-        const res = await apiClient.get<{ data: ApiAppeal[] }>(
-          `/students/events/${submission.event_id}/submissions/${submission.submission_id}/appeals`
-        )
-        return {
-          submission,
-          appeals: res.data || [],
-        }
-      },
-      enabled,
-    })),
-  })
-}
-
-/**
- * Mutation to update/resubmit a denied or pending submission
+ * Mutation to update/resubmit a pending or returned submission
  */
 export function useUpdateSubmissionMutation() {
   const queryClient = useQueryClient()
@@ -187,26 +156,6 @@ export function useUpdateSubmissionMutation() {
       queryClient.invalidateQueries({
         queryKey: SUBMISSION_KEYS.notifications(variables.eventId, variables.submissionId),
       })
-    },
-  })
-}
-
-/**
- * Mutation to submit an appeal for a denied submission
- */
-export function useCreateAppealMutation() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async (payload: { event_id: string; submission_id: string; comment: string }) => {
-      const res = await apiClient.post<{ data: ApiAppeal }>("/students/appeals", payload)
-      return res.data
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: SUBMISSION_KEYS.appeals(variables.event_id, variables.submission_id),
-      })
-      queryClient.invalidateQueries({ queryKey: SUBMISSION_KEYS.all })
     },
   })
 }

@@ -2,6 +2,7 @@ import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import type { Announcement } from "@/lib/types"
+import { layout } from "@/config"
 
 export function AnnouncementsTable({
   announcements,
@@ -15,7 +16,7 @@ export function AnnouncementsTable({
   onDelete: (id: string) => void
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-2xs">
+    <div className={layout.sectionFlush}>
       <div className="border-b border-neutral-200 p-6">
         <h2 className="text-lg font-bold text-neutral-900">
           Current Announcements

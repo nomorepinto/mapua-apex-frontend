@@ -13,23 +13,22 @@ import {
   Bell,
 } from "lucide-react"
 
-import { AppealsModal } from "@/components/org/AppealsModal"
 import { SubmissionTrackerModal } from "@/components/org/SubmissionTrackerModal"
+import { layout } from "@/config"
 import {
   useCurrentOrganizationQuery,
-  useDeniedSubmissionAppealsQuery,
+  useOrgAnnouncementsQuery,
   useOrgDeadlinesQuery,
   useOrgSubmissionsQuery,
 } from "@/hooks/use-submissions"
 import {
-  apiAppealToRow,
   apiDeadlinesToReminders,
   apiSubmissionToDashboardRow,
-  type AppealRow,
+  formatDisplayDateTime,
 } from "@/lib/dynamodb-adapters"
+import { cn } from "@/lib/utils"
 
 export function OrgDashboard() {
-  const [isAppealsOpen, setIsAppealsOpen] = useState(false)
   const [isTrackerOpen, setIsTrackerOpen] = useState(false)
   const [selectedKeys, setSelectedKeys] = useState<{
     eventId: string
@@ -40,24 +39,14 @@ export function OrgDashboard() {
 
   const organizationQuery = useCurrentOrganizationQuery()
   const submissionsQuery = useOrgSubmissionsQuery()
+  const announcementsQuery = useOrgAnnouncementsQuery()
   const deadlinesQuery = useOrgDeadlinesQuery()
-  const appealsQueries = useDeniedSubmissionAppealsQuery(
-    submissionsQuery.data || [],
-    isAppealsOpen
-  )
 
   const submissions = useMemo(
     () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
     [submissionsQuery.data]
   )
-
-  const appeals = useMemo<AppealRow[]>(() => {
-    return appealsQueries.flatMap((query) => {
-      if (!query.data) return []
-      const title = query.data.submission.activity_details?.title_and_nature
-      return query.data.appeals.map((appeal) => apiAppealToRow(appeal, title))
-    })
-  }, [appealsQueries])
+  const announcements = announcementsQuery.data || []
 
   const reminders = useMemo(() => {
     const items = apiDeadlinesToReminders(
@@ -80,9 +69,11 @@ export function OrgDashboard() {
       case "submitted":
       case "pending":
         return "text-[#F59E0B] bg-amber-50"
+      case "denied":
       case "rejected":
-      case "returned":
         return "text-[#D9291C] bg-red-50"
+      case "returned":
+        return "text-[#F59E0B] bg-amber-50"
       default:
         return "text-[#64748B] bg-neutral-100"
     }
@@ -94,7 +85,7 @@ export function OrgDashboard() {
   }
 
   return (
-    <div className="w-full min-h-full bg-[#F5F6F8] p-6 sm:p-8 space-y-6">
+    <div className={cn(layout.page, layout.stack)}>
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
@@ -114,9 +105,9 @@ export function OrgDashboard() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-        <div className="xl:col-span-2 space-y-6">
-          <div className="bg-white p-6 md:p-7 rounded-2xl shadow-xs border border-neutral-100">
+      <div className={cn("grid grid-cols-1 items-start xl:grid-cols-3", layout.gap)}>
+        <div className={cn("xl:col-span-2", layout.stack)}>
+          <div className={layout.section}>
             <div className="flex items-center justify-between mb-5">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-xl bg-red-50 text-[#D9291C] flex items-center justify-center">
@@ -133,28 +124,45 @@ export function OrgDashboard() {
               </div>
             </div>
 
-            <div className="bg-[#F8FAFC] border border-neutral-100 rounded-xl p-8 text-center text-[#94A3B8] text-xs font-semibold">
-              No announcements at this time
-            </div>
+            {announcementsQuery.isLoading ? (
+              <div className="rounded-xl bg-[#F8FAFC] p-8 text-center text-xs font-semibold text-[#94A3B8]">
+                Loading announcements…
+              </div>
+            ) : announcementsQuery.isError ? (
+              <div className="rounded-xl bg-red-50 p-8 text-center text-xs font-semibold text-[#D9291C]">
+                Could not load announcements.
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="rounded-xl bg-[#F8FAFC] p-8 text-center text-xs font-semibold text-[#94A3B8]">
+                No announcements at this time
+              </div>
+            ) : (
+              <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-1 scrollbar-thin">
+                {announcements.map((announcement) => (
+                  <article
+                    key={announcement.sent_at}
+                    className="rounded-xl bg-[#F8FAFC] px-4 py-3.5"
+                  >
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
+                      {formatDisplayDateTime(announcement.sent_at)}
+                    </p>
+                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#1E293B]">
+                      {announcement.content}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="bg-white p-6 md:p-7 rounded-2xl shadow-xs border border-neutral-100 overflow-hidden">
-            <div className="flex items-center justify-between mb-5">
-              <div>
-                <h2 className="text-lg sm:text-xl font-bold text-[#1E293B]">
-                  Project Status & Submissions
-                </h2>
-                <p className="text-xs text-[#94A3B8]">
-                  Track current signatory routing and approval statuses
-                </p>
-              </div>
-
-              <button
-                onClick={() => setIsAppealsOpen(true)}
-                className="text-[#D9291C] font-bold text-xs hover:underline cursor-pointer"
-              >
-                View Appeals &rarr;
-              </button>
+          <div className={cn(layout.section, "overflow-hidden")}>
+            <div className="mb-5">
+              <h2 className="text-lg sm:text-xl font-bold text-[#1E293B]">
+                Project Status & Submissions
+              </h2>
+              <p className="text-xs text-[#94A3B8]">
+                Track current signatory routing and approval statuses
+              </p>
             </div>
 
             <div className="overflow-x-auto">
@@ -237,7 +245,7 @@ export function OrgDashboard() {
             </div>
           </div>
 
-          <div className="bg-white p-6 rounded-2xl shadow-xs border border-neutral-100">
+          <div className={layout.section}>
             <h2 className="text-base font-bold text-[#1E293B] mb-4">Resource Quick Links</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <button
@@ -271,8 +279,8 @@ export function OrgDashboard() {
           </div>
         </div>
 
-        <div className="xl:col-span-1 space-y-6">
-          <div className="bg-white p-6 rounded-2xl shadow-xs border border-neutral-100">
+        <div className={cn("xl:col-span-1", layout.stack)}>
+          <div className={layout.section}>
             <div
               onClick={() => setIsRemindersExpanded(!isRemindersExpanded)}
               className="flex items-center justify-between cursor-pointer group select-none"
@@ -423,17 +431,6 @@ export function OrgDashboard() {
           </div>
         </div>
       </div>
-
-      <AppealsModal
-        isOpen={isAppealsOpen}
-        onClose={() => setIsAppealsOpen(false)}
-        appeals={appeals}
-        isLoading={appealsQueries.some((query) => query.isLoading)}
-        onSelectDocument={(appeal) => {
-          setIsAppealsOpen(false)
-          openTracker(appeal.event_id, appeal.submission_id)
-        }}
-      />
 
       <SubmissionTrackerModal
         isOpen={isTrackerOpen}

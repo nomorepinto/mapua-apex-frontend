@@ -2,6 +2,7 @@ import { PlusIcon } from "lucide-react"
 
 import { ProponentCard } from "@/components/submission/proponent-card"
 import type { Proponent } from "@/components/submission/types"
+import { layout } from "@/config"
 
 export function ProponentsSection({
   proponents,
@@ -21,7 +22,7 @@ export function ProponentsSection({
   const canRemove = proponents.length > 1
 
   return (
-    <div className="space-y-8">
+    <div className={layout.stack}>
       {proponents.map((proponent, index) => (
         <ProponentCard
           key={proponent.id}

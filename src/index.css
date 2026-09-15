@@ -49,6 +49,8 @@
   --color-card: var(--card);
   --color-border: var(--border);
   --color-background: var(--background);
+  /* Keep in sync with `colors.page` in src/config.ts */
+  --color-page: #F5F6F8;
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
   --color-warning-foreground: var(--warning-foreground);

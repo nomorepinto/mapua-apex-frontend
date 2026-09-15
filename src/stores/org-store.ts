@@ -23,16 +23,7 @@ export interface Task {
   checklist: ChecklistItem[];
 }
 
-export interface Appeal {
-  id: string;
-  title: string;
-  date: string;
-  department: string;
-  status: string;
-  statusColor: string;
-}
-
-export type SubmissionStatus = 'Submitted' | 'Under Review' | 'Approved' | 'Returned' | 'Completed';
+export type SubmissionStatus = 'Submitted' | 'Under Review' | 'Approved' | 'Returned' | 'Denied' | 'Completed';
 
 // NOTE: This model is for the frontend prototype stage, acting as in-memory state until a real backend/API is implemented.
 export interface Submission {
@@ -114,15 +105,6 @@ interface OrgState {
   // Announcements
   announcements: Announcement[];
 
-  // Appeals
-  appeals: Appeal[];
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
-  departmentFilter: string;
-  setDepartmentFilter: (dept: string) => void;
-
   // Submissions (SAAF)
   submissions: Submission[];
   addSubmission: (submission: Omit<Submission, 'id' | 'status' | 'statusColor'>) => void;
@@ -130,6 +112,8 @@ interface OrgState {
   // Submissions wizard start
   eventName: string
   reserveFacilities: "yes" | "no" | null
+  saafValidated: boolean
+  setSaafValidated: (value: boolean) => void
   setSubmissionStart: (eventName: string, reserveFacilities: "yes" | "no") => void
   clearSubmissionStart: () => void
 
@@ -372,15 +356,6 @@ export const useOrgStore = create<OrgState>()(
   // Announcements
   announcements: [],
 
-  // Appeals
-  searchQuery: '',
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  statusFilter: 'All',
-  setStatusFilter: (status) => set({ statusFilter: status }),
-  departmentFilter: 'All',
-  setDepartmentFilter: (dept) => set({ departmentFilter: dept }),
-  appeals: [],
-
   // Submissions (SAAF)
   submissions: [],
   addSubmission: (submission) => {
@@ -398,9 +373,11 @@ export const useOrgStore = create<OrgState>()(
 
   eventName: "",
   reserveFacilities: null,
+  saafValidated: false,
+  setSaafValidated: (value) => set({ saafValidated: value }),
   setSubmissionStart: (eventName, reserveFacilities) =>
-    set({ eventName, reserveFacilities }),
-  clearSubmissionStart: () => set({ eventName: "", reserveFacilities: null }),
+    set({ eventName, reserveFacilities, saafValidated: false }),
+  clearSubmissionStart: () => set({ eventName: "", reserveFacilities: null, saafValidated: false }),
 
   // SAAF Draft
   saafDraft: null,
@@ -433,6 +410,7 @@ export const useOrgStore = create<OrgState>()(
       partialize: (state) => ({
         eventName: state.eventName,
         reserveFacilities: state.reserveFacilities,
+        saafValidated: state.saafValidated,
         saafDraft: state.saafDraft,
         reservationDraft: state.reservationDraft,
         editingEventId: state.editingEventId,

@@ -1,12 +1,12 @@
 import { createBrowserRouter, Navigate, Outlet } from "react-router"
 
-// Removed login imports
+import { layout } from "@/config"
 import { AdminLayout } from "@/routes/layouts/admin-layout"
 import { SignatoriesLayout } from "@/routes/layouts/signatories-layout"
 import { StudentsLayout } from "@/routes/layouts/students-layout"
 
 function RouteFallback() {
-  return <div className="min-h-dvh w-full bg-[#F3F4F6]" />
+  return <div className={layout.fallback} />
 }
 
 function PassThroughLayout() {

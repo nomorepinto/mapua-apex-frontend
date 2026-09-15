@@ -4,7 +4,6 @@ import type { Submission } from "@/stores/org-store"
 import { useOrgStore } from "@/stores/org-store"
 
 export function useOrgDashboard() {
-  const [isAppealsOpen, setIsAppealsOpen] = useState(false)
   const [isMilestoneOpen, setIsMilestoneOpen] = useState(false)
   const [isNewEventOpen, setIsNewEventOpen] = useState(false)
   const [isTrackerOpen, setIsTrackerOpen] = useState(false)
@@ -17,11 +16,8 @@ export function useOrgDashboard() {
   const calendarEvents = useOrgStore((state) => state.calendarEvents)
   const milestoneTasks = useOrgStore((state) => state.milestoneTasks)
   const activities = useOrgStore((state) => state.activities)
-  const appeals = useOrgStore((state) => state.appeals)
   const logActivity = useOrgStore((state) => state.logActivity)
 
-  const openAppeals = useCallback(() => setIsAppealsOpen(true), [])
-  const closeAppeals = useCallback(() => setIsAppealsOpen(false), [])
   const openMilestone = useCallback(() => setIsMilestoneOpen(true), [])
   const closeMilestone = useCallback(() => setIsMilestoneOpen(false), [])
   const openNewEvent = useCallback(() => setIsNewEventOpen(true), [])
@@ -41,7 +37,6 @@ export function useOrgDashboard() {
   )
 
   return {
-    isAppealsOpen,
     isMilestoneOpen,
     isNewEventOpen,
     isTrackerOpen,
@@ -52,9 +47,6 @@ export function useOrgDashboard() {
     calendarEvents,
     milestoneTasks,
     activities,
-    appeals,
-    openAppeals,
-    closeAppeals,
     openMilestone,
     closeMilestone,
     openNewEvent,

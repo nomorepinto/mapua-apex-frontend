@@ -3,6 +3,7 @@ import { Outlet } from "react-router"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { AuthGuard } from "@/components/auth/AuthGuard"
+import { layout } from "@/config"
 
 const SIGNATORY_NAV = [
   {
@@ -21,7 +22,7 @@ const SIGNATORY_NAV = [
 export function SignatoriesLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar", "cdm_reviewer", "org_adviser", "dean"]}>
-      <div className="flex h-dvh w-full flex-col overflow-hidden bg-[#F3F4F6] lg:flex-row">
+      <div className={layout.frame}>
         <AppSidebar homeTo="/signatories/dashboard" items={SIGNATORY_NAV} />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />

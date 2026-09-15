@@ -6,6 +6,7 @@ import {
   TABLE_INPUT_CLASS,
 } from "@/components/reservation/constants"
 import type { AVItem } from "@/components/reservation/types"
+import { layout } from "@/config"
 
 export function AvTable({
   purpose,
@@ -41,7 +42,7 @@ export function AvTable({
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xs">
+      <div className={layout.sectionFlush}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
             <thead>
