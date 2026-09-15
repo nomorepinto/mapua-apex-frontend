@@ -1,6 +1,9 @@
 import { useAuth } from "react-oidc-context"
 import { useEffect, useState } from "react"
 
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
+
 export type AuthGuardProps = {
   children: React.ReactNode
   allowedGroups?: string[]
@@ -25,7 +28,7 @@ export function AuthGuard({ children, allowedGroups }: AuthGuardProps) {
 
   if (auth.isLoading || (!auth.isAuthenticated && !hasAttemptedSignin) || auth.activeNavigator) {
     return (
-      <div className="flex min-h-dvh w-full items-center justify-center bg-[#F3F4F6]">
+      <div className={layout.center}>
         <div className="flex flex-col items-center space-y-4">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#8B0000] border-t-transparent" />
           <p className="text-sm font-medium text-neutral-600">Authenticating...</p>
@@ -36,7 +39,7 @@ export function AuthGuard({ children, allowedGroups }: AuthGuardProps) {
 
   if (auth.error) {
     return (
-      <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-[#F3F4F6] p-4 text-center">
+      <div className={cn(layout.center, "flex-col p-4 text-center")}>
         <h2 className="text-xl font-bold text-red-700">Authentication Error</h2>
         <p className="mt-2 text-neutral-600">{auth.error.message}</p>
         <button
@@ -56,7 +59,7 @@ export function AuthGuard({ children, allowedGroups }: AuthGuardProps) {
 
       if (!hasAccess) {
         return (
-          <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-[#F3F4F6] p-4 text-center">
+          <div className={cn(layout.center, "flex-col p-4 text-center")}>
             <h2 className="text-xl font-bold text-red-700">Access Denied</h2>
             <p className="mt-2 text-neutral-600">
               You do not have permission to view this page.

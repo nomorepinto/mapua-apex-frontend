@@ -9,6 +9,7 @@ import {
   calculateRowTotal,
   formatPeso,
 } from "@/lib/numeric-input"
+import { layout } from "@/config"
 
 const BudgetRow = memo(function BudgetRow({
   item,
@@ -126,7 +127,7 @@ export function BudgetProposalSection({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xs">
+      <div className={layout.sectionFlush}>
         <div className="overflow-x-auto">
           <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
             <thead>

@@ -2,12 +2,14 @@ import { useState } from "react"
 import { useNavigate } from "react-router"
 import { X, Check, FileText, CheckCircle2 } from "lucide-react"
 
-import { useCreateAppealMutation, useSubmissionDetailQuery, useSubmissionNotificationsQuery } from "@/hooks/use-submissions"
+import { useSubmissionDetailQuery, useSubmissionNotificationsQuery } from "@/hooks/use-submissions"
 import {
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
 } from "@/lib/dynamodb-adapters"
 import { useOrgStore } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 interface SubmissionTrackerModalProps {
   isOpen: boolean
@@ -24,8 +26,6 @@ export function SubmissionTrackerModal({
 }: SubmissionTrackerModalProps) {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<"details" | "progress">("details")
-  const [appealComment, setAppealComment] = useState("")
-  const [appealError, setAppealError] = useState<string | null>(null)
 
   const detailQuery = useSubmissionDetailQuery(
     isOpen ? eventId || undefined : undefined,
@@ -35,7 +35,6 @@ export function SubmissionTrackerModal({
     isOpen ? eventId || undefined : undefined,
     isOpen ? submissionId || undefined : undefined
   )
-  const createAppeal = useCreateAppealMutation()
 
   if (!isOpen || !eventId || !submissionId) return null
 
@@ -48,8 +47,8 @@ export function SubmissionTrackerModal({
     submission?.api_status
   )
   const canResubmit =
-    submission?.api_status === "pending" || submission?.api_status === "denied"
-  const canAppeal = submission?.api_status === "denied"
+    submission?.api_status === "pending" || submission?.api_status === "returned"
+  const isDenied = submission?.api_status === "denied"
 
   const handleResubmit = () => {
     useOrgStore.getState().setEditingSubmission(eventId, submissionId)
@@ -57,27 +56,6 @@ export function SubmissionTrackerModal({
     navigate(
       `/students/submissions/saaf?event=${encodeURIComponent(eventId)}&submission=${encodeURIComponent(submissionId)}`
     )
-  }
-
-  const handleFileAppeal = async () => {
-    const comment = appealComment.trim()
-    if (!comment) {
-      setAppealError("Describe why this decision should be reviewed.")
-      return
-    }
-    setAppealError(null)
-    try {
-      await createAppeal.mutateAsync({
-        event_id: eventId,
-        submission_id: submissionId,
-        comment,
-      })
-      setAppealComment("")
-    } catch (error) {
-      setAppealError(
-        error instanceof Error ? error.message : "Could not file this appeal."
-      )
-    }
   }
 
   return (
@@ -161,9 +139,9 @@ export function SubmissionTrackerModal({
           ) : null}
 
           {activeTab === "details" && submission && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+            <div className={cn(layout.stack, "animate-in fade-in duration-200")}>
+              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap)}>
+                <div className={layout.section}>
                   <h3 className="text-lg font-extrabold text-[#1E293B] mb-4">
                     Document Specification & Details
                   </h3>
@@ -234,7 +212,7 @@ export function SubmissionTrackerModal({
                 </div>
 
                 <div className="space-y-4">
-                  <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 shadow-xs">
+                  <div className={layout.section}>
                     <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
                       Description & Objective
                     </h4>
@@ -243,7 +221,7 @@ export function SubmissionTrackerModal({
                     </p>
                   </div>
 
-                  <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 shadow-xs">
+                  <div className={layout.section}>
                     <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
                       Proponent & Routing
                     </h4>
@@ -263,8 +241,8 @@ export function SubmissionTrackerModal({
           )}
 
           {activeTab === "progress" && (
-            <div className="space-y-6 animate-in fade-in duration-200">
-              <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+            <div className={cn(layout.stack, "animate-in fade-in duration-200")}>
+              <div className={layout.section}>
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-lg font-extrabold text-[#1E293B]">Progress</h3>
                   <span className="text-xs text-[#94A3B8] font-medium">
@@ -334,7 +312,7 @@ export function SubmissionTrackerModal({
                 </div>
               </div>
 
-              <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 sm:p-7 shadow-xs">
+              <div className={layout.section}>
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-lg font-extrabold text-[#1E293B]">Pending approval</h3>
                 </div>
@@ -368,48 +346,30 @@ export function SubmissionTrackerModal({
             </div>
           )}
 
-          {(canResubmit || canAppeal) && (
-            <div className="bg-white border border-neutral-100/90 rounded-2xl p-6 shadow-xs space-y-4">
-              {canResubmit ? (
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <p className="text-sm text-[#475569]">
-                    Update this application and resubmit it to the current signatory.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleResubmit}
-                    className="rounded-xl bg-[#1E293B] px-4 py-2 text-xs font-bold text-white"
-                  >
-                    Edit and resubmit
-                  </button>
-                </div>
-              ) : null}
-
-              {canAppeal ? (
-                <div className="space-y-2 border-t border-neutral-100 pt-4">
-                  <p className="text-sm font-semibold text-[#1E293B]">File an appeal</p>
-                  <textarea
-                    value={appealComment}
-                    onChange={(event) => setAppealComment(event.target.value)}
-                    rows={3}
-                    placeholder="Explain why this returned submission should be reviewed again."
-                    className="w-full rounded-xl border border-neutral-200 px-3 py-2 text-sm text-[#1E293B]"
-                  />
-                  {appealError ? (
-                    <p className="text-xs font-semibold text-rose-600">{appealError}</p>
-                  ) : null}
-                  <button
-                    type="button"
-                    disabled={createAppeal.isPending}
-                    onClick={() => void handleFileAppeal()}
-                    className="rounded-xl bg-[#D9291C] px-4 py-2 text-xs font-bold text-white disabled:opacity-50"
-                  >
-                    {createAppeal.isPending ? "Filing…" : "Submit appeal"}
-                  </button>
-                </div>
-              ) : null}
+          {canResubmit ? (
+            <div className={cn(layout.section, "space-y-4")}>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <p className="text-sm text-[#475569]">
+                  Update this application and resubmit it to the current signatory.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleResubmit}
+                  className="rounded-xl bg-[#1E293B] px-4 py-2 text-xs font-bold text-white"
+                >
+                  Edit and resubmit
+                </button>
+              </div>
             </div>
-          )}
+          ) : null}
+
+          {isDenied ? (
+            <div className={cn(layout.section)}>
+              <p className="text-sm text-[#475569]">
+                This submission was denied and cannot be edited.
+              </p>
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

@@ -11,6 +11,8 @@ import { InstitutionalAlignmentSection } from "@/components/submission/instituti
 import { ProponentsSection } from "@/components/submission/proponents-section"
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { useSaafForm } from "@/hooks/use-saaf-form"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function Submission() {
   const formRef = useRef<HTMLFormElement>(null)
@@ -18,9 +20,9 @@ export function Submission() {
   const { draft } = form
 
   return (
-    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl">
-        <form.fetcher.Form ref={formRef} method="post" className="space-y-10">
+    <div className={cn("relative", layout.page)}>
+      <div className={layout.container}>
+        <form.fetcher.Form ref={formRef} method="post" className={layout.stack}>
           <FormPageHeader
             title="Student Activity Application Form"
             subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"

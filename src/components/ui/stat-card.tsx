@@ -1,12 +1,11 @@
 import { memo } from "react"
 import type { StatItem } from "./activity.data"
-
-// ─── StatCard ─────────────────────────────────────────────────────────────────
-// memo() prevents re-renders when parent Dashboard re-renders (rerender-memo)
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 const StatCard = memo(function StatCard({ label, value }: StatItem) {
   return (
-    <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-2xs space-y-4 transition-all hover:shadow-xs hover:border-neutral-300/80">
+    <div className={cn(layout.section, "space-y-4 transition-all hover:shadow-md")}>
       <span className="block text-xs sm:text-sm font-semibold text-neutral-600 leading-tight">
         {label}
       </span>

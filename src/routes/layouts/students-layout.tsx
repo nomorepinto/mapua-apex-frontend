@@ -3,6 +3,7 @@ import { Outlet } from "react-router"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
 import { AuthGuard } from "@/components/auth/AuthGuard"
+import { layout } from "@/config"
 
 const STUDENT_NAV = [
   {
@@ -26,7 +27,7 @@ const STUDENT_NAV = [
 export function StudentsLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "org_adviser", "org_submitter"]}>
-      <div className="flex h-dvh w-full flex-col overflow-hidden bg-[#F5F6F8] lg:flex-row">
+      <div className={layout.frame}>
         <AppSidebar homeTo="/students/dashboard" items={STUDENT_NAV} />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />

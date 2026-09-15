@@ -26,7 +26,7 @@ export interface Activity {
   representative: string
   decision: ActivityDecision
   type: string
-  status?: "Review" | "Returned" | "Accepted" | "Pending Dean Approval"
+  status?: "Review" | "Returned" | "Rejected" | "Accepted" | "Pending Dean Approval"
   description: string
   venue: string
   expectedParticipants: number
@@ -45,6 +45,7 @@ export function getStatusVariant(status: Activity["status"]): StatusVariant {
     case "Pending Dean Approval":
       return "warning"
     case "Returned":
+    case "Rejected":
       return "error"
     default:
       return "outline"

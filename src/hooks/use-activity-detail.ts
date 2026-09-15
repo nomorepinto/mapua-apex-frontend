@@ -2,6 +2,8 @@ import { useCallback, useState } from "react"
 
 import type { Activity } from "@/components/ui/activity.types"
 
+export type ActivityCommentAction = "return" | "reject"
+
 export function useActivityDetail({
   activity,
   onClose,
@@ -10,12 +12,12 @@ export function useActivityDetail({
   activity: Activity | null
   onClose: () => void
   onAction?: (
-    action: "approve" | "return" | "defer",
+    action: "approve" | "return" | "reject" | "defer",
     activityId: string,
     details?: { title: string; message: string }
   ) => void | Promise<void>
 }) {
-  const [returnModalOpen, setReturnModalOpen] = useState(false)
+  const [commentAction, setCommentAction] = useState<ActivityCommentAction | null>(null)
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
@@ -34,21 +36,21 @@ export function useActivityDetail({
     await onAction?.("defer", activity.id)
   }, [activity, onAction])
 
-  const handleReturnSubmit = useCallback(
+  const handleCommentSubmit = useCallback(
     async (title: string, message: string) => {
-      if (!activity) return
-      await onAction?.("return", activity.id, { title, message })
-      setReturnModalOpen(false)
+      if (!activity || !commentAction) return
+      await onAction?.(commentAction, activity.id, { title, message })
+      setCommentAction(null)
     },
-    [activity, onAction]
+    [activity, commentAction, onAction]
   )
 
   return {
-    returnModalOpen,
-    setReturnModalOpen,
+    commentAction,
+    setCommentAction,
     handleOpenChange,
     handleApprove,
     handleDefer,
-    handleReturnSubmit,
+    handleCommentSubmit,
   }
 }

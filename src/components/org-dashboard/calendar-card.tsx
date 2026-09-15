@@ -3,6 +3,8 @@ import { DayPicker } from "react-day-picker"
 
 import { DAY_PICKER_STYLES } from "@/components/org-dashboard/day-picker-styles"
 import { getDateKey } from "@/lib/date-key"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function CalendarCard({
   selectedDate,
@@ -19,7 +21,7 @@ export function CalendarCard({
   const selectedEvents = selectedKey ? calendarEvents[selectedKey] : undefined
 
   return (
-    <div className="relative flex min-w-0 flex-col justify-between rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm xl:col-span-1">
+    <div className={cn(layout.section, "relative flex min-w-0 flex-col justify-between xl:col-span-1")}>
       <button
         onClick={onNewEvent}
         className="absolute top-4 right-4 z-10 flex size-11 cursor-pointer items-center justify-center rounded-full border border-neutral-100 bg-neutral-50 text-[#1E293B] transition-colors hover:bg-neutral-100 sm:top-6 sm:right-6 sm:size-7"

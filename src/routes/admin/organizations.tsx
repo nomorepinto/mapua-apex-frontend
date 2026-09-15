@@ -31,6 +31,8 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 import {
   Combobox,
   ComboboxEmpty,
@@ -510,8 +512,8 @@ export function AdminOrganizationsPage() {
     sharedAccountsReady && missingAssignable.length === 0
 
   return (
-    <div className="min-h-full w-full bg-background px-4 py-8 text-foreground sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-8">
+    <div className={layout.page}>
+      <div className={cn(layout.container, layout.stack)}>
         <FormPageHeader
           subtitle="Assign a dean and adviser to each organization. Admin, CDM, and OSAAR are shared accounts used by every organization."
           title="Organizations"
@@ -530,8 +532,8 @@ export function AdminOrganizationsPage() {
           </Alert>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
-          <Card>
+        <div className={cn("grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]", layout.gap)}>
+          <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add organization</CardTitle>
               <CardDescription>
@@ -712,7 +714,7 @@ export function AdminOrganizationsPage() {
             </CardFooter>
           </Card>
 
-          <Card className="min-w-0">
+          <Card className={cn(layout.card, "min-w-0")}>
             <CardHeader>
               <CardTitle>Registered organizations</CardTitle>
               <CardDescription>

@@ -1,4 +1,6 @@
 import { useOrgStore, type Submission, type Task } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 type StageItem = {
   title: string
@@ -81,7 +83,7 @@ function StageCard({
       >
         {label}
       </span>
-      <div className="flex flex-1 flex-col justify-center gap-3 rounded-xl border border-neutral-100 bg-white p-6 shadow-2xs">
+      <div className="flex flex-1 flex-col justify-center gap-3 rounded-xl bg-white p-6 shadow-xs">
         {item ? (
           <>
             <h3 className="text-xl leading-snug font-extrabold text-[#1E293B] sm:text-2xl">
@@ -138,7 +140,7 @@ export function PortfolioSection() {
     )
 
   return (
-    <div className="flex w-full flex-col justify-between rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm md:p-7 xl:col-span-2">
+    <div className={cn(layout.section, "flex w-full flex-col justify-between xl:col-span-2")}>
       <div>
         <h2 className="mb-1 text-xl font-bold text-[#1E293B] sm:text-2xl">
           Project & Event Portfolio

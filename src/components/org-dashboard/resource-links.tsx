@@ -1,5 +1,7 @@
 import { Cloud, FileText, Folder } from "lucide-react"
 
+import { layout } from "@/config"
+
 const RESOURCES = [
   {
     label: "Official Templates",
@@ -30,7 +32,7 @@ export function ResourceLinks({
   onAccess: (title: string, description: string) => void
 }) {
   return (
-    <div className="rounded-2xl border border-neutral-100 bg-white p-6 shadow-sm md:p-7">
+    <div className={layout.section}>
       <h2 className="mb-5 text-xl font-bold text-[#1E293B]">
         Resource Quick Links
       </h2>

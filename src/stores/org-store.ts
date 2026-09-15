@@ -23,16 +23,7 @@ export interface Task {
   checklist: ChecklistItem[];
 }
 
-export interface Appeal {
-  id: string;
-  title: string;
-  date: string;
-  department: string;
-  status: string;
-  statusColor: string;
-}
-
-export type SubmissionStatus = 'Submitted' | 'Under Review' | 'Approved' | 'Returned' | 'Completed';
+export type SubmissionStatus = 'Submitted' | 'Under Review' | 'Approved' | 'Returned' | 'Denied' | 'Completed';
 
 // NOTE: This model is for the frontend prototype stage, acting as in-memory state until a real backend/API is implemented.
 export interface Submission {
@@ -113,15 +104,6 @@ interface OrgState {
 
   // Announcements
   announcements: Announcement[];
-
-  // Appeals
-  appeals: Appeal[];
-  searchQuery: string;
-  setSearchQuery: (query: string) => void;
-  statusFilter: string;
-  setStatusFilter: (status: string) => void;
-  departmentFilter: string;
-  setDepartmentFilter: (dept: string) => void;
 
   // Submissions (SAAF)
   submissions: Submission[];
@@ -373,15 +355,6 @@ export const useOrgStore = create<OrgState>()(
 
   // Announcements
   announcements: [],
-
-  // Appeals
-  searchQuery: '',
-  setSearchQuery: (query) => set({ searchQuery: query }),
-  statusFilter: 'All',
-  setStatusFilter: (status) => set({ statusFilter: status }),
-  departmentFilter: 'All',
-  setDepartmentFilter: (dept) => set({ departmentFilter: dept }),
-  appeals: [],
 
   // Submissions (SAAF)
   submissions: [],

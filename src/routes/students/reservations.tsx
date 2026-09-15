@@ -12,6 +12,8 @@ import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
 import { useOrgStore } from "@/stores/org-store"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function Reservation() {
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
@@ -32,8 +34,8 @@ export function Reservation() {
   }
 
   return (
-    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 font-sans text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-7">
+    <div className={cn("relative font-sans", layout.page)}>
+      <div className={cn(layout.container, layout.stack)}>
         <FormPageHeader
           title="Reservation of Facilities"
           subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"
@@ -51,7 +53,7 @@ export function Reservation() {
         <form
           ref={formRef}
           onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-          className="space-y-8"
+          className={layout.stack}
         >
           <EquipmentSection
             equipment={draft.equipment}

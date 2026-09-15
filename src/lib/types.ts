@@ -154,17 +154,18 @@ export interface Submission {
   institutional_alignment: InstitutionalAlignment
   detailed_budget_proposal: DetailedBudgetProposal
   venue_reservation: VenueReservation
+  status: "pending" | "approved" | "denied" | "returned"
   /** UUID of the signatory who currently needs to act on this */
   current_signatory: string
-  /** GSI2PK = `SIGNATORY#<uuid>` */
-  GSI2PK: string
+  /** GSI2PK = `SIGNATORY#<uuid>` — present while pending or returned */
+  GSI2PK?: string
   /** GSI2SK = timestamp */
-  GSI2SK: string
+  GSI2SK?: string
 }
 
 // ─── Notification ────────────────────────────────────────────────────────────
 
-export type NotificationType = "approved" | "denied" | "fully_approved"
+export type NotificationType = "approved" | "fully approved" | "denied" | "returned"
 
 export interface Notification {
   /** PK = `SUBMISSION#<uuid>` */
@@ -173,7 +174,7 @@ export interface Notification {
   SK: string
   signatory: string
   notif_type: NotificationType
-  /** Mandatory when notif_type === "denied" */
+  /** Mandatory when notif_type is denied or returned */
   comment?: string
 }
 
@@ -189,22 +190,6 @@ export interface Signatory {
   GSI4PK: string
   /** GSI4SK = signatory_uuid */
   GSI4SK: string
-}
-
-// ─── Appeal ──────────────────────────────────────────────────────────────────
-
-export interface Appeal {
-  /** PK = `SUBMISSION#<uuid>` */
-  PK: string
-  /** SK = `APPEAL#<uuid>` */
-  SK: string
-  sent_at: string
-  signatory_destination: string
-  comment: string
-  /** GSI3PK = `SIGNATORY#<uuid>` */
-  GSI3PK: string
-  /** GSI3SK = timestamp */
-  GSI3SK: string
 }
 
 // ─── Deadline Reminder ───────────────────────────────────────────────────────

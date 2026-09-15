@@ -14,12 +14,11 @@ import {
   useApproveSubmissionMutation,
   useCurrentSignatoryQuery,
   useDenySubmissionMutation,
-  useResolveAppealMutation,
-  useSignatoryAppealsQuery,
+  useReturnSubmissionMutation,
   useSignatoryQueueQuery,
   useSignatorySubmissionDetailQuery,
 } from "@/hooks/use-signatory"
-import { apiAppealToRow, apiSubmissionToActivity } from "@/lib/dynamodb-adapters"
+import { apiSubmissionToActivity } from "@/lib/dynamodb-adapters"
 
 export function useReviewDashboard() {
   const auth = useAuth()
@@ -28,10 +27,9 @@ export function useReviewDashboard() {
   const role = meQuery.data?.role || roleFromCognitoGroups(groups)
   const roleLabel = role ? signatoryRoleLabel(role) : "Signatory"
   const queueQuery = useSignatoryQueueQuery()
-  const appealsQuery = useSignatoryAppealsQuery()
   const approveMutation = useApproveSubmissionMutation()
+  const returnMutation = useReturnSubmissionMutation()
   const denyMutation = useDenySubmissionMutation()
-  const resolveMutation = useResolveAppealMutation()
 
   const [selectedDept, setSelectedDept] = useState<string | null>(null)
   const [selectedOrg, setSelectedOrg] = useState<string | null>(null)
@@ -49,11 +47,6 @@ export function useReviewDashboard() {
   const activitiesList = useMemo(
     () => (queueQuery.data || []).map(apiSubmissionToActivity),
     [queueQuery.data]
-  )
-
-  const appealRows = useMemo(
-    () => (appealsQuery.data || []).map((appeal) => apiAppealToRow(appeal)),
-    [appealsQuery.data]
   )
 
   const activeActivity = useMemo(() => {
@@ -92,7 +85,7 @@ export function useReviewDashboard() {
 
   const handleModalAction = useCallback(
     async (
-      action: "approve" | "return" | "defer",
+      action: "approve" | "return" | "reject" | "defer",
       _activityId: string,
       details?: { title: string; message: string }
     ) => {
@@ -112,10 +105,18 @@ export function useReviewDashboard() {
             .filter(Boolean)
             .join(" — ")
           if (!comment) {
-            setActionError("A return comment is required.")
+            setActionError(
+              action === "reject"
+                ? "A rejection comment is required."
+                : "A return comment is required."
+            )
             return
           }
-          await denyMutation.mutateAsync({ ...activeKeys, comment })
+          if (action === "reject") {
+            await denyMutation.mutateAsync({ ...activeKeys, comment })
+          } else {
+            await returnMutation.mutateAsync({ ...activeKeys, comment })
+          }
         }
         handleModalClose()
       } catch (error) {
@@ -124,30 +125,7 @@ export function useReviewDashboard() {
         )
       }
     },
-    [activeKeys, approveMutation, denyMutation, handleModalClose]
-  )
-
-  const handleResolveAppeal = useCallback(
-    async (appeal: {
-      event_id: string
-      submission_id: string
-      appeal_id: string
-    }, resolution: "upheld" | "overturned") => {
-      setActionError(null)
-      try {
-        await resolveMutation.mutateAsync({
-          eventId: appeal.event_id,
-          submissionId: appeal.submission_id,
-          appealId: appeal.appeal_id,
-          resolution,
-        })
-      } catch (error) {
-        setActionError(
-          error instanceof Error ? error.message : "Could not resolve this appeal."
-        )
-      }
-    },
-    [resolveMutation]
+    [activeKeys, approveMutation, denyMutation, handleModalClose, returnMutation]
   )
 
   const stats = useMemo(() => computeReviewStats(activitiesList), [activitiesList])
@@ -181,15 +159,12 @@ export function useReviewDashboard() {
     hasActivities: activitiesList.length > 0,
     isLoading: queueQuery.isLoading,
     isActing:
-      approveMutation.isPending || denyMutation.isPending || resolveMutation.isPending,
+      approveMutation.isPending || returnMutation.isPending || denyMutation.isPending,
     actionError,
-    appealRows,
-    appealsLoading: appealsQuery.isLoading,
     handleDeptSelect,
     handleOrgSelect,
     handleActivitySelect,
     handleModalClose,
     handleModalAction,
-    handleResolveAppeal,
   }
 }

@@ -18,6 +18,8 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { blockNonIntegerKeys, sanitizeIntegerInput } from "@/lib/numeric-input"
+import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 interface ProponentCardProps {
   proponent: Proponent
@@ -39,7 +41,7 @@ export const ProponentCard = memo(function ProponentCard({
   onDepartmentChange,
 }: ProponentCardProps) {
   return (
-    <div className="space-y-6 rounded-2xl border border-neutral-200/80 bg-white/60 p-6 shadow-xs">
+    <div className={cn(layout.section, "space-y-6")}>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-3">
         <div className="flex items-center gap-3">
           <span className="text-base font-bold tracking-wider text-neutral-900 uppercase">
