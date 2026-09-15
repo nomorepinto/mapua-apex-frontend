@@ -153,6 +153,7 @@ async function request<T>(endpoint: string, options: RequestOptions = {}): Promi
   const reqHeaders: Record<string, string> = {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "ngrok-skip-browser-warning": "true",
     ...(headers as Record<string, string>),
   }
 
