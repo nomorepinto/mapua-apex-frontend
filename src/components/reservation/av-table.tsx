@@ -8,21 +8,22 @@ import {
 import type { AVItem } from "@/components/reservation/types"
 
 export function AvTable({
-  purpose,
-  items,
+  purpose = "",
+  items = [],
   onPurposeChange,
   onUpdate,
   onRemove,
   onAdd,
 }: {
   purpose: string
-  items: AVItem[]
+  items?: AVItem[]
   onPurposeChange: (value: string) => void
   onUpdate: (id: string, field: keyof AVItem, value: string) => void
   onRemove: (id: string) => void
   onAdd: () => void
 }) {
-  const canRemove = items.length > 1
+  const safeItems = items ?? []
+  const canRemove = safeItems.length > 1
 
   return (
     <div className="space-y-3 pt-2">
@@ -43,27 +44,50 @@ export function AvTable({
 
       <div className="overflow-hidden rounded-xl border border-neutral-300 bg-white shadow-2xs">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[54rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
-                <th className="w-48 border-r border-neutral-300 px-4 py-3 text-center">
-                  Date Needed
-                </th>
-                <th className="w-40 border-r border-neutral-300 px-4 py-3 text-center">
-                  Time Needed
-                </th>
-                <th className="w-56 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-52 border-r border-neutral-300 px-4 py-3 text-center">
                   Equipment Needed
                 </th>
+                <th className="w-36 border-r border-neutral-300 px-2 py-3 text-center">
+                  Start Date
+                </th>
+                <th className="w-36 border-r border-neutral-300 px-2 py-3 text-center">
+                  End Date
+                </th>
+                <th className="w-28 border-r border-neutral-300 px-2 py-3 text-center">
+                  Start Time
+                </th>
+                <th className="w-28 border-r border-neutral-300 px-2 py-3 text-center">
+                  End Time
+                </th>
                 <th className="px-4 py-3 text-center">Remarks</th>
-                {canRemove ? <th className="w-12 px-2 py-3 text-center" /> : null}
+                {canRemove ? <th className="w-10 px-2 py-3 text-center" /> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
-              {items.map((item) => {
+              {safeItems.map((item) => {
                 const isFixedItem = FIXED_AV_EQUIPMENT.has(item.equipmentNeeded)
                 return (
                   <tr key={item.id} className="hover:bg-neutral-50/60">
+                    <td className="border-r border-neutral-300 p-2 text-center text-sm font-medium !text-neutral-900">
+                      {isFixedItem ? (
+                        <span>{item.equipmentNeeded}</span>
+                      ) : (
+                        <input
+                          type="text"
+                          maxLength={40}
+                          value={item.equipmentNeeded}
+                          placeholder="Enter equipment needed"
+                          onChange={(e) =>
+                            onUpdate(item.id, "equipmentNeeded", e.target.value)
+                          }
+                          style={{ color: "#171717" }}
+                          className={`${TABLE_INPUT_CLASS} font-medium`}
+                        />
+                      )}
+                    </td>
                     <td className="border-r border-neutral-300 p-2">
                       <input
                         type="date"
@@ -72,7 +96,19 @@ export function AvTable({
                           onUpdate(item.id, "dateNeeded", e.target.value)
                         }
                         style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer`}
+                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                      />
+                    </td>
+                    <td className="border-r border-neutral-300 p-2">
+                      <input
+                        type="date"
+                        min={item.dateNeeded || undefined}
+                        value={item.endDateNeeded || ""}
+                        onChange={(e) =>
+                          onUpdate(item.id, "endDateNeeded", e.target.value)
+                        }
+                        style={{ color: "#171717" }}
+                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
                       />
                     </td>
                     <td className="border-r border-neutral-300 p-2">
@@ -83,28 +119,24 @@ export function AvTable({
                           onUpdate(item.id, "timeNeeded", e.target.value)
                         }
                         style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer`}
+                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
                       />
                     </td>
-                    <td className="border-r border-neutral-300 p-2 text-center text-sm font-medium !text-neutral-900">
-                      {isFixedItem ? (
-                        <span>{item.equipmentNeeded}</span>
-                      ) : (
-                        <input
-                          type="text"
-                          value={item.equipmentNeeded}
-                          placeholder="Specify equipment..."
-                          onChange={(e) =>
-                            onUpdate(item.id, "equipmentNeeded", e.target.value)
-                          }
-                          style={{ color: "#171717" }}
-                          className={`${TABLE_INPUT_CLASS} font-medium`}
-                        />
-                      )}
+                    <td className="border-r border-neutral-300 p-2">
+                      <input
+                        type="time"
+                        value={item.endTimeNeeded || ""}
+                        onChange={(e) =>
+                          onUpdate(item.id, "endTimeNeeded", e.target.value)
+                        }
+                        style={{ color: "#171717" }}
+                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                      />
                     </td>
                     <td className="p-2">
                       <input
                         type="text"
+                        maxLength={40}
                         value={item.remarks}
                         placeholder="Enter remarks..."
                         onChange={(e) =>

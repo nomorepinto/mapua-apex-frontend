@@ -59,20 +59,26 @@ export interface ReservationPdfData {
     facilityItems?: Array<{
         item?: string
         dateOfUse?: string
+        endDateOfUse?: string
         timeOfUse?: string
+        endTimeOfUse?: string
         location?: string
     }>
     functionRoomPurpose?: string
     roomItems?: Array<{
         dateNeeded?: string
+        endDateNeeded?: string
         timeNeeded?: string
+        endTimeNeeded?: string
         roomNeeded?: string
         remarks?: string
     }>
     avPurpose?: string
     avItems?: Array<{
         dateNeeded?: string
+        endDateNeeded?: string
         timeNeeded?: string
+        endTimeNeeded?: string
         equipmentNeeded?: string
         remarks?: string
     }>
@@ -234,52 +240,97 @@ export function generateProposalPdf(
         const facilityRows = (reservationData.facilityItems || []).map((f) => [
             f.item || "",
             f.dateOfUse || "",
+            f.endDateOfUse || f.dateOfUse || "",
             f.timeOfUse || "",
+            f.endTimeOfUse || f.timeOfUse || "",
             f.location || "",
         ])
 
         autoTable(doc, {
             startY: ry,
-            head: [[`General Facilities (Purpose: ${reservationData.purpose || "N/A"})`, "", "", ""]],
-            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-            body: [["Item", "Date of Use", "Time of Use", "Location"], ...facilityRows],
-            styles: { fontSize: 7.5, cellPadding: 1.5 },
+            head: [
+                [
+                    {
+                        content: `General Facilities (Purpose: ${reservationData.purpose || "N/A"})`,
+                        colSpan: 6,
+                        styles: { halign: "left" },
+                    },
+                ],
+                ["Item", "Start Date", "End Date", "Start Time", "End Time", "Location"],
+            ],
+            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+            body: facilityRows,
+            styles: { fontSize: 7, cellPadding: 1.5, halign: "center" },
+            columnStyles: {
+                0: { halign: "left" },
+                5: { halign: "left" },
+            },
         })
 
         ry = (doc as any).lastAutoTable.finalY + 4
 
         // Function Room Table
         const roomRows = (reservationData.roomItems || []).map((r) => [
-            r.dateNeeded || "",
-            r.timeNeeded || "",
             r.roomNeeded || "",
+            r.dateNeeded || "",
+            r.endDateNeeded || r.dateNeeded || "",
+            r.timeNeeded || "",
+            r.endTimeNeeded || r.timeNeeded || "",
             r.remarks || "",
         ])
 
         autoTable(doc, {
             startY: ry,
-            head: [[`Function Rooms (Purpose: ${reservationData.functionRoomPurpose || "N/A"})`, "", "", ""]],
-            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-            body: [["Date Needed", "Time Needed", "Room Needed", "Remarks"], ...roomRows],
-            styles: { fontSize: 7.5, cellPadding: 1.5 },
+            head: [
+                [
+                    {
+                        content: `Function Rooms (Purpose: ${reservationData.functionRoomPurpose || "N/A"})`,
+                        colSpan: 6,
+                        styles: { halign: "left" },
+                    },
+                ],
+                ["Room Needed", "Start Date", "End Date", "Start Time", "End Time", "Remarks"],
+            ],
+            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+            body: roomRows,
+            styles: { fontSize: 7, cellPadding: 1.5, halign: "center" },
+            columnStyles: {
+                0: { halign: "left" },
+                5: { halign: "left" },
+            },
         })
 
         ry = (doc as any).lastAutoTable.finalY + 4
 
         // Audiovisual Equipment Table
         const avRows = (reservationData.avItems || []).map((a) => [
-            a.dateNeeded || "",
-            a.timeNeeded || "",
             a.equipmentNeeded || "",
+            a.dateNeeded || "",
+            a.endDateNeeded || a.dateNeeded || "",
+            a.timeNeeded || "",
+            a.endTimeNeeded || a.timeNeeded || "",
             a.remarks || "",
         ])
 
         autoTable(doc, {
             startY: ry,
-            head: [[`Audiovisual Equipment (Purpose: ${reservationData.avPurpose || "N/A"})`, "", "", ""]],
-            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8.5 },
-            body: [["Date Needed", "Time Needed", "Equipment Needed", "Remarks"], ...avRows],
-            styles: { fontSize: 7.5, cellPadding: 1.5 },
+            head: [
+                [
+                    {
+                        content: `Audiovisual Equipment (Purpose: ${reservationData.avPurpose || "N/A"})`,
+                        colSpan: 6,
+                        styles: { halign: "left" },
+                    },
+                ],
+                ["Equipment Needed", "Start Date", "End Date", "Start Time", "End Time", "Remarks"],
+            ],
+            headStyles: { fillColor: primaryRed, textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
+            body: avRows,
+            styles: { fontSize: 7, cellPadding: 1.5, halign: "center" },
+            columnStyles: {
+                0: { halign: "left" },
+                5: { halign: "left" },
+            },
         })
     }
 

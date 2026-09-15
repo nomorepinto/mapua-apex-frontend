@@ -30,14 +30,14 @@ export function Reservation() {
   }
 
   return (
-    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-8 font-sans text-neutral-900 sm:px-8 lg:px-12">
-      <div className="mx-auto max-w-6xl space-y-7">
+    <div className="relative min-h-full w-full bg-[#F3F4F6] px-4 py-6 font-sans text-neutral-900 sm:px-8 lg:px-12">
+      <div className="mx-auto max-w-6xl space-y-4">
         <FormPageHeader
           title="Reservation of Facilities"
           subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"
         />
 
-        <div className="space-y-1">
+        <div className="space-y-0.5">
           <h2 className="text-sm font-bold tracking-wide text-neutral-900 uppercase">
             APPLICATION FORM ON USE OF FACILITIES
           </h2>
@@ -49,7 +49,7 @@ export function Reservation() {
         <form
           ref={formRef}
           onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-          className="space-y-8"
+          className="space-y-5"
         >
           <EquipmentSection
             equipment={draft.equipment}
@@ -77,6 +77,7 @@ export function Reservation() {
             }
             onUpdate={form.handleUpdateRoomItem}
             onRemove={form.handleRemoveRoomItem}
+            onAdd={form.handleAddRoomItem}
           />
 
           <AvTable

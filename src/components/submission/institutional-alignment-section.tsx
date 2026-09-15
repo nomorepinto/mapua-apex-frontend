@@ -111,8 +111,8 @@ export function InstitutionalAlignmentSection({
             </label>
             <span
               className={`text-[11px] ${peoLen > 0 && peoLen < 30
-                  ? "font-medium text-amber-600"
-                  : "text-neutral-400"
+                ? "font-medium text-amber-600"
+                : "text-neutral-400"
                 }`}
             >
               {peoLen}/30 min
