@@ -97,6 +97,7 @@ export const DEFAULT_SAAF_DRAFT: SaafDraft = {
   activityObjectives: "",
   activityVenue: "",
   dateOfEvent: "",
+  endDateOfEvent: "",
   timeOfEvent: "",
   mission1: false,
   mission2: false,

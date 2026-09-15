@@ -37,7 +37,10 @@ export interface SaafDraft {
   activityObjectives: string
   activityVenue: string
   dateOfEvent: string
+  endDateOfEvent?: string
   timeOfEvent: string
+  timeOfEventStart?: string
+  timeOfEventEnd?: string
   mission1: boolean
   mission2: boolean
   mission3: boolean

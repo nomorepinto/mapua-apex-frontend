@@ -45,6 +45,7 @@ export interface ApiSubmission {
     objectives?: string
     venue?: string
     date_of_event?: string
+    end_date_of_event?: string
     day_of_event?: string
     time_of_event?: string
     expected_participants?: number
@@ -236,6 +237,7 @@ export function buildSaafApiPayload(
       objectives: saafDraft.activityObjectives || "",
       venue: saafDraft.activityVenue || "",
       date_of_event: saafDraft.dateOfEvent || "",
+      end_date_of_event: saafDraft.endDateOfEvent || saafDraft.dateOfEvent || "",
       day_of_event: saafDraft.dayOfEvent || "",
       time_of_event: saafDraft.timeOfEvent || "",
       expected_participants: Number(saafDraft.expectedParticipants) || 0,
@@ -726,6 +728,10 @@ export function apiSubmissionToDrafts(submission: ApiSubmission): {
       activityObjectives: submission.activity_details?.objectives || "",
       activityVenue: submission.activity_details?.venue || "",
       dateOfEvent: submission.activity_details?.date_of_event || "",
+      endDateOfEvent:
+        submission.activity_details?.end_date_of_event ||
+        submission.activity_details?.date_of_event ||
+        "",
       timeOfEvent: submission.activity_details?.time_of_event || "",
       mission1: Boolean(submission.institutional_alignment?.mission_statements?.competitive),
       mission2: Boolean(submission.institutional_alignment?.mission_statements?.research),
