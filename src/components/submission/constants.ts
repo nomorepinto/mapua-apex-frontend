@@ -54,7 +54,7 @@ export const SELECT_ITEM_CLASS =
   "cursor-pointer rounded-lg px-3 py-2 text-sm text-neutral-900 data-[highlighted]:bg-neutral-100 data-[highlighted]:text-neutral-900 data-[state=checked]:font-semibold data-[state=checked]:text-neutral-900"
 
 export const FIELD_INPUT_CLASS =
-  "h-9.5 rounded-lg border-neutral-300 bg-white !text-neutral-900 placeholder:text-neutral-400"
+  "h-9.5 rounded-lg border-neutral-300 bg-white !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
 
 export const TABLE_INPUT_CLASS =
   "w-full rounded border border-transparent bg-transparent px-2 py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"
@@ -69,7 +69,7 @@ export function createEmptyProponent(id: string): Proponent {
     suffix: "",
     studentNumber: "",
     programAndYear: "",
-    dateOfSubmission: "",
+    dateOfSubmission: new Date().toISOString().split("T")[0],
     department: "",
     positionOfApplicant: "",
     orgOrCourseSection: "",
@@ -79,12 +79,9 @@ export function createEmptyProponent(id: string): Proponent {
   }
 }
 
+// Default to 1 row with empty item name to show the "Item Name" placeholder
 export const DEFAULT_BUDGET_ITEMS: BudgetItem[] = [
-  { id: "1", item: "1", unit: "1", quantity: "1", pricePerUnit: "0" },
-  { id: "2", item: "2", unit: "1", quantity: "1", pricePerUnit: "0" },
-  { id: "3", item: "3", unit: "1", quantity: "1", pricePerUnit: "0" },
-  { id: "4", item: "4", unit: "1", quantity: "1", pricePerUnit: "0" },
-  { id: "5", item: "5", unit: "1", quantity: "1", pricePerUnit: "0" },
+  { id: "1", item: "", unit: "1", quantity: "1", pricePerUnit: "0" },
 ]
 
 export const DEFAULT_SAAF_DRAFT: SaafDraft = {

@@ -40,22 +40,16 @@ export const ProponentCard = memo(function ProponentCard({
   onRemove,
   onDepartmentChange,
 }: ProponentCardProps) {
+  const today = new Date().toISOString().split("T")[0]
+  const submissionDate = proponent.dateOfSubmission || today
+
   return (
     <div className={cn(layout.section, "space-y-6")}>
       <div className="flex flex-wrap items-center justify-between gap-4 border-b border-dashed border-neutral-300 pb-3">
         <div className="flex items-center gap-3">
           <span className="text-base font-bold tracking-wider text-neutral-900 uppercase">
-            PROPONENT {index + 1} -
+            PROPONENT {index + 1}
           </span>
-          <input
-            type="text"
-            name={`proponent_${index}_positionTitle`}
-            placeholder="Position"
-            value={proponent.position}
-            onChange={(e) => onUpdate(proponent.id, "position", e.target.value)}
-            style={{ color: "#171717" }}
-            className="rounded-md border border-neutral-200 bg-neutral-100/90 px-3 py-1 text-sm !text-neutral-900 placeholder:text-neutral-400 focus:ring-1 focus:ring-red-700 focus:outline-none"
-          />
         </div>
         {canRemove ? (
           <Button
@@ -79,6 +73,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_firstName`}
             value={proponent.firstName}
+            maxLength={35}
             onChange={(e) => onUpdate(proponent.id, "firstName", e.target.value)}
             placeholder="First Name"
             style={{ color: "#171717" }}
@@ -93,6 +88,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_middleName`}
             value={proponent.middleName}
+            maxLength={20}
             onChange={(e) =>
               onUpdate(proponent.id, "middleName", e.target.value)
             }
@@ -108,6 +104,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_lastName`}
             value={proponent.lastName}
+            maxLength={30}
             onChange={(e) => onUpdate(proponent.id, "lastName", e.target.value)}
             placeholder="Last Name"
             style={{ color: "#171717" }}
@@ -122,6 +119,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_suffix`}
             value={proponent.suffix}
+            maxLength={7}
             onChange={(e) => onUpdate(proponent.id, "suffix", e.target.value)}
             placeholder="Jr."
             style={{ color: "#171717" }}
@@ -140,13 +138,14 @@ export const ProponentCard = memo(function ProponentCard({
             inputMode="numeric"
             name={`proponent_${index}_studentNumber`}
             placeholder="202XXXXXXX"
+            maxLength={10}
             value={proponent.studentNumber}
             onKeyDown={blockNonIntegerKeys}
             onChange={(e) =>
               onUpdate(
                 proponent.id,
                 "studentNumber",
-                sanitizeIntegerInput(e.target.value)
+                sanitizeIntegerInput(e.target.value).slice(0, 10)
               )
             }
             style={{ color: "#171717" }}
@@ -161,6 +160,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_programAndYear`}
             value={proponent.programAndYear}
+            maxLength={20}
             onChange={(e) =>
               onUpdate(proponent.id, "programAndYear", e.target.value)
             }
@@ -176,14 +176,16 @@ export const ProponentCard = memo(function ProponentCard({
           </label>
           <Input
             type="date"
-            name={`proponent_${index}_dateOfSubmission`}
-            value={proponent.dateOfSubmission}
-            onChange={(e) =>
-              onUpdate(proponent.id, "dateOfSubmission", e.target.value)
-            }
+            value={submissionDate}
+            readOnly
+            tabIndex={-1}
             style={{ color: "#171717" }}
-            className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
-            required
+            className={`${FIELD_INPUT_CLASS} cursor-not-allowed bg-neutral-100/70 select-none px-3`}
+          />
+          <input
+            type="hidden"
+            name={`proponent_${index}_dateOfSubmission`}
+            value={submissionDate}
           />
         </div>
       </div>
@@ -230,6 +232,7 @@ export const ProponentCard = memo(function ProponentCard({
           <Input
             name={`proponent_${index}_positionOfApplicant`}
             value={proponent.positionOfApplicant}
+            maxLength={30}
             onChange={(e) =>
               onUpdate(proponent.id, "positionOfApplicant", e.target.value)
             }
@@ -269,13 +272,14 @@ export const ProponentCard = memo(function ProponentCard({
             inputMode="numeric"
             name={`proponent_${index}_contactNumber`}
             placeholder="09XXXXXXXXX"
+            maxLength={11}
             value={proponent.contactNumber}
             onKeyDown={blockNonIntegerKeys}
             onChange={(e) =>
               onUpdate(
                 proponent.id,
                 "contactNumber",
-                sanitizeIntegerInput(e.target.value)
+                sanitizeIntegerInput(e.target.value).slice(0, 11)
               )
             }
             style={{ color: "#171717" }}
