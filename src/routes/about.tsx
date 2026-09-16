@@ -35,7 +35,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   { name: "Aviel", coorole: "Council of Organizations: External Relations Head 25-26", awsrole: "Chief External Relations Officer: 26-27", photo: AvielPhoto },
   { name: "Benedict", coorole: "Council of Organizations: Supreme Overlord 25-26", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
   { name: "Joel", coorole: "", awsrole: "Technology Committee: 26-27", photo: JoelPhoto },
-  { name: "Luna", coorole: "", awsrole: "Organization Mascot: 26-27", photo: LunaPhoto },
+  { name: "Luna", coorole: "", awsrole: "President of the World: 26-27", photo: LunaPhoto },
 ]
 
 function DevCard({ member }: { member: TeamMember }) {
