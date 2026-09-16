@@ -2,15 +2,10 @@ import { useState } from "react"
 import { useNavigate } from "react-router"
 import { X, Check, FileText, CheckCircle2 } from "lucide-react"
 
-import {
-  useSubmissionDetailQuery,
-  useSubmissionNotificationsQuery,
-  useCurrentOrganizationQuery,
-} from "@/hooks/use-submissions"
+import { useSubmissionDetailQuery, useSubmissionNotificationsQuery } from "@/hooks/use-submissions"
 import {
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
-  formatDocumentId,
 } from "@/lib/dynamodb-adapters"
 import { useOrgStore } from "@/stores/org-store"
 import { layout } from "@/config"
@@ -32,7 +27,6 @@ export function SubmissionTrackerModal({
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<"details" | "progress">("details")
 
-  const orgQuery = useCurrentOrganizationQuery()
   const detailQuery = useSubmissionDetailQuery(
     isOpen ? eventId || undefined : undefined,
     isOpen ? submissionId || undefined : undefined
@@ -45,17 +39,12 @@ export function SubmissionTrackerModal({
   if (!isOpen || !eventId || !submissionId) return null
 
   const submission = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data, orgQuery.data?.signatories)
+    ? apiSubmissionToDashboardRow(detailQuery.data)
     : null
   const stepper = apiNotificationsToStepper(
     notificationsQuery.data || [],
-    detailQuery.data?.current_signatory,
-    detailQuery.data?.status,
-    {
-      activityType: detailQuery.data?.activity_classification?.activity_type,
-      hasVenue: Boolean(detailQuery.data?.venue_reservation?.has_reservation),
-      orgSignatories: orgQuery.data?.signatories,
-    }
+    submission?.current_signatory,
+    submission?.api_status
   )
   const canResubmit =
     submission?.api_status === "pending" || submission?.api_status === "returned"
@@ -75,8 +64,8 @@ export function SubmissionTrackerModal({
         <div className="px-8 pt-7 pb-5 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-mono font-bold text-[#D9291C] bg-red-50 px-2 py-0.5 rounded-md" title={submission?.id || submissionId}>
-                {formatDocumentId(submission?.id || submissionId)}
+              <span className="text-xs font-mono font-bold text-[#D9291C] bg-red-50 px-2 py-0.5 rounded-md">
+                {submission?.id || submissionId}
               </span>
               <span className="text-xs font-extrabold uppercase tracking-wider text-[#475569] bg-neutral-100 px-2 py-0.5 rounded-md">
                 {submission?.activity_classification || "saaf"}
@@ -151,8 +140,8 @@ export function SubmissionTrackerModal({
 
           {activeTab === "details" && submission && (
             <div className={cn(layout.stack, "animate-in fade-in duration-200")}>
-              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap, "items-stretch")}>
-                <div className={cn(layout.section, "flex flex-col")}>
+              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap)}>
+                <div className={layout.section}>
                   <h3 className="text-lg font-extrabold text-[#1E293B] mb-4">
                     Document Specification & Details
                   </h3>
@@ -222,29 +211,17 @@ export function SubmissionTrackerModal({
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-4">
-                  <div className={cn(layout.section, "flex-1 flex flex-col min-h-[220px]")}>
-                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2 shrink-0">
-                      Description
+                <div className="space-y-4">
+                  <div className={layout.section}>
+                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
+                      Description & Objective
                     </h4>
-                    <div className="flex-1 overflow-y-auto max-h-[260px] pr-2 space-y-3 [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
-                      <p className="text-sm text-[#1E293B] leading-relaxed">
-                        {submission.activity_details.description || "No description provided."}
-                      </p>
-                      {submission.activity_details.objectives ? (
-                        <div className="pt-3 border-t border-neutral-100">
-                          <h5 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
-                            Objectives
-                          </h5>
-                          <p className="text-sm text-[#1E293B] leading-relaxed">
-                            {submission.activity_details.objectives}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
+                    <p className="text-sm text-[#1E293B] leading-relaxed">
+                      {submission.activity_details.description || "No description provided."}
+                    </p>
                   </div>
 
-                  <div className={cn(layout.section, "shrink-0")}>
+                  <div className={layout.section}>
                     <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
                       Proponent & Routing
                     </h4>
@@ -275,7 +252,7 @@ export function SubmissionTrackerModal({
 
                 <div className="flex items-center justify-between text-xs text-[#64748B] mb-6">
                   <span>
-                    {formatDocumentId(submissionId)} • Submitted {submission?.submitted_date || "—"} •{" "}
+                    {submissionId} • Submitted {submission?.submitted_date || "—"} •{" "}
                     {stepper.isAllApproved
                       ? "All steps completed"
                       : `${stepper.remainingSteps} tasks remaining before final approval`}
@@ -288,10 +265,10 @@ export function SubmissionTrackerModal({
                   </div>
                 </div>
 
-                <div className="relative py-4 px-2 select-none">
-                  <div className="absolute top-9 left-8 right-8 -translate-y-1/2 h-1.5 bg-neutral-200 rounded-full z-0 overflow-hidden">
+                <div className="relative py-4 px-3">
+                  <div className="absolute top-1/2 left-8 right-8 -translate-y-4 h-1 bg-neutral-200 rounded-full z-0">
                     <div
-                      className="h-full bg-[#10B981] rounded-full transition-all duration-500 ease-out"
+                      className="h-full bg-[#4ADE80] rounded-full transition-all duration-500"
                       style={{
                         width: `${
                           stepper.fullSteps.length > 1
@@ -304,53 +281,30 @@ export function SubmissionTrackerModal({
                     ></div>
                   </div>
 
-                  <div className="relative z-10 w-full min-h-[76px]">
+                  <div className="relative z-10 flex items-center justify-between w-full">
                     {stepper.fullSteps.map((stepName, idx) => {
-                      const totalSteps = stepper.fullSteps.length
                       const isCompleted = stepper.isAllApproved || idx < stepper.currentStepIdx
                       const isCurrent = !stepper.isAllApproved && idx === stepper.currentStepIdx
 
-                      let nodeBg = "bg-neutral-100 border-neutral-300 text-neutral-400"
+                      let nodeBg = "bg-neutral-200 border-neutral-200 text-neutral-400"
                       if (isCompleted) {
-                        nodeBg = "bg-[#D1FAE5] border-[#10B981] text-[#065F46]"
+                        nodeBg = "bg-[#6EE7B7] border-[#4ADE80] text-emerald-900"
                       } else if (isCurrent) {
-                        nodeBg = "bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] ring-4 ring-amber-100"
+                        nodeBg = "bg-[#FCD34D] border-[#F59E0B] text-amber-900"
                       }
 
                       return (
-                        <div
-                          key={`${stepName}-${idx}`}
-                          className="absolute top-4 -translate-x-1/2 flex flex-col items-center"
-                          style={{
-                            left: totalSteps > 1
-                              ? `calc(32px + (100% - 64px) * ${idx / (totalSteps - 1)})`
-                              : "50%",
-                          }}
-                        >
+                        <div key={`${stepName}-${idx}`} className="flex flex-col items-center">
                           <div
-                            className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all duration-300 shadow-xs ${nodeBg}`}
+                            className={`w-10 h-10 rounded-full border-2 flex items-center justify-center font-bold transition-all shadow-xs ${nodeBg}`}
                           >
                             {isCompleted ? (
-                              <Check className="w-5 h-5 stroke-[2.5] text-emerald-800" />
-                            ) : isCurrent ? (
-                              <span className="w-3.5 h-3.5 rounded-full bg-amber-500 animate-pulse"></span>
+                              <Check className="w-5 h-5 stroke-[3] text-emerald-900" />
                             ) : (
-                              <span className="w-2.5 h-2.5 rounded-full bg-neutral-300"></span>
+                              <span className="w-3 h-3 rounded-full bg-current opacity-60"></span>
                             )}
                           </div>
-                          <span
-                            className={cn(
-                              "text-xs font-bold mt-2 text-center whitespace-nowrap px-1 max-w-[120px] truncate",
-                              isCompleted
-                                ? "text-[#1E293B]"
-                                : isCurrent
-                                ? "text-amber-900 font-extrabold"
-                                : "text-slate-400"
-                            )}
-                            title={stepName}
-                          >
-                            {stepName}
-                          </span>
+                          <span className="text-xs font-bold text-[#1E293B] mt-3">{stepName}</span>
                         </div>
                       )
                     })}
