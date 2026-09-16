@@ -89,7 +89,12 @@ import {
 
 const EMPTY_SIGNATORIES: ApiSignatory[] = []
 
-const ROLE_ITEMS = SIGNATORY_ROLE_ITEMS.map((item) => ({ ...item }))
+type RoleOption = { label: string; value: SignatoryRoleValue }
+
+const ROLE_ITEMS: RoleOption[] = SIGNATORY_ROLE_ITEMS.map((item) => ({
+  label: item.label,
+  value: item.value,
+}))
 const DEPT_ITEMS = DEPARTMENT_ITEMS.map((item) => ({ ...item }))
 
 type DepartmentOption = { label: string; value: string }
