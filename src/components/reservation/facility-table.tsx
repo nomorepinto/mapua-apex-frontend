@@ -8,21 +8,22 @@ import type { FacilityItem } from "@/components/reservation/types"
 import { layout } from "@/config"
 
 export function FacilityTable({
-  purpose,
-  items,
+  purpose = "",
+  items = [],
   onPurposeChange,
   onUpdate,
   onRemove,
   onAdd,
 }: {
   purpose: string
-  items: FacilityItem[]
+  items?: FacilityItem[]
   onPurposeChange: (value: string) => void
   onUpdate: (id: string, field: keyof FacilityItem, value: string) => void
   onRemove: (id: string) => void
   onAdd: () => void
 }) {
-  const canRemove = items.length > 1
+  const safeItems = items ?? []
+  const canRemove = safeItems.length > 1
 
   return (
     <div className="space-y-3">
@@ -43,33 +44,40 @@ export function FacilityTable({
 
       <div className={layout.sectionFlush}>
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[44rem] border-collapse text-left text-sm">
+          <table className="w-full min-w-[54rem] border-collapse text-left text-sm">
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
-                <th className="w-72 border-r border-neutral-300 px-4 py-3 text-center">
+                <th className="w-56 border-r border-neutral-300 px-4 py-3 text-center">
                   Item
                 </th>
-                <th className="w-48 border-r border-neutral-300 px-4 py-3 text-center">
-                  Date of Use
+                <th className="w-36 border-r border-neutral-300 px-2 py-3 text-center">
+                  Start Date
                 </th>
-                <th className="w-40 border-r border-neutral-300 px-4 py-3 text-center">
-                  Time of Use
+                <th className="w-36 border-r border-neutral-300 px-2 py-3 text-center">
+                  End Date
                 </th>
-                <th className="w-60 px-4 py-3 text-center">Location</th>
-                {canRemove ? <th className="w-12 px-2 py-3 text-center" /> : null}
+                <th className="w-28 border-r border-neutral-300 px-2 py-3 text-center">
+                  Start Time
+                </th>
+                <th className="w-28 border-r border-neutral-300 px-2 py-3 text-center">
+                  End Time
+                </th>
+                <th className="px-4 py-3 text-center">Location</th>
+                {canRemove ? <th className="w-10 px-2 py-3 text-center" /> : null}
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-200">
-              {items.map((item) => (
+              {safeItems.map((item) => (
                 <tr key={item.id} className="hover:bg-neutral-50/60">
                   <td className="border-r border-neutral-300 p-2">
                     <input
                       type="text"
+                      maxLength={40}
                       value={item.item}
                       placeholder="Item name"
                       onChange={(e) => onUpdate(item.id, "item", e.target.value)}
                       style={{ color: "#171717" }}
-                      className={`${TABLE_INPUT_CLASS} px-3`}
+                      className={`${TABLE_INPUT_CLASS} px-3 text-center`}
                     />
                   </td>
                   <td className="border-r border-neutral-300 p-2">
@@ -80,7 +88,19 @@ export function FacilityTable({
                         onUpdate(item.id, "dateOfUse", e.target.value)
                       }
                       style={{ color: "#171717" }}
-                      className={`${TABLE_INPUT_CLASS} cursor-pointer`}
+                      className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                    />
+                  </td>
+                  <td className="border-r border-neutral-300 p-2">
+                    <input
+                      type="date"
+                      min={item.dateOfUse || undefined}
+                      value={item.endDateOfUse || ""}
+                      onChange={(e) =>
+                        onUpdate(item.id, "endDateOfUse", e.target.value)
+                      }
+                      style={{ color: "#171717" }}
+                      className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
                     />
                   </td>
                   <td className="border-r border-neutral-300 p-2">
@@ -91,12 +111,24 @@ export function FacilityTable({
                         onUpdate(item.id, "timeOfUse", e.target.value)
                       }
                       style={{ color: "#171717" }}
-                      className={`${TABLE_INPUT_CLASS} cursor-pointer`}
+                      className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                    />
+                  </td>
+                  <td className="border-r border-neutral-300 p-2">
+                    <input
+                      type="time"
+                      value={item.endTimeOfUse || ""}
+                      onChange={(e) =>
+                        onUpdate(item.id, "endTimeOfUse", e.target.value)
+                      }
+                      style={{ color: "#171717" }}
+                      className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
                     />
                   </td>
                   <td className="p-2">
                     <input
                       type="text"
+                      maxLength={40}
                       value={item.location}
                       placeholder="Location name"
                       onChange={(e) =>
