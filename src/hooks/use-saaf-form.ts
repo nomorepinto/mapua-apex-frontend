@@ -32,6 +32,8 @@ export function useSaafForm() {
     navigation.state === "submitting" || fetcher.state === "submitting"
 
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showConfirmClearModal, setShowConfirmClearModal] = useState(false)
+  const [showErrors, setShowErrors] = useState(false)
   const [successDismissed, setSuccessDismissed] = useState(false)
   const showSuccessModal = Boolean(fetcher.data?.success) && !successDismissed
   const submitError =
@@ -174,17 +176,37 @@ export function useSaafForm() {
   const validateForm = useCallback(
     (form: HTMLFormElement | null): boolean => {
       if (!form) return false
-      if (!form.reportValidity()) return false
+
+      // Check standard constraints
+      const isHtmlValid = form.checkValidity()
 
       // 1. Mandatory mission statement check
       const hasMission =
         Boolean(draft.mission1) || Boolean(draft.mission2) || Boolean(draft.mission3)
-      if (!hasMission) {
-        alert("Please select at least one Institutional Mission statement.")
+
+      // 2. Mandatory department check for all proponents
+      const hasDepartments = draft.proponents.every(
+        (p) => Boolean(draft.departmentValues[p.id] || p.department)
+      )
+
+      if (!isHtmlValid || !hasMission || !hasDepartments) {
+        setShowErrors(false)
+        requestAnimationFrame(() => {
+          setShowErrors(true)
+        })
+        setTimeout(() => {
+          const firstInvalid = form.querySelector<HTMLElement>(
+            ":invalid, .saaf-glow-invalid"
+          )
+          if (firstInvalid) {
+            firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
+            firstInvalid.focus?.()
+          }
+        }, 50)
         return false
       }
 
-      // 2. Date buffer validation (at least 11 days after submission)
+      // 3. Date buffer validation (at least 11 days after submission)
       const submissionDateStr =
         draft.proponents?.[0]?.dateOfSubmission ||
         new Date().toISOString().split("T")[0]
@@ -197,6 +219,7 @@ export function useSaafForm() {
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
         if (diffDays <= 10) {
+          setShowErrors(true)
           alert(
             "The date of event must be at least 11 days after the date of submission."
           )
@@ -204,27 +227,31 @@ export function useSaafForm() {
         }
       }
 
-      // 3. Activity details minimum length validations
+      // 4. Activity details minimum length validations
       if (draft.activityDescription && draft.activityDescription.trim().length < 100) {
+        setShowErrors(true)
         alert("Activity Description must be at least 100 characters.")
         return false
       }
 
       if (draft.activityObjectives && draft.activityObjectives.trim().length < 50) {
+        setShowErrors(true)
         alert("Activity Objectives must be at least 50 characters.")
         return false
       }
 
       if (draft.activityVenue && draft.activityVenue.trim().length < 5) {
+        setShowErrors(true)
         alert("Activity Venue must be at least 5 characters.")
         return false
       }
 
-      // 4. Institutional alignment minimum length validations
+      // 5. Institutional alignment minimum length validations
       if (
         draft.coreValuesExplanation &&
         draft.coreValuesExplanation.trim().length < 30
       ) {
+        setShowErrors(true)
         alert("Core Values Explanation must be at least 30 characters.")
         return false
       }
@@ -234,21 +261,25 @@ export function useSaafForm() {
         draft.peoExplanation.trim().length > 0 &&
         draft.peoExplanation.trim().length < 30
       ) {
+        setShowErrors(true)
         alert("Program Educational Objectives must be at least 30 characters if provided.")
         return false
       }
 
       if (draft.sdgExplanation && draft.sdgExplanation.trim().length < 30) {
+        setShowErrors(true)
         alert("UN Sustainability Goals explanation must be at least 30 characters.")
         return false
       }
 
-      // 5. Total Org Members length guard
+      // 6. Total Org Members length guard
       if (draft.totalOrgMembers && draft.totalOrgMembers.length > 5) {
+        setShowErrors(true)
         alert("Total number of class/org members cannot exceed 5 digits.")
         return false
       }
 
+      setShowErrors(false)
       return true
     },
     [
@@ -256,6 +287,7 @@ export function useSaafForm() {
       draft.mission2,
       draft.mission3,
       draft.proponents,
+      draft.departmentValues,
       draft.dateOfEvent,
       draft.activityDescription,
       draft.activityObjectives,
@@ -267,9 +299,25 @@ export function useSaafForm() {
     ]
   )
 
+  const handleClearForm = useCallback(() => {
+    const today = new Date().toISOString().split("T")[0]
+    useOrgStore.getState().setSaafDraft({
+      ...DEFAULT_SAAF_DRAFT,
+      proponents: [
+        {
+          ...createEmptyProponent("1"),
+          dateOfSubmission: today,
+        },
+      ],
+    })
+    setShowErrors(false)
+    setShowConfirmClearModal(false)
+  }, [])
+
   const handleGoToReservation = useCallback(
     (form: HTMLFormElement | null) => {
       if (!validateForm(form)) return
+      setShowErrors(false)
       useOrgStore.getState().setSaafValidated(true)
       const query = searchParams.toString()
       navigate(`/students/submissions/saaf/reservations${query ? `?${query}` : ""}`)
@@ -281,6 +329,7 @@ export function useSaafForm() {
     (e: MouseEvent, form: HTMLFormElement | null) => {
       e.preventDefault()
       if (validateForm(form)) {
+        setShowErrors(false)
         setShowConfirmModal(true)
       }
     },
@@ -310,7 +359,9 @@ export function useSaafForm() {
     fetcher,
     isSubmitting,
     showConfirmModal,
+    showConfirmClearModal,
     showSuccessModal,
+    showErrors,
     submitError,
     grandTotal,
     reserveFacilities,
@@ -322,11 +373,14 @@ export function useSaafForm() {
     handleAddBudgetItem,
     handleRemoveBudgetItem,
     handleUpdateBudgetItem,
+    handleClearForm,
     handleGoToReservation,
     handleInitiateSubmit,
     handleConfirmProceed,
     handleSavePdf,
     setShowConfirmModal,
+    setShowConfirmClearModal,
+    setShowErrors,
     setSuccessDismissed,
   }
 }

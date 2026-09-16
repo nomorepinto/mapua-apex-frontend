@@ -98,7 +98,7 @@ export function ActivityDetailsSection({
             onChange={(e) => onChange("activityTitle", e.target.value)}
             placeholder="i.e. Seminar, Field Trip, Plant Visit, Outing, Socials, Assembly, Meeting, etc."
             style={{ color: "#171717" }}
-            className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
@@ -120,7 +120,7 @@ export function ActivityDetailsSection({
             placeholder="Provide a comprehensive summary of the activity (minimum 100 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
@@ -142,7 +142,7 @@ export function ActivityDetailsSection({
             placeholder="State the primary targets and outcomes (minimum 50 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
@@ -164,7 +164,7 @@ export function ActivityDetailsSection({
             onChange={(e) => onChange("activityVenue", e.target.value)}
             placeholder="Complete room number or address (5 to 40 characters)"
             style={{ color: "#171717" }}
-            className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
@@ -181,7 +181,7 @@ export function ActivityDetailsSection({
               value={values.dateOfEvent}
               onChange={(e) => handleStartDateChange(e.target.value)}
               style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20`}
+              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
               required
             />
             <span className="text-[10px] text-neutral-500 block">
@@ -200,7 +200,7 @@ export function ActivityDetailsSection({
               value={values.endDateOfEvent || values.dateOfEvent || ""}
               onChange={(e) => onChange("endDateOfEvent", e.target.value)}
               style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20`}
+              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
               required
             />
           </div>
@@ -216,7 +216,7 @@ export function ActivityDetailsSection({
                 value={timeStart}
                 onChange={(e) => handleStartTimeChange(e.target.value)}
                 style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20`}
+                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
                 required
               />
               <span className="text-xs text-neutral-500 font-medium">to</span>
@@ -226,7 +226,7 @@ export function ActivityDetailsSection({
                 value={timeEnd}
                 onChange={(e) => handleEndTimeChange(e.target.value)}
                 style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20`}
+                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
                 required
               />
             </div>
@@ -253,7 +253,7 @@ export function ActivityDetailsSection({
                 onChange("expectedParticipants", sanitizeIntegerInput(e.target.value).slice(0, 5))
               }
               style={{ color: "#171717" }}
-              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
           </div>
@@ -277,7 +277,7 @@ export function ActivityDetailsSection({
                 )
               }
               style={{ color: "#171717" }}
-              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
           </div>
@@ -298,7 +298,7 @@ export function ActivityDetailsSection({
                 onChange("proposedBudget", sanitizeDecimalInput(e.target.value).slice(0, 10))
               }
               style={{ color: "#171717" }}
-              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+              className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
           </div>

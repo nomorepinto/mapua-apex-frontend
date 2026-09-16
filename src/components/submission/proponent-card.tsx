@@ -201,7 +201,12 @@ export const ProponentCard = memo(function ProponentCard({
               if (typeof val === "string") onDepartmentChange(proponent.id, val)
             }}
           >
-            <SelectTrigger className="h-9.5 w-full truncate rounded-lg border-neutral-300 bg-white !text-neutral-900">
+            <SelectTrigger
+              className={cn(
+                "h-9.5 w-full truncate rounded-lg border-neutral-300 bg-white !text-neutral-900",
+                !departmentValue && "saaf-glow-invalid"
+              )}
+            >
               <SelectValue placeholder="Select Department">
                 {departmentValue || "Select Department"}
               </SelectValue>

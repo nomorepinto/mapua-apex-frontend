@@ -1,5 +1,6 @@
 import { useRef } from "react"
 
+import { ConfirmClearModal } from "@/components/forms/confirm-clear-modal"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
@@ -22,7 +23,12 @@ export function Submission() {
   return (
     <div className={cn("relative", layout.page)}>
       <div className={layout.container}>
-        <form.fetcher.Form ref={formRef} method="post" className={layout.stack}>
+        <form.fetcher.Form
+          ref={formRef}
+          method="post"
+          noValidate
+          className={cn(layout.stack, form.showErrors && "saaf-show-errors")}
+        >
           <FormPageHeader
             title="Student Activity Application Form"
             subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"
@@ -72,9 +78,18 @@ export function Submission() {
             onNextPage={() => form.handleGoToReservation(formRef.current)}
             onSavePdf={form.handleSavePdf}
             onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
+            onClear={() => form.setShowConfirmClearModal(true)}
           />
         </form.fetcher.Form>
       </div>
+
+      <ConfirmClearModal
+        open={form.showConfirmClearModal}
+        title="Are you sure you want to clear?"
+        description="This action will clear your student activity form with the data you have inputted."
+        onClose={() => form.setShowConfirmClearModal(false)}
+        onConfirm={form.handleClearForm}
+      />
 
       <ConfirmSubmitModal
         open={form.showConfirmModal}

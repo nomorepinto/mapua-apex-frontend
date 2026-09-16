@@ -301,3 +301,53 @@
   -moz-appearance: textfield;
   appearance: textfield;
 }
+
+/* SAAF Form Required Fields: Glow once then stay red border at ~65% transparency */
+@keyframes saaf-glow-once {
+  0% {
+    border-color: rgba(239, 68, 68, 0.65);
+    box-shadow: none;
+  }
+  30% {
+    border-color: rgba(239, 68, 68, 0.85);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.45);
+  }
+  100% {
+    border-color: rgba(239, 68, 68, 0.65);
+    box-shadow: none;
+  }
+}
+
+.saaf-show-errors [data-slot="input-control"]:has(:invalid),
+.saaf-show-errors [data-slot="textarea-control"]:has(:invalid),
+.saaf-show-errors input:invalid:not([data-slot="input"]):not([type="checkbox"]):not([type="radio"]),
+.saaf-show-errors textarea:invalid:not([data-slot="textarea"]),
+.saaf-show-errors .saaf-glow-invalid,
+.reservation-show-errors [data-slot="input-control"]:has(:invalid),
+.reservation-show-errors [data-slot="textarea-control"]:has(:invalid),
+.reservation-show-errors input:invalid:not([data-slot="input"]):not([type="checkbox"]):not([type="radio"]),
+.reservation-show-errors textarea:invalid:not([data-slot="textarea"]),
+.reservation-show-errors .saaf-glow-invalid {
+  border-color: rgba(239, 68, 68, 0.65) !important;
+  box-shadow: none !important;
+  outline: none !important;
+  animation: saaf-glow-once 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1 forwards !important;
+}
+
+.saaf-show-errors [data-slot="input-control"]:has(:invalid)::before,
+.saaf-show-errors [data-slot="textarea-control"]:has(:invalid)::before,
+.reservation-show-errors [data-slot="input-control"]:has(:invalid)::before,
+.reservation-show-errors [data-slot="textarea-control"]:has(:invalid)::before {
+  box-shadow: none !important;
+}
+
+.saaf-show-errors [data-slot="input-control"] > [data-slot="input"],
+.saaf-show-errors [data-slot="input-control"] > input,
+.saaf-show-errors [data-slot="textarea-control"] textarea,
+.reservation-show-errors [data-slot="input-control"] > [data-slot="input"],
+.reservation-show-errors [data-slot="input-control"] > input,
+.reservation-show-errors [data-slot="textarea-control"] textarea {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}

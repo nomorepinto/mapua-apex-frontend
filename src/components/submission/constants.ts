@@ -54,7 +54,7 @@ export const SELECT_ITEM_CLASS =
   "cursor-pointer rounded-lg px-3 py-2 text-sm text-neutral-900 data-[highlighted]:bg-neutral-100 data-[highlighted]:text-neutral-900 data-[state=checked]:font-semibold data-[state=checked]:text-neutral-900"
 
 export const FIELD_INPUT_CLASS =
-  "h-9.5 rounded-lg border-neutral-300 bg-white !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+  "h-9.5 rounded-lg border-neutral-300 bg-white !text-neutral-900 placeholder:text-neutral-400"
 
 export const TABLE_INPUT_CLASS =
   "w-full rounded border border-transparent bg-transparent px-2 py-1 text-center !text-neutral-900 focus:border-neutral-300 focus:bg-white focus:outline-none"

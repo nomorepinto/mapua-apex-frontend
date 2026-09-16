@@ -24,7 +24,9 @@ export function useReservationForm() {
   const createSubmission = useCreateSubmissionMutation()
   const updateSubmission = useUpdateSubmissionMutation()
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showConfirmClearModal, setShowConfirmClearModal] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
+  const [showErrors, setShowErrors] = useState(false)
 
   // Ensure every nested array and object always falls back to defaults
   const storedDraft = useOrgStore((state) => state.reservationDraft)
@@ -212,14 +214,47 @@ export function useReservationForm() {
     navigate(`/students/submissions/saaf${query ? `?${query}` : ""}`)
   }, [navigate, searchParams])
 
+  const validateForm = useCallback((form: HTMLFormElement | null): boolean => {
+    if (!form) return false
+
+    const isHtmlValid = form.checkValidity()
+
+    if (!isHtmlValid) {
+      setShowErrors(false)
+      requestAnimationFrame(() => {
+        setShowErrors(true)
+      })
+      setTimeout(() => {
+        const firstInvalid = form.querySelector<HTMLElement>(
+          ":invalid, .saaf-glow-invalid"
+        )
+        if (firstInvalid) {
+          firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
+          firstInvalid.focus?.()
+        }
+      }, 50)
+      return false
+    }
+
+    setShowErrors(false)
+    return true
+  }, [])
+
+  const handleClearForm = useCallback(() => {
+    useOrgStore.getState().clearReservationDraft()
+    setShowErrors(false)
+    setShowConfirmClearModal(false)
+  }, [])
+
   const handleInitiateSubmit = useCallback(
-    (e: FormEvent, form: HTMLFormElement | null) => {
+    (e: FormEvent | React.MouseEvent, form: HTMLFormElement | null) => {
       e.preventDefault()
-      if (form && form.reportValidity()) {
+      if (validateForm(form)) {
+        setShowErrors(false)
         setShowConfirmModal(true)
       }
     },
-    []
+    [validateForm]
   )
 
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -325,7 +360,12 @@ export function useReservationForm() {
   return {
     draft,
     showConfirmModal,
+    showConfirmClearModal,
     showSuccessModal,
+    showErrors,
+    setShowErrors,
+    setShowConfirmClearModal,
+    handleClearForm,
     updateField,
     toggleEquipment,
     handleAddFacilityItem,
