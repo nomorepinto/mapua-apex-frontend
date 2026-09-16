@@ -55,7 +55,8 @@ export function AuthGuard({ children, allowedGroups }: AuthGuardProps) {
   if (auth.isAuthenticated) {
     if (allowedGroups && allowedGroups.length > 0) {
       const userGroups = (auth.user?.profile["cognito:groups"] as string[]) || []
-      const hasAccess = allowedGroups.some((group) => userGroups.includes(group))
+      const lowerUserGroups = userGroups.map((g) => g.toLowerCase())
+      const hasAccess = allowedGroups.some((group) => lowerUserGroups.includes(group.toLowerCase()))
 
       if (!hasAccess) {
         return (

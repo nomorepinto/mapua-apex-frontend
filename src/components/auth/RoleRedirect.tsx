@@ -3,6 +3,12 @@ import { Navigate } from "react-router"
 
 import { layout } from "@/config"
 
+/** Case-insensitive check for whether a user belongs to a Cognito group. */
+function hasGroup(userGroups: string[], target: string): boolean {
+  const lowerTarget = target.toLowerCase()
+  return userGroups.some((g) => g.toLowerCase() === lowerTarget)
+}
+
 export function RoleRedirect() {
   const auth = useAuth()
 
@@ -24,22 +30,26 @@ export function RoleRedirect() {
 
   const userGroups = (auth.user?.profile["cognito:groups"] as string[]) || []
 
-  if (userGroups.includes("Admin") || userGroups.includes("OSAAR")) {
+  // Admin & OSAAR → admin panel
+  if (hasGroup(userGroups, "admin") || hasGroup(userGroups, "osaar")) {
     return <Navigate to="/admin/dashboard" replace />
   }
 
-  if (
-    userGroups.includes("CDM_Reviewer") ||
-    userGroups.includes("Dean") ||
-    userGroups.includes("ORG_Adviser")
-  ) {
+  // CDM Reviewer → signatories panel
+  if (hasGroup(userGroups, "cdm_reviewer")) {
     return <Navigate to="/signatories/dashboard" replace />
   }
 
-  if (userGroups.includes("ORG_Submitter")) {
+  // Org Adviser & Dean → signatories panel
+  if (hasGroup(userGroups, "org_adviser") || hasGroup(userGroups, "dean")) {
+    return <Navigate to="/signatories/dashboard" replace />
+  }
+
+  // Org Submitter (student orgs) → student panel
+  if (hasGroup(userGroups, "org_submitter")) {
     return <Navigate to="/students/dashboard" replace />
   }
 
-  // Fallback
+  // Fallback for unknown groups
   return <Navigate to="/students/dashboard" replace />
 }
