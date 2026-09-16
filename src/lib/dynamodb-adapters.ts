@@ -664,7 +664,7 @@ export function apiSubmissionToDrafts(submission: ApiSubmission): {
     orgOrCourseSection: proponent.org_or_course_section || "",
     contactNumber: proponent.contact_number || "",
     emailAddress: proponent.email_address || "",
-    facebookLink: proponent.facebookLink || proponent.facebook_link || "",
+    facebookLink: proponent.facebook_link || "",
   }))
 
   const departmentValues = Object.fromEntries(
