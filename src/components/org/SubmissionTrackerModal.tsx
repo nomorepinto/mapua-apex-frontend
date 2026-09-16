@@ -151,8 +151,8 @@ export function SubmissionTrackerModal({
 
           {activeTab === "details" && submission && (
             <div className={cn(layout.stack, "animate-in fade-in duration-200")}>
-              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap)}>
-                <div className={layout.section}>
+              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap, "items-stretch")}>
+                <div className={cn(layout.section, "flex flex-col")}>
                   <h3 className="text-lg font-extrabold text-[#1E293B] mb-4">
                     Document Specification & Details
                   </h3>
@@ -222,17 +222,29 @@ export function SubmissionTrackerModal({
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <div className={layout.section}>
-                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
-                      Description & Objective
+                <div className="flex flex-col gap-4">
+                  <div className={cn(layout.section, "flex-1 flex flex-col min-h-[220px]")}>
+                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2 shrink-0">
+                      Description
                     </h4>
-                    <p className="text-sm text-[#1E293B] leading-relaxed">
-                      {submission.activity_details.description || "No description provided."}
-                    </p>
+                    <div className="flex-1 overflow-y-auto max-h-[260px] pr-2 space-y-3 [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
+                      <p className="text-sm text-[#1E293B] leading-relaxed">
+                        {submission.activity_details.description || "No description provided."}
+                      </p>
+                      {submission.activity_details.objectives ? (
+                        <div className="pt-3 border-t border-neutral-100">
+                          <h5 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
+                            Objectives
+                          </h5>
+                          <p className="text-sm text-[#1E293B] leading-relaxed">
+                            {submission.activity_details.objectives}
+                          </p>
+                        </div>
+                      ) : null}
+                    </div>
                   </div>
 
-                  <div className={layout.section}>
+                  <div className={cn(layout.section, "shrink-0")}>
                     <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
                       Proponent & Routing
                     </h4>

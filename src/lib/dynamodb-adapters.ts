@@ -353,6 +353,7 @@ export interface DashboardSubmissionRow {
   activity_details: {
     title: string
     description: string
+    objectives?: string
     venue: string
     date: string
     time?: string
@@ -401,6 +402,24 @@ export function formatDisplayDate(value?: string | null): string {
     month: "short",
     day: "numeric",
   })
+}
+
+export function formatDisplayDateRange(
+  start?: string | null,
+  end?: string | null
+): string {
+  if (!start && !end) return "—"
+  if (!end || start === end) return formatDisplayDate(start)
+  if (!start) return formatDisplayDate(end)
+
+  const startFormatted = formatDisplayDate(start)
+  const endFormatted = formatDisplayDate(end)
+
+  if (startFormatted === endFormatted) {
+    return startFormatted
+  }
+
+  return `${startFormatted} – ${endFormatted}`
 }
 
 export function formatDisplayDateTime(value?: string | null): string {
@@ -545,8 +564,12 @@ export function apiSubmissionToDashboardRow(
     activity_details: {
       title,
       description: submission.activity_details?.description || "",
+      objectives: submission.activity_details?.objectives || "",
       venue: submission.activity_details?.venue || "—",
-      date: formatDisplayDate(submission.activity_details?.date_of_event),
+      date: formatDisplayDateRange(
+        submission.activity_details?.date_of_event,
+        submission.activity_details?.end_date_of_event
+      ),
       time: submission.activity_details?.time_of_event || "",
       expected_attendees: submission.activity_details?.expected_participants,
       budget: typeof budget === "number" ? `₱${budget.toLocaleString("en-PH")}` : "—",
@@ -601,7 +624,10 @@ export function apiSubmissionToActivity(submission: ApiSubmission): Activity {
     title,
     org: firstProponent?.org_or_course_section || "Organization",
     department: firstProponent?.department || "—",
-    date: formatDisplayDate(submission.activity_details?.date_of_event),
+    date: formatDisplayDateRange(
+      submission.activity_details?.date_of_event,
+      submission.activity_details?.end_date_of_event
+    ),
     time: submission.activity_details?.time_of_event || "",
     submittedDate: formatDisplayDate(submission.sent_at),
     representative: formatProponentName(firstProponent) || "—",
