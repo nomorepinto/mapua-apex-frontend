@@ -39,7 +39,7 @@ const TEAM_MEMBERS: TeamMember[] = [
   { name: "Nicole", coorole: "Organization's Welfare and Advocacy Co-Head 25-26", awsrole: "Chief Finance Officer: 26-27", photo: NicolePhoto },
   { name: "Karina", coorole: "External Relations Co-Head 25-26",awsrole: "Chief Auditing Officer: 26-27", photo: KarinaPhoto },
   { name: "Aviel", coorole: "External Relations Head 25-26", awsrole: "Chief External Relations Officer: 26-27", photo: AvielPhoto },
-  { name: "Benedict", coorole: "Supreme Overlord 25-26", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
+  { name: "Benedict", coorole: "His Imperial Majesty, the Supreme Overlord 25-26", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
   { name: "Joel", coorole: "", awsrole: "Technology Committee: 26-27", photo: JoelPhoto },
   { name: "Luna", coorole: "", awsrole: "President of the World: 26-27", photo: LunaPhoto },
 ]
