@@ -30,3 +30,11 @@ dist-ssr
 .env
 .env.*
 !.env.example
+
+# Figma tooling scratch files
+expanded.json
+fetch_figma.js
+fetch_figma.mjs
+figma_nodes.json
+figma_simplified.json
+simplify_figma.mjs

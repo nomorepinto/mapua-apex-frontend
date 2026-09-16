@@ -21,6 +21,7 @@ import {
   useOrgDeadlinesQuery,
   useOrgSubmissionsQuery,
 } from "@/hooks/use-submissions"
+import { useSignatoriesQuery } from "@/hooks/use-admin"
 import {
   apiDeadlinesToReminders,
   apiSubmissionToDashboardRow,
@@ -42,10 +43,28 @@ export function OrgDashboard() {
   const announcementsQuery = useOrgAnnouncementsQuery()
   const deadlinesQuery = useOrgDeadlinesQuery()
 
-  const submissions = useMemo(
-    () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
-    [submissionsQuery.data]
-  )
+  const signatoriesQuery = useSignatoriesQuery()
+
+  const signatoryNameById = useMemo(() => {
+    const list = signatoriesQuery.data || []
+    return new Map(list.map((s) => [s.signatory_id, s.name]))
+  }, [signatoriesQuery.data])
+
+  const submissions = useMemo(() => {
+    const raw = submissionsQuery.data || []
+    const seen = new Set<string>()
+    const deduped = raw.filter((submission) => {
+      const key = `${submission.event_id}:${submission.submission_id}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+    return deduped.map(apiSubmissionToDashboardRow).map((row) => ({
+      ...row,
+      current_signatory:
+        signatoryNameById.get(row.current_signatory) || row.current_signatory,
+    }))
+  }, [submissionsQuery.data, signatoryNameById])
   const announcements = announcementsQuery.data || []
 
   const reminders = useMemo(() => {
