@@ -6,12 +6,14 @@ import { EquipmentSection } from "@/components/reservation/equipment-section"
 import { FacilityTable } from "@/components/reservation/facility-table"
 import { ReservationActions } from "@/components/reservation/reservation-actions"
 import { RoomTable } from "@/components/reservation/room-table"
+import { ConfirmClearModal } from "@/components/forms/confirm-clear-modal"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
 import { useReservationForm } from "@/hooks/use-reservation-form"
 import { useOrgStore } from "@/stores/org-store"
+import { cn } from "@/lib/utils"
 
 export function Reservation() {
   const reserveFacilities = useOrgStore((state) => state.reserveFacilities)
@@ -50,8 +52,9 @@ export function Reservation() {
 
         <form
           ref={formRef}
+          noValidate
           onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-          className="space-y-8"
+          className={cn("space-y-8", form.showErrors && "saaf-show-errors")}
         >
           <EquipmentSection
             equipment={draft.equipment}
@@ -94,11 +97,21 @@ export function Reservation() {
           <SubmissionErrorAlert message={form.submitError} />
 
           <ReservationActions
+            isSubmitting={form.isSubmitting}
             onSavePdf={form.handleSavePdf}
             onGoBack={form.handleGoBack}
+            onClear={() => form.setShowConfirmClearModal(true)}
           />
         </form>
       </div>
+
+      <ConfirmClearModal
+        open={form.showConfirmClearModal}
+        title="Are you sure you want to clear?"
+        description="This action will clear your facility reservation form with the data you have inputted."
+        onClose={() => form.setShowConfirmClearModal(false)}
+        onConfirm={form.handleClearForm}
+      />
 
       <ConfirmSubmitModal
         open={form.showConfirmModal}

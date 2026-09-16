@@ -1,6 +1,7 @@
 import { MISSION_STATEMENTS } from "@/components/submission/constants"
 import type { SaafDraft } from "@/components/submission/types"
 import { Textarea } from "@/components/ui/textarea"
+import { cn } from "@/lib/utils"
 
 type AlignmentFields = Pick<
   SaafDraft,
@@ -47,7 +48,12 @@ export function InstitutionalAlignmentSection({
           ) : null}
         </div>
 
-        <div className="space-y-3 pl-1">
+        <div
+          className={cn(
+            "space-y-3 p-3 rounded-xl border border-transparent transition-all",
+            !atLeastOneSelected && "saaf-glow-invalid"
+          )}
+        >
           {MISSION_STATEMENTS.map((mission) => {
             const checked = values[mission.key]
             return (
@@ -98,7 +104,7 @@ export function InstitutionalAlignmentSection({
             placeholder="Discuss how the activity fosters these core values (minimum 30 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
@@ -152,7 +158,7 @@ export function InstitutionalAlignmentSection({
             placeholder="Specify targeted SDGs and your audit methodology (minimum 30 characters required)..."
             rows={4}
             style={{ color: "#171717" }}
-            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400 invalid:border-red-500 invalid:ring-1 invalid:ring-red-500/20"
+            className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
         </div>
