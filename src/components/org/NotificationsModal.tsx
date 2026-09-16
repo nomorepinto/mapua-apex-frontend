@@ -2,6 +2,7 @@ import { X, Bell, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 
 import { useDeadlineNotifications } from "@/hooks/use-deadline-notifications"
 import { useOrgStore } from "@/stores/org-store"
+import { formatDocumentId } from "@/lib/dynamodb-adapters"
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -54,7 +55,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
                     <div>
                       <h4 className="text-[13px] font-bold text-[#1E293B] leading-tight">{sub.activity_details.title}</h4>
                       <p className="text-[11px] text-[#64748B] mt-0.5 line-clamp-2">
-                        {sub.id} is currently {sub.status} with {sub.current_signatory}.
+                        {formatDocumentId(sub.id)} is currently {sub.status} with {sub.current_signatory}.
                       </p>
                       <span className={`inline-block mt-1.5 text-[10px] font-bold px-2 py-0.5 rounded-md ${diffDays < 0 ? 'bg-red-100 text-red-700' : (diffDays < 3 ? 'bg-red-50 text-red-600' : 'bg-orange-50 text-orange-600')}`}>
                         {diffDays < 0 ? `Overdue by ${Math.abs(diffDays)} days` : (diffDays === 0 ? 'Due Today' : `Due in ${diffDays} days`)}

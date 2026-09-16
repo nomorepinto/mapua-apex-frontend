@@ -416,6 +416,85 @@ export function formatDisplayDateTime(value?: string | null): string {
   })
 }
 
+/**
+ * Formats a raw UUID or ID into a clean human-readable document code (e.g., SAAF-1289C970)
+ */
+export function formatDocumentId(id?: string | null, prefix = "SAAF"): string {
+  if (!id || id === "—") return "—"
+  const cleaned = id.replace(/^(SUBMISSION#|EVENT#)/i, "")
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(cleaned)
+  if (isUuid) {
+    return `${prefix}-${cleaned.slice(0, 8).toUpperCase()}`
+  }
+  return cleaned
+}
+
+/**
+ * Resolves a signatory ID / UUID / role string to a clean human-readable Role name
+ */
+export function formatSignatoryRole(
+  signatoryIdOrRole?: string | null,
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>,
+  fallbackIndex?: number,
+  activityType?: string,
+  hasVenue?: boolean
+): string {
+  if (!signatoryIdOrRole || signatoryIdOrRole === "—") return "—"
+
+  const raw = signatoryIdOrRole.replace(/^SIGNATORY#/i, "").trim().toLowerCase()
+
+  // Match standard role names
+  if (raw === "adviser" || raw.includes("adviser") || raw.startsWith("adv")) return "Adviser"
+  if (raw === "dean" || raw.includes("dean")) return "Dean"
+  if (raw === "osaar" || raw.includes("osaar") || raw === "osa") return "OSAAR"
+  if (raw === "cdm" || raw.includes("cdm")) return "CDM"
+  if (raw === "admin" || raw.includes("admin")) return "Admin"
+  if (raw === "system") return "System"
+
+  // Check if signatoryId is mapped in org signatories
+  if (orgSignatories && orgSignatories.length > 0) {
+    const match = orgSignatories.find(
+      (s) =>
+        s.signatory_id?.toLowerCase() === raw ||
+        s.signatory_id?.replace(/^SIGNATORY#/i, "").toLowerCase() === raw
+    )
+    if (match) {
+      if (match.role) {
+        const r = match.role.toLowerCase()
+        if (r === "adviser") return "Adviser"
+        if (r === "dean") return "Dean"
+        if (r === "osaar") return "OSAAR"
+        if (r === "cdm") return "CDM"
+        if (r === "admin") return "Admin"
+        return match.role.charAt(0).toUpperCase() + match.role.slice(1)
+      }
+      if (match.name) return match.name
+    }
+  }
+
+  // Fallback to submission's expected sequence
+  if (fallbackIndex !== undefined) {
+    const expectedRoles = ["Adviser"]
+    if (activityType === "co-curricular") {
+      expectedRoles.push("Dean")
+    }
+    expectedRoles.push("OSAAR")
+    if (hasVenue) {
+      expectedRoles.push("CDM")
+    }
+    if (fallbackIndex >= 0 && fallbackIndex < expectedRoles.length) {
+      return expectedRoles[fallbackIndex]
+    }
+  }
+
+  // If it's a UUID and nothing matched, default to Adviser for index 0
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(raw)) {
+    return "Signatory"
+  }
+
+  return signatoryIdOrRole.charAt(0).toUpperCase() + signatoryIdOrRole.slice(1)
+}
+
 export function announcementPath(sentAt: string): string {
   return `/admins/announcements/${encodeURIComponent(sentAt)}`
 }
@@ -430,18 +509,35 @@ function formatProponentName(
     .trim()
 }
 
-export function apiSubmissionToDashboardRow(submission: ApiSubmission): DashboardSubmissionRow {
+export function apiSubmissionToDashboardRow(
+  submission: ApiSubmission,
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+): DashboardSubmissionRow {
   const meta = getSubmissionStatusMeta(submission.status)
   const firstProponent = submission.proponents?.[0]
   const title = submission.activity_details?.title_and_nature || "Untitled activity"
   const budget = submission.activity_details?.proposed_budget
+  const isApproved = submission.status === "approved"
+
+  let currentSignatoryLabel = "—"
+  if (isApproved) {
+    currentSignatoryLabel = "Completed"
+  } else if (submission.current_signatory) {
+    currentSignatoryLabel = formatSignatoryRole(
+      submission.current_signatory,
+      orgSignatories,
+      0,
+      submission.activity_classification?.activity_type,
+      Boolean(submission.venue_reservation?.has_reservation)
+    )
+  }
 
   return {
     event_id: submission.event_id,
     submission_id: submission.submission_id,
     id: submission.submission_id,
     activity_classification: submission.activity_classification?.activity_type || "extra-curricular",
-    current_signatory: submission.current_signatory || "—",
+    current_signatory: currentSignatoryLabel,
     target_date: submission.activity_details?.date_of_event || submission.sent_at,
     requires_venue: Boolean(submission.venue_reservation?.has_reservation),
     submitted_date: formatDisplayDate(submission.sent_at),
@@ -531,50 +627,113 @@ export function apiSubmissionToActivity(submission: ApiSubmission): Activity {
 export function apiNotificationsToStepper(
   notifications: ApiNotification[],
   currentSignatory?: string,
-  apiStatus?: ApiSubmission["status"]
+  apiStatus?: ApiSubmission["status"],
+  options?: {
+    activityType?: string
+    hasVenue?: boolean
+    orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+  }
 ): TrackerStepper {
   const sorted = [...notifications].sort((a, b) => a.sent_at.localeCompare(b.sent_at))
   const fullyApproved = sorted.some((item) => item.notif_type === "fully approved")
   const isAllApproved = fullyApproved || apiStatus === "approved"
 
-  const roles: string[] = []
-  for (const item of sorted) {
-    if (item.signatory && !roles.includes(item.signatory)) {
-      roles.push(item.signatory)
+  // Construct standard expected roles
+  const expectedRoles = ["Adviser"]
+  if (options?.activityType === "co-curricular") {
+    expectedRoles.push("Dean")
+  }
+  expectedRoles.push("OSAAR")
+  if (options?.hasVenue) {
+    expectedRoles.push("CDM")
+  }
+
+  // Map each notification to a resolved role
+  const resolvedNotifs: Array<{
+    role: string
+    sent_at: string
+    notif_type: ApiNotification["notif_type"]
+    comment?: string
+  }> = []
+
+  for (let i = 0; i < sorted.length; i++) {
+    const item = sorted[i]
+    const role = formatSignatoryRole(
+      item.signatory,
+      options?.orgSignatories,
+      i,
+      options?.activityType,
+      options?.hasVenue
+    )
+    resolvedNotifs.push({
+      role,
+      sent_at: item.sent_at,
+      notif_type: item.notif_type,
+      comment: item.comment,
+    })
+  }
+
+  // Ensure all expected roles are included in sequence
+  const roles = [...expectedRoles]
+
+  // Add any other recognized role if present
+  for (const n of resolvedNotifs) {
+    if (!roles.includes(n.role) && n.role !== "Signatory" && n.role !== "System") {
+      roles.push(n.role)
     }
-  }
-  if (currentSignatory && currentSignatory !== "—" && !roles.includes(currentSignatory)) {
-    roles.push(currentSignatory)
-  }
-  if (roles.length === 0) {
-    roles.push("Adviser")
   }
 
   const fullSteps = [...roles, "Approved"]
-  const latestBySignatory = new Map<string, ApiNotification>()
-  for (const item of sorted) {
-    latestBySignatory.set(item.signatory, item)
+
+  const latestByRole = new Map<string, {
+    role: string
+    sent_at: string
+    notif_type: ApiNotification["notif_type"]
+    comment?: string
+  }>()
+  for (const item of resolvedNotifs) {
+    latestByRole.set(item.role, item)
   }
 
-  let currentStepIdx = roles.findIndex((role) => role === currentSignatory)
+  // Resolve current signatory role
+  let currentRole = currentSignatory
+    ? formatSignatoryRole(
+        currentSignatory,
+        options?.orgSignatories,
+        resolvedNotifs.length,
+        options?.activityType,
+        options?.hasVenue
+      )
+    : undefined
+
+  let currentStepIdx = -1
   if (isAllApproved) {
     currentStepIdx = roles.length
-  } else if (currentStepIdx === -1) {
-    const blocked = [...sorted].reverse().find(
+  } else if (currentRole) {
+    currentStepIdx = roles.indexOf(currentRole)
+  }
+
+  if (!isAllApproved && currentStepIdx === -1) {
+    // Check if there's a blocked (denied/returned) notification
+    const blocked = [...resolvedNotifs].reverse().find(
       (item) => item.notif_type === "denied" || item.notif_type === "returned"
     )
-    currentStepIdx = blocked ? Math.max(0, roles.indexOf(blocked.signatory)) : 0
+    if (blocked) {
+      currentStepIdx = Math.max(0, roles.indexOf(blocked.role))
+    } else {
+      currentStepIdx = Math.min(resolvedNotifs.length, roles.length - 1)
+    }
   }
 
   const assigneesList: TrackerAssignee[] = roles.map((role, idx) => {
-    const latest = latestBySignatory.get(role)
+    const latest = latestByRole.get(role)
     let state: TrackerAssignee["state"] = "queued"
     let statusText = idx === 0 ? "Queued" : `Queued (Awaiting ${roles[idx - 1]})`
 
     if (isAllApproved || idx < currentStepIdx) {
       state = "completed"
       statusText = latest
-        ? `${latest.notif_type} (${formatDisplayDate(latest.sent_at)})`
+        ? `${latest.notif_type === "fully approved" ? "Fully approved" : "Approved"} (${formatDisplayDate(latest.sent_at)})`
         : "Approved"
     } else if (idx === currentStepIdx) {
       state = "current"

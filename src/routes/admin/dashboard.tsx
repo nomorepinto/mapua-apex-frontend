@@ -47,11 +47,13 @@ import {
   useCreateAnnouncementMutation,
   useDeleteAnnouncementMutation,
   useUpdateAnnouncementMutation,
+  useSignatoriesQuery,
 } from "@/hooks/use-admin"
 import {
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
   formatDisplayDateTime,
+  formatDocumentId,
   type ApiAnnouncement,
 } from "@/lib/dynamodb-adapters"
 
@@ -88,6 +90,7 @@ export function AdminOsaPanel() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
+  const signatoriesQuery = useSignatoriesQuery()
   const submissionsQuery = useAdminSubmissionsQuery({
     status: status || undefined,
     activity_type: activityType || undefined,
@@ -102,18 +105,26 @@ export function AdminOsaPanel() {
   const deleteAnnouncement = useDeleteAnnouncementMutation()
 
   const rows = useMemo(
-    () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
-    [submissionsQuery.data]
+    () =>
+      (submissionsQuery.data || []).map((sub) =>
+        apiSubmissionToDashboardRow(sub, signatoriesQuery.data)
+      ),
+    [submissionsQuery.data, signatoriesQuery.data]
   )
   const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data)
+    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data)
     : null
   const stepper = apiNotificationsToStepper(
     detailQuery.data?.notifications || [],
-    selectedRow?.current_signatory,
-    selectedRow?.api_status
+    detailQuery.data?.current_signatory,
+    detailQuery.data?.status,
+    {
+      activityType: detailQuery.data?.activity_classification?.activity_type,
+      hasVenue: Boolean(detailQuery.data?.venue_reservation?.has_reservation),
+      orgSignatories: signatoriesQuery.data,
+    }
   )
 
   function openCreate() {
@@ -393,7 +404,7 @@ export function AdminOsaPanel() {
             <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
             <DialogDescription>
               {selectedRow
-                ? `${selectedRow.status} • ${selectedRow.current_signatory}`
+                ? `${formatDocumentId(selectedRow.submission_id)} • ${selectedRow.status} • ${selectedRow.current_signatory}`
                 : "Loading the full SAAF record and notifications."}
             </DialogDescription>
           </DialogHeader>
