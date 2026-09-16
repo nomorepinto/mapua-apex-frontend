@@ -184,9 +184,6 @@ export function SubmissionsStart() {
             <p className="text-xs text-neutral-400 dark:text-neutral-500 hidden sm:block">
               Follow these 3 steps to successfully submit your activity proposal
             </p>
-            <DialogClose render={<Button variant="outline" size="sm" />}>
-              Close Guide
-            </DialogClose>
           </DialogFooter>
         </DialogPopup>
       </Dialog>
