@@ -43,13 +43,18 @@ export function OrgDashboard() {
   const announcementsQuery = useOrgAnnouncementsQuery()
   const deadlinesQuery = useOrgDeadlinesQuery()
 
-  const submissions = useMemo(
-    () =>
-      (submissionsQuery.data || []).map((sub) =>
-        apiSubmissionToDashboardRow(sub, organizationQuery.data?.signatories)
-      ),
-    [submissionsQuery.data, organizationQuery.data?.signatories]
-  )
+  const submissions = useMemo(() => {
+    const raw = (submissionsQuery.data || []).map((sub) =>
+      apiSubmissionToDashboardRow(sub, organizationQuery.data?.signatories)
+    )
+    const seen = new Set<string>()
+    return raw.filter((row) => {
+      const key = `${row.event_id}:${row.submission_id}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [submissionsQuery.data, organizationQuery.data?.signatories])
   const announcements = announcementsQuery.data || []
 
   const reminders = useMemo(() => {
