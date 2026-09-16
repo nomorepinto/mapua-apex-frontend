@@ -2,14 +2,18 @@ export interface FacilityItem {
   id: string
   item: string
   dateOfUse: string
+  endDateOfUse: string
   timeOfUse: string
+  endTimeOfUse: string
   location: string
 }
 
 export interface RoomItem {
   id: string
   dateNeeded: string
+  endDateNeeded: string
   timeNeeded: string
+  endTimeNeeded: string
   roomNeeded: string
   remarks: string
 }
@@ -17,7 +21,9 @@ export interface RoomItem {
 export interface AVItem {
   id: string
   dateNeeded: string
+  endDateNeeded: string
   timeNeeded: string
+  endTimeNeeded: string
   equipmentNeeded: string
   remarks: string
 }

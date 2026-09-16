@@ -88,7 +88,9 @@ export interface ApiSubmission {
       items?: Array<{
         item: string
         date_of_use: string
+        end_date_of_use?: string
         time_of_use: string
+        end_time_of_use?: string
         location: string
       }>
     }
@@ -96,7 +98,9 @@ export interface ApiSubmission {
       purpose?: string
       items?: Array<{
         date_needed: string
+        end_date_needed?: string
         time_needed: string
+        end_time_needed?: string
         room_needed: string
         remarks?: string
       }>
@@ -105,7 +109,9 @@ export interface ApiSubmission {
       purpose?: string
       items?: Array<{
         date_needed: string
+        end_date_needed?: string
         time_needed: string
+        end_time_needed?: string
         equipment_needed: string
         remarks?: string
       }>
@@ -201,10 +207,10 @@ export function buildSaafApiPayload(
   const event_id = existingEventId || crypto.randomUUID()
   const hasReservation = Boolean(
     reservationDraft &&
-      (reservationDraft.facilityItems.length > 0 ||
-        reservationDraft.roomItems.length > 0 ||
-        reservationDraft.avItems.length > 0 ||
-        Object.values(reservationDraft.equipment).some(Boolean))
+    (reservationDraft.facilityItems?.length > 0 ||
+      reservationDraft.roomItems?.length > 0 ||
+      reservationDraft.avItems?.length > 0 ||
+      Object.values(reservationDraft.equipment || {}).some(Boolean))
   )
 
   return {
@@ -283,7 +289,9 @@ export function buildSaafApiPayload(
         items: (reservationDraft?.facilityItems || []).map((f) => ({
           item: f.item,
           date_of_use: f.dateOfUse,
+          end_date_of_use: f.endDateOfUse || f.dateOfUse,
           time_of_use: f.timeOfUse,
+          end_time_of_use: f.endTimeOfUse || f.timeOfUse,
           location: f.location,
         })),
       },
@@ -291,7 +299,9 @@ export function buildSaafApiPayload(
         purpose: reservationDraft?.functionRoomPurpose || "",
         items: (reservationDraft?.roomItems || []).map((r) => ({
           date_needed: r.dateNeeded,
+          end_date_needed: r.endDateNeeded || r.dateNeeded,
           time_needed: r.timeNeeded,
+          end_time_needed: r.endTimeNeeded || r.timeNeeded,
           room_needed: r.roomNeeded,
           remarks: r.remarks || "",
         })),
@@ -300,7 +310,9 @@ export function buildSaafApiPayload(
         purpose: reservationDraft?.avPurpose || "",
         items: (reservationDraft?.avItems || []).map((a) => ({
           date_needed: a.dateNeeded,
+          end_date_needed: a.endDateNeeded || a.dateNeeded,
           time_needed: a.timeNeeded,
+          end_time_needed: a.endTimeNeeded || a.timeNeeded,
           equipment_needed: a.equipmentNeeded,
           remarks: a.remarks || "",
         })),
@@ -652,7 +664,7 @@ export function apiSubmissionToDrafts(submission: ApiSubmission): {
     orgOrCourseSection: proponent.org_or_course_section || "",
     contactNumber: proponent.contact_number || "",
     emailAddress: proponent.email_address || "",
-    facebookLink: proponent.facebook_link || "",
+    facebookLink: proponent.facebookLink || proponent.facebook_link || "",
   }))
 
   const departmentValues = Object.fromEntries(
@@ -686,30 +698,36 @@ export function apiSubmissionToDrafts(submission: ApiSubmission): {
     avPurpose: reservationSource?.audiovisual_equipment?.purpose || "",
     facilityItems: reservationSource?.general_facilities?.items?.length
       ? reservationSource.general_facilities.items.map((item, index) => ({
-          id: String(index + 1),
-          item: item.item,
-          dateOfUse: item.date_of_use,
-          timeOfUse: item.time_of_use,
-          location: item.location,
-        }))
+        id: String(index + 1),
+        item: item.item,
+        dateOfUse: item.date_of_use,
+        endDateOfUse: item.end_date_of_use || item.date_of_use,
+        timeOfUse: item.time_of_use,
+        endTimeOfUse: item.end_time_of_use || item.time_of_use,
+        location: item.location,
+      }))
       : DEFAULT_RESERVATION_DRAFT.facilityItems,
     roomItems: reservationSource?.function_rooms?.items?.length
       ? reservationSource.function_rooms.items.map((item, index) => ({
-          id: String(index + 1),
-          dateNeeded: item.date_needed,
-          timeNeeded: item.time_needed,
-          roomNeeded: item.room_needed,
-          remarks: item.remarks || "",
-        }))
+        id: String(index + 1),
+        dateNeeded: item.date_needed,
+        endDateNeeded: item.end_date_needed || item.date_needed,
+        timeNeeded: item.time_needed,
+        endTimeNeeded: item.end_time_needed || item.time_needed,
+        roomNeeded: item.room_needed,
+        remarks: item.remarks || "",
+      }))
       : DEFAULT_RESERVATION_DRAFT.roomItems,
     avItems: reservationSource?.audiovisual_equipment?.items?.length
       ? reservationSource.audiovisual_equipment.items.map((item, index) => ({
-          id: String(index + 1),
-          dateNeeded: item.date_needed,
-          timeNeeded: item.time_needed,
-          equipmentNeeded: item.equipment_needed,
-          remarks: item.remarks || "",
-        }))
+        id: String(index + 1),
+        dateNeeded: item.date_needed,
+        endDateNeeded: item.end_date_needed || item.date_needed,
+        timeNeeded: item.time_needed,
+        endTimeNeeded: item.end_time_needed || item.time_needed,
+        equipmentNeeded: item.equipment_needed,
+        remarks: item.remarks || "",
+      }))
       : DEFAULT_RESERVATION_DRAFT.avItems,
   }
 
