@@ -25,6 +25,7 @@ import {
   apiDeadlinesToReminders,
   apiSubmissionToDashboardRow,
   formatDisplayDateTime,
+  formatDocumentId,
 } from "@/lib/dynamodb-adapters"
 import { cn } from "@/lib/utils"
 
@@ -42,10 +43,18 @@ export function OrgDashboard() {
   const announcementsQuery = useOrgAnnouncementsQuery()
   const deadlinesQuery = useOrgDeadlinesQuery()
 
-  const submissions = useMemo(
-    () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
-    [submissionsQuery.data]
-  )
+  const submissions = useMemo(() => {
+    const raw = (submissionsQuery.data || []).map((sub) =>
+      apiSubmissionToDashboardRow(sub, organizationQuery.data?.signatories)
+    )
+    const seen = new Set<string>()
+    return raw.filter((row) => {
+      const key = `${row.event_id}:${row.submission_id}`
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }, [submissionsQuery.data, organizationQuery.data?.signatories])
   const announcements = announcementsQuery.data || []
 
   const reminders = useMemo(() => {
@@ -213,8 +222,11 @@ export function OrgDashboard() {
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                         onClick={() => openTracker(sub.event_id, sub.submission_id)}
                       >
-                        <td className="py-3.5 pr-4 font-mono text-xs text-[#1E293B] font-bold whitespace-nowrap group-hover:text-[#D9291C]">
-                          {sub.submission_id}
+                        <td
+                          className="py-3.5 pr-4 font-mono text-xs text-[#1E293B] font-bold whitespace-nowrap group-hover:text-[#D9291C]"
+                          title={sub.submission_id}
+                        >
+                          {formatDocumentId(sub.submission_id)}
                         </td>
                         <td className="py-3.5 pr-6 text-xs text-[#1E293B] font-semibold">
                           {sub.activity_details.title}

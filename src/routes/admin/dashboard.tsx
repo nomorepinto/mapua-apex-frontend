@@ -47,11 +47,13 @@ import {
   useCreateAnnouncementMutation,
   useDeleteAnnouncementMutation,
   useUpdateAnnouncementMutation,
+  useSignatoriesQuery,
 } from "@/hooks/use-admin"
 import {
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
   formatDisplayDateTime,
+  formatDocumentId,
   type ApiAnnouncement,
 } from "@/lib/dynamodb-adapters"
 
@@ -88,6 +90,7 @@ export function AdminOsaPanel() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteError, setDeleteError] = useState("")
 
+  const signatoriesQuery = useSignatoriesQuery()
   const submissionsQuery = useAdminSubmissionsQuery({
     status: status || undefined,
     activity_type: activityType || undefined,
@@ -102,18 +105,26 @@ export function AdminOsaPanel() {
   const deleteAnnouncement = useDeleteAnnouncementMutation()
 
   const rows = useMemo(
-    () => (submissionsQuery.data || []).map(apiSubmissionToDashboardRow),
-    [submissionsQuery.data]
+    () =>
+      (submissionsQuery.data || []).map((sub) =>
+        apiSubmissionToDashboardRow(sub, signatoriesQuery.data)
+      ),
+    [submissionsQuery.data, signatoriesQuery.data]
   )
   const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data)
+    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data)
     : null
   const stepper = apiNotificationsToStepper(
     detailQuery.data?.notifications || [],
-    selectedRow?.current_signatory,
-    selectedRow?.api_status
+    detailQuery.data?.current_signatory,
+    detailQuery.data?.status,
+    {
+      activityType: detailQuery.data?.activity_classification?.activity_type,
+      hasVenue: Boolean(detailQuery.data?.venue_reservation?.has_reservation),
+      orgSignatories: signatoriesQuery.data,
+    }
   )
 
   function openCreate() {
@@ -218,107 +229,107 @@ export function AdminOsaPanel() {
         </div>
 
         <section className={layout.section}>
-            <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
-                <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
-                <p className="text-xs text-neutral-500">
-                  Filter by status or activity type, then open a row for the full SAAF record.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                  Status
-                  <select
-                    value={status}
-                    onChange={(event) =>
-                      setStatus(
-                        event.target.value as "" | "pending" | "approved" | "denied" | "returned"
-                      )
-                    }
-                    className="h-10 min-w-40 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                  >
-                    {STATUS_FILTERS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                  Activity type
-                  <select
-                    value={activityType}
-                    onChange={(event) => setActivityType(event.target.value)}
-                    className="h-10 min-w-44 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                  >
-                    {TYPE_FILTERS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
+          <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
+              <p className="text-xs text-neutral-500">
+                Filter by status or activity type, then open a row for the full SAAF record.
+              </p>
             </div>
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                Status
+                <select
+                  value={status}
+                  onChange={(event) =>
+                    setStatus(
+                      event.target.value as "" | "pending" | "approved" | "denied" | "returned"
+                    )
+                  }
+                  className="h-10 min-w-40 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                >
+                  {STATUS_FILTERS.map((option) => (
+                    <option key={option.label} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                Activity type
+                <select
+                  value={activityType}
+                  onChange={(event) => setActivityType(event.target.value)}
+                  className="h-10 min-w-44 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                >
+                  {TYPE_FILTERS.map((option) => (
+                    <option key={option.label} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          </div>
 
-            <div className="min-h-0 flex-1 overflow-x-auto">
-              <Table className="min-w-[28rem]">
-                <TableHeader>
-                  <TableRow className="border-b border-neutral-100 text-neutral-500">
-                    <TableHead className="text-xs font-bold uppercase">Event</TableHead>
-                    <TableHead className="text-xs font-bold uppercase">Type</TableHead>
-                    <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
-                    <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
+          <div className="min-h-0 flex-1 overflow-x-auto">
+            <Table className="min-w-[28rem]">
+              <TableHeader>
+                <TableRow className="border-b border-neutral-100 text-neutral-500">
+                  <TableHead className="text-xs font-bold uppercase">Event</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Type</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
+                  <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {submissionsQuery.isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                      Loading submissions…
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {submissionsQuery.isLoading ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
-                        Loading submissions…
+                ) : submissionsQuery.isError ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-12 text-center text-sm text-rose-600">
+                      Could not load submissions.
+                    </TableCell>
+                  </TableRow>
+                ) : rows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                      No submissions match these filters.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  rows.map((row) => (
+                    <TableRow
+                      key={`${row.event_id}:${row.submission_id}`}
+                      className="cursor-pointer hover:bg-neutral-50"
+                      onClick={() =>
+                        setSelectedKeys({
+                          eventId: row.event_id,
+                          submissionId: row.submission_id,
+                        })
+                      }
+                    >
+                      <TableCell className="text-sm font-semibold">
+                        {row.activity_details.title}
                       </TableCell>
-                    </TableRow>
-                  ) : submissionsQuery.isError ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="py-12 text-center text-sm text-rose-600">
-                        Could not load submissions.
+                      <TableCell className="text-xs capitalize text-neutral-500">
+                        {row.activity_classification}
                       </TableCell>
-                    </TableRow>
-                  ) : rows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
-                        No submissions match these filters.
+                      <TableCell className="text-sm text-neutral-500">
+                        {row.submitted_date}
                       </TableCell>
+                      <TableCell className="text-right text-xs font-bold">{row.status}</TableCell>
                     </TableRow>
-                  ) : (
-                    rows.map((row) => (
-                      <TableRow
-                        key={`${row.event_id}:${row.submission_id}`}
-                        className="cursor-pointer hover:bg-neutral-50"
-                        onClick={() =>
-                          setSelectedKeys({
-                            eventId: row.event_id,
-                            submissionId: row.submission_id,
-                          })
-                        }
-                      >
-                        <TableCell className="text-sm font-semibold">
-                          {row.activity_details.title}
-                        </TableCell>
-                        <TableCell className="text-xs capitalize text-neutral-500">
-                          {row.activity_classification}
-                        </TableCell>
-                        <TableCell className="text-sm text-neutral-500">
-                          {row.submitted_date}
-                        </TableCell>
-                        <TableCell className="text-right text-xs font-bold">{row.status}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </section>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </section>
 
         <section className={layout.section}>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -393,7 +404,7 @@ export function AdminOsaPanel() {
             <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
             <DialogDescription>
               {selectedRow
-                ? `${selectedRow.status} • ${selectedRow.current_signatory}`
+                ? `${formatDocumentId(selectedRow.submission_id)} • ${selectedRow.status} • ${selectedRow.current_signatory}`
                 : "Loading the full SAAF record and notifications."}
             </DialogDescription>
           </DialogHeader>
