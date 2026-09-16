@@ -1,11 +1,23 @@
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router"
+import { BookOpen, Sparkles } from "lucide-react"
 
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogClose,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogPanel,
+  DialogPopup,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
 import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
+import { HowItWorks } from "@/components/submission/how-it-works"
 import { useOrgStore } from "@/stores/org-store"
 import { layout } from "@/config"
 import { cn } from "@/lib/utils"
@@ -19,6 +31,7 @@ export function SubmissionsStart() {
     savedChoice ?? ""
   )
   const [error, setError] = useState<string | null>(null)
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault()
@@ -49,66 +62,135 @@ export function SubmissionsStart() {
   }
 
   return (
-    <div className={cn("relative", layout.page)}>
-      <div className={cn(layout.containerNarrow, layout.stack)}>
-        <FormPageHeader
-          title="New submission"
-          subtitle="Academic Term: 2026 - 2027 • Start your activity proposal"
-        />
-
-        <form
-          onSubmit={handleSubmit}
-          className={cn(layout.section, "space-y-6")}
+    <div
+      className={cn(
+        "relative flex min-h-full flex-col items-center justify-center py-10 sm:py-14",
+        layout.page
+      )}
+    >
+      <div className="w-full max-w-xl space-y-5">
+        {/* Event Setup Form Section */}
+        <div
+          id="submission-start-form"
+          className={cn(layout.stack, "w-full")}
         >
-          <Field>
-            <FieldLabel htmlFor="eventName">Event name</FieldLabel>
-            <Input
-              id="eventName"
-              name="eventName"
-              nativeInput
-              placeholder="e.g. Tech Week 2026"
-              required
-              type="text"
-              value={eventName}
-              onChange={(e) => {
-                setEventName(e.target.value)
-                setError(null)
-              }}
-            />
-          </Field>
+          <FormPageHeader
+            title="Create your Activity Proposal"
+            subtitle="Academic Term: 2026 - 2027 • Enter your event title and facility reservation preference"
+          />
 
-          <Field>
-            <FieldLabel htmlFor="reserveFacilities">
-              Are you going to reserve school facilities?
-            </FieldLabel>
-            <select
-              id="reserveFacilities"
-              name="reserveFacilities"
-              required
-              value={reserveFacilities}
-              onChange={(e) => {
-                setReserveFacilities(e.target.value as "yes" | "no" | "")
-                setError(null)
-              }}
-              className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/24"
-            >
-              <option value="" disabled>
-                Select an option
-              </option>
-              <option value="yes">Yes I want to</option>
-              <option value="no">No I don&apos;t want to</option>
-            </select>
-          </Field>
+          <form
+            onSubmit={handleSubmit}
+            className={cn(layout.section, "space-y-6")}
+          >
+            <Field>
+              <FieldLabel htmlFor="eventName">Event name</FieldLabel>
+              <Input
+                id="eventName"
+                name="eventName"
+                nativeInput
+                placeholder="e.g. Tech Week 2026"
+                required
+                type="text"
+                value={eventName}
+                onChange={(e) => {
+                  setEventName(e.target.value)
+                  setError(null)
+                }}
+              />
+            </Field>
 
-          {error ? <FieldError>{error}</FieldError> : null}
+            <Field>
+              <FieldLabel htmlFor="reserveFacilities">
+                Are you going to reserve school facilities?
+              </FieldLabel>
+              <select
+                id="reserveFacilities"
+                name="reserveFacilities"
+                required
+                value={reserveFacilities}
+                onChange={(e) => {
+                  setReserveFacilities(e.target.value as "yes" | "no" | "")
+                  setError(null)
+                }}
+                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/24"
+              >
+                <option value="" disabled>
+                  Select an option
+                </option>
+                <option value="yes">Yes I want to</option>
+                <option value="no">No I don&apos;t want to</option>
+              </select>
+            </Field>
 
-          <div className="flex justify-end">
-            <Button type="submit" className="min-w-36">
-              Continue
-            </Button>
-          </div>
-        </form>
+            {error ? <FieldError>{error}</FieldError> : null}
+
+            <div className="flex justify-center pt-2">
+              <Button type="submit" className="min-w-40 sm:min-w-48">
+                Continue
+              </Button>
+            </div>
+          </form>
+        </div>
+
+        {/* Guide Trigger Button below the section (75% transparency) */}
+        <div className="flex flex-col items-center justify-center gap-2 pt-1 text-center opacity-75 hover:opacity-100 transition-opacity duration-200">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setIsGuideOpen(true)}
+            className="inline-flex items-center gap-2 rounded-xl border border-neutral-200/90 bg-white px-5 py-2.5 text-sm font-semibold text-neutral-700 shadow-xs hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-200 dark:hover:bg-neutral-800 transition-all cursor-pointer"
+          >
+            <BookOpen className="h-4 w-4 text-[#FBC02D]" />
+            Guide
+          </Button>
+          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+            Need help? Learn how to submit an event activity application
+          </p>
+        </div>
       </div>
+
+      {/* Guide Modal Showcase */}
+      <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
+        <DialogPopup
+          bottomStickOnMobile={false}
+          viewportProps={{
+            className: "grid-rows-[1fr_auto_1fr] items-center justify-items-center",
+          }}
+          className="my-auto flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950"
+        >
+          <DialogHeader className="border-b border-neutral-200/80 bg-white px-6 py-5 shrink-0 dark:border-neutral-800 dark:bg-neutral-900">
+            <div className="pr-8">
+              <div className="flex items-center gap-2 mb-1.5">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-[#8B0000]/10 px-2.5 py-0.5 text-xs font-semibold text-[#8B0000] border border-[#8B0000]/20 dark:bg-[#8B0000]/30 dark:text-[#FBC02D] dark:border-[#8B0000]/40">
+                  <Sparkles className="h-3.5 w-3.5 text-[#FBC02D]" />
+                  Submission Guide
+                </span>
+              </div>
+              <DialogTitle className="text-xl sm:text-2xl font-extrabold text-neutral-900 dark:text-white tracking-tight">
+                How to submit an event activity application?
+              </DialogTitle>
+              <DialogDescription className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1">
+                A seamless 3-step workflow to prepare and submit your event proposal for official Mapúa approval.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+
+          <DialogPanel className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 bg-neutral-50/50 dark:bg-neutral-950">
+            <HowItWorks hideHeader className="py-2" />
+          </DialogPanel>
+
+          <DialogFooter className="border-t border-neutral-200/80 bg-white px-6 py-3.5 shrink-0 flex flex-row justify-between sm:justify-between items-center dark:border-neutral-800 dark:bg-neutral-900">
+            <p className="text-xs text-neutral-400 dark:text-neutral-500 hidden sm:block">
+              Follow these 3 steps to successfully submit your activity proposal
+            </p>
+            <DialogClose render={<Button variant="outline" size="sm" />}>
+              Close Guide
+            </DialogClose>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </div>
   )
 }
+
