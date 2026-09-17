@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { toastManager } from "@/components/ui/toast"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 import {
   useAdminAnnouncementsQuery,
@@ -220,10 +220,10 @@ export function AdminOsaPanel() {
     <div className={layout.page}>
       <div className={cn(layout.container, layout.stack)}>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <h1 className={layout.pageTitle}>
             Admin Panel — Office of Student Affairs
           </h1>
-          <p className="mt-1 text-xs font-normal text-neutral-500 sm:text-sm">
+          <p className={layout.pageSubtitle}>
             Global submissions and announcements across every organization.
           </p>
         </div>
@@ -272,8 +272,8 @@ export function AdminOsaPanel() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-x-auto">
-            <Table className="min-w-[28rem]">
+          <div className={cn("min-h-0 flex-1", layout.tableWrap)}>
+            <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Event</TableHead>
@@ -344,8 +344,8 @@ export function AdminOsaPanel() {
               New announcement
             </Button>
           </div>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[32rem]">
+          <div className={layout.tableWrap}>
+            <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Posted</TableHead>
@@ -399,7 +399,7 @@ export function AdminOsaPanel() {
           if (!open) setSelectedKeys(null)
         }}
       >
-        <DialogPopup className="flex max-h-[90dvh] w-full max-w-3xl flex-col">
+        <DialogPopup className={cn(modal.dialog, "max-w-3xl")}>
           <DialogHeader>
             <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
             <DialogDescription>
@@ -470,7 +470,7 @@ export function AdminOsaPanel() {
           }
         }}
       >
-        <DialogPopup className="w-full max-w-lg">
+        <DialogPopup className={modal.dialogMd}>
           <Form className="contents" onSubmit={handleCreate}>
             <DialogHeader>
               <DialogTitle>New announcement</DialogTitle>
@@ -517,7 +517,7 @@ export function AdminOsaPanel() {
           if (!open) closeEdit()
         }}
       >
-        <DialogPopup className="w-full max-w-lg">
+        <DialogPopup className={modal.dialogMd}>
           <Form className="contents" onSubmit={handleEdit}>
             <DialogHeader>
               <DialogTitle>Edit announcement</DialogTitle>

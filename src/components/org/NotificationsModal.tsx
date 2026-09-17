@@ -3,6 +3,8 @@ import { X, Bell, Clock, AlertTriangle, CheckCircle } from "lucide-react"
 import { useDeadlineNotifications } from "@/hooks/use-deadline-notifications"
 import { useOrgStore } from "@/stores/org-store"
 import { formatDocumentId } from "@/lib/dynamodb-adapters"
+import { layout, modal } from "@/config"
+import { cn } from "@/lib/utils"
 
 interface NotificationsModalProps {
   isOpen: boolean
@@ -16,7 +18,7 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-end p-3 sm:p-0 sm:pr-8 sm:pt-20">
+    <div className={modal.popoverOverlay}>
       <button
         type="button"
         className="absolute inset-0 bg-black/40 sm:bg-transparent"
@@ -24,22 +26,26 @@ export function NotificationsModal({ isOpen, onClose }: NotificationsModalProps)
         onClick={onClose}
       />
       <div
-        className="relative w-full max-w-sm overflow-hidden rounded-2xl border border-neutral-100 bg-white shadow-2xl sm:w-96"
+        className={modal.popoverShell}
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-neutral-100 bg-[#F8FAFC]">
+        <div className="flex items-center justify-between border-b border-neutral-100 bg-[#F8FAFC] px-5 py-4">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-[#1E293B]" />
+            <Bell className="h-4 w-4 text-[#1E293B]" />
             <h2 className="text-sm font-bold text-[#1E293B]">Notifications & Reminders</h2>
           </div>
-          <button onClick={onClose} className="inline-flex size-11 items-center justify-center text-neutral-400 transition-colors hover:text-neutral-600 cursor-pointer" aria-label="Close notifications">
-            <X className="w-4 h-4" />
+          <button
+            onClick={onClose}
+            className={modal.close}
+            aria-label="Close notifications"
+          >
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="max-h-[400px] overflow-y-auto p-2">
+        <div className="max-h-[min(24rem,60dvh)] overflow-y-auto p-2 sm:max-h-[400px]">
           {notifications.length === 0 ? (
-            <div className="p-8 text-center flex flex-col items-center">
+            <div className={cn(layout.empty, "p-8")}>
               <CheckCircle className="w-8 h-8 text-neutral-300 mb-2" />
               <p className="text-sm font-medium text-neutral-500">You're all caught up!</p>
               <p className="text-xs text-neutral-400 mt-1">No pressing deadlines right now.</p>

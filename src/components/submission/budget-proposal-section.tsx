@@ -11,6 +11,7 @@ import {
   sanitizeIntegerInput,
 } from "@/lib/numeric-input"
 import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 const BudgetRow = memo(function BudgetRow({
   item,
@@ -148,8 +149,8 @@ export function BudgetProposalSection({
       </div>
 
       <div className={layout.sectionFlush}>
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed border-collapse text-left text-sm">
+        <div className={layout.tableWrap}>
+          <table className={cn("table-fixed border-collapse text-left text-sm", layout.table)}>
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
                 <th className="w-[32%] border-r border-neutral-300 px-4 py-3 text-center">

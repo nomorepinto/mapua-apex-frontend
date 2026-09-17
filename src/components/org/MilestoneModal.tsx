@@ -4,6 +4,8 @@ import { useDisclosure } from "@/hooks/use-disclosure"
 import { getAssignedText, useMilestoneStats } from "@/hooks/use-milestone-stats"
 import { useOrgStore } from "@/stores/org-store"
 import type { Task } from "@/stores/org-store"
+import { modal } from "@/config"
+import { cn } from "@/lib/utils"
 import { NewTaskModal } from "./NewTaskModal"
 
 interface MilestoneModalProps {
@@ -66,10 +68,9 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
-      <div className="flex h-[85dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-
-        <div className="flex-1 overflow-y-auto p-4 sm:p-10">
+    <div className={modal.overlay}>
+      <div className={cn(modal.shell, modal.full)}>
+        <div className={cn(modal.body, "bg-white p-4 sm:p-10")}>
           {/* Header */}
           <div className="mb-8 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">

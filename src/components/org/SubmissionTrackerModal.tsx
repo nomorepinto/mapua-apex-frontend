@@ -13,7 +13,7 @@ import {
   formatDocumentId,
 } from "@/lib/dynamodb-adapters"
 import { useOrgStore } from "@/stores/org-store"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 
 interface SubmissionTrackerModalProps {
@@ -70,34 +70,34 @@ export function SubmissionTrackerModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
-        <div className="px-8 pt-7 pb-5 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-xs font-mono font-bold text-[#D9291C] bg-red-50 px-2 py-0.5 rounded-md" title={submission?.id || submissionId}>
+    <div className={modal.overlay}>
+      <div className={cn(modal.shell, modal.xl, modal.tall)}>
+        <div className={modal.header}>
+          <div className="min-w-0">
+            <div className="mb-1 flex flex-wrap items-center gap-2">
+              <span className="rounded-md bg-red-50 px-2 py-0.5 font-mono text-xs font-bold text-[#D9291C]" title={submission?.id || submissionId}>
                 {formatDocumentId(submission?.id || submissionId)}
               </span>
-              <span className="text-xs font-extrabold uppercase tracking-wider text-[#475569] bg-neutral-100 px-2 py-0.5 rounded-md">
+              <span className="rounded-md bg-neutral-100 px-2 py-0.5 text-xs font-extrabold tracking-wider text-[#475569] uppercase">
                 {submission?.activity_classification || "saaf"}
               </span>
             </div>
-            <h2 className="text-xl sm:text-2xl font-extrabold text-[#1E293B] tracking-tight">
+            <h2 className="text-xl font-extrabold tracking-tight text-[#1E293B] sm:text-2xl">
               {detailQuery.isLoading
                 ? "Loading submission…"
                 : submission?.activity_details.title || "Submission"}
             </h2>
-            <p className="text-xs font-medium text-[#64748B] mt-0.5">
+            <p className="mt-0.5 text-xs font-medium text-[#64748B]">
               {submission?.activity_details.proponent
                 ? `Submitted by ${submission.activity_details.proponent}`
                 : "Student activity application"}
             </p>
           </div>
 
-          <div className="flex items-center gap-4 self-end sm:self-center">
-            <div className="bg-slate-100/90 p-1 rounded-xl relative flex items-center w-84 h-10 border border-slate-200/80 shadow-inner">
+          <div className="flex w-full min-w-0 flex-col gap-3 sm:w-auto sm:flex-row sm:items-center">
+            <div className="relative flex h-11 w-full items-center rounded-xl border border-slate-200/80 bg-slate-100/90 p-1 shadow-inner sm:h-10 sm:w-84">
               <div
-                className="absolute top-1 bottom-1 rounded-lg bg-white shadow-xs border border-slate-200/60 transition-all duration-200 ease-in-out z-0"
+                className="absolute top-1 bottom-1 z-0 rounded-lg border border-slate-200/60 bg-white shadow-xs transition-all duration-200 ease-in-out"
                 style={{
                   left: activeTab === "details" ? "4px" : "calc(50% + 2px)",
                   width: "calc(50% - 6px)",
@@ -105,44 +105,50 @@ export function SubmissionTrackerModal({
               ></div>
 
               <button
+                type="button"
                 onClick={() => setActiveTab("details")}
-                className={`relative z-10 w-1/2 h-full text-center text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 rounded-lg select-none ${
+                className={`relative z-10 flex h-full w-1/2 cursor-pointer items-center justify-center gap-2 rounded-lg text-center text-xs select-none transition-colors ${
                   activeTab === "details"
-                    ? "text-[#D9291C] font-bold"
-                    : "text-slate-500 hover:text-slate-800 font-medium"
+                    ? "font-bold text-[#D9291C]"
+                    : "font-medium text-slate-500 hover:text-slate-800"
                 }`}
               >
                 <FileText
-                  className={`w-3.5 h-3.5 shrink-0 ${activeTab === "details" ? "text-[#D9291C]" : "text-slate-400"}`}
+                  className={`h-3.5 w-3.5 shrink-0 ${activeTab === "details" ? "text-[#D9291C]" : "text-slate-400"}`}
                 />
-                <span>Document Details</span>
+                <span className="sm:hidden">Details</span>
+                <span className="hidden sm:inline">Document Details</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => setActiveTab("progress")}
-                className={`relative z-10 w-1/2 h-full text-center text-xs transition-colors cursor-pointer flex items-center justify-center gap-2 rounded-lg select-none ${
+                className={`relative z-10 flex h-full w-1/2 cursor-pointer items-center justify-center gap-2 rounded-lg text-center text-xs select-none transition-colors ${
                   activeTab === "progress"
-                    ? "text-[#D9291C] font-bold"
-                    : "text-slate-500 hover:text-slate-800 font-medium"
+                    ? "font-bold text-[#D9291C]"
+                    : "font-medium text-slate-500 hover:text-slate-800"
                 }`}
               >
                 <CheckCircle2
-                  className={`w-3.5 h-3.5 shrink-0 ${activeTab === "progress" ? "text-[#D9291C]" : "text-slate-400"}`}
+                  className={`h-3.5 w-3.5 shrink-0 ${activeTab === "progress" ? "text-[#D9291C]" : "text-slate-400"}`}
                 />
-                <span>Milestone & Progress</span>
+                <span className="sm:hidden">Progress</span>
+                <span className="hidden sm:inline">Milestone & Progress</span>
               </button>
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              className="text-neutral-400 hover:text-neutral-600 transition-colors p-1.5 rounded-full hover:bg-neutral-100 cursor-pointer"
+              className={cn(modal.close, "self-end sm:self-center")}
+              aria-label="Close submission tracker"
             >
-              <X className="w-6 h-6" />
+              <X className="h-6 w-6" />
             </button>
           </div>
         </div>
 
-        <div className="p-8 overflow-y-auto space-y-6 bg-neutral-50/40">
+        <div className={cn(modal.body, layout.stack, "bg-neutral-50/40")}>
           {detailQuery.isError ? (
             <p className="text-sm font-semibold text-rose-600">
               Could not load this submission. Try again from the dashboard.
@@ -151,13 +157,13 @@ export function SubmissionTrackerModal({
 
           {activeTab === "details" && submission && (
             <div className={cn(layout.stack, "animate-in fade-in duration-200")}>
-              <div className={cn("grid grid-cols-1 lg:grid-cols-2", layout.gap, "items-stretch")}>
+              <div className={cn("grid grid-cols-1 items-stretch lg:grid-cols-2", layout.gap)}>
                 <div className={cn(layout.section, "flex flex-col")}>
                   <h3 className="text-lg font-extrabold text-[#1E293B] mb-4">
                     Document Specification & Details
                   </h3>
 
-                  <div className="overflow-x-auto">
+                  <div className={layout.tableWrap}>
                     <table className="w-full text-left border-collapse">
                       <thead>
                         <tr className="border-b border-neutral-100 text-xs font-bold text-[#94A3B8] tracking-wider">
@@ -273,22 +279,63 @@ export function SubmissionTrackerModal({
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[#64748B] mb-6">
-                  <span>
+                <div className="mb-6 flex flex-col gap-2 text-xs text-[#64748B] sm:flex-row sm:items-center sm:justify-between">
+                  <span className="min-w-0">
                     {formatDocumentId(submissionId)} • Submitted {submission?.submitted_date || "—"} •{" "}
                     {stepper.isAllApproved
                       ? "All steps completed"
                       : `${stepper.remainingSteps} tasks remaining before final approval`}
                   </span>
                   <div className="flex items-center gap-4">
-                    <span className="text-xs text-[#64748B] font-medium">Overall progress</span>
+                    <span className="text-xs font-medium text-[#64748B]">Overall progress</span>
                     <span className="text-base font-extrabold text-[#1E293B]">
                       {stepper.progressPercent}%
                     </span>
                   </div>
                 </div>
 
-                <div className="relative py-4 px-2 select-none">
+                <ol className="flex flex-col gap-3 md:hidden">
+                  {stepper.fullSteps.map((stepName, idx) => {
+                    const isCompleted = stepper.isAllApproved || idx < stepper.currentStepIdx
+                    const isCurrent = !stepper.isAllApproved && idx === stepper.currentStepIdx
+                    let nodeBg = "bg-neutral-100 border-neutral-300 text-neutral-400"
+                    if (isCompleted) {
+                      nodeBg = "bg-[#D1FAE5] border-[#10B981] text-[#065F46]"
+                    } else if (isCurrent) {
+                      nodeBg = "bg-[#FEF3C7] border-[#F59E0B] text-[#92400E] ring-4 ring-amber-100"
+                    }
+
+                    return (
+                      <li key={`${stepName}-${idx}`} className="flex items-center gap-3">
+                        <div
+                          className={`flex size-10 shrink-0 items-center justify-center rounded-full border-2 font-bold shadow-xs ${nodeBg}`}
+                        >
+                          {isCompleted ? (
+                            <Check className="h-5 w-5 stroke-[2.5] text-emerald-800" />
+                          ) : isCurrent ? (
+                            <span className="h-3.5 w-3.5 rounded-full bg-amber-500 animate-pulse"></span>
+                          ) : (
+                            <span className="h-2.5 w-2.5 rounded-full bg-neutral-300"></span>
+                          )}
+                        </div>
+                        <span
+                          className={cn(
+                            "min-w-0 text-xs font-bold",
+                            isCompleted
+                              ? "text-[#1E293B]"
+                              : isCurrent
+                                ? "font-extrabold text-amber-900"
+                                : "text-slate-400"
+                          )}
+                        >
+                          {stepName}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ol>
+
+                <div className="relative hidden select-none px-2 py-4 md:block">
                   <div className="absolute top-9 left-8 right-8 -translate-y-1/2 h-1.5 bg-neutral-200 rounded-full z-0 overflow-hidden">
                     <div
                       className="h-full bg-[#10B981] rounded-full transition-all duration-500 ease-out"
@@ -401,7 +448,7 @@ export function SubmissionTrackerModal({
                 <button
                   type="button"
                   onClick={handleResubmit}
-                  className="rounded-xl bg-[#1E293B] px-4 py-2 text-xs font-bold text-white"
+                  className="min-h-11 rounded-xl bg-[#1E293B] px-4 py-2 text-xs font-bold text-white"
                 >
                   Edit and resubmit
                 </button>

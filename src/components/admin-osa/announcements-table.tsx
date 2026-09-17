@@ -3,6 +3,7 @@ import { PencilIcon, PlusIcon, Trash2Icon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import type { Announcement } from "@/lib/types"
 import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function AnnouncementsTable({
   announcements,
@@ -28,8 +29,8 @@ export function AnnouncementsTable({
           No announcements yet. Create one to notify organizations.
         </p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[36rem] border-collapse text-left text-sm">
+        <div className={layout.tableWrap}>
+          <table className={cn("border-collapse text-left text-sm", layout.table)}>
             <thead>
               <tr className="border-b border-neutral-200 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-600 uppercase">
                 <th className="px-6 py-3.5">Title</th>

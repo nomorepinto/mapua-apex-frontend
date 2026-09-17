@@ -7,6 +7,7 @@ import { useAuth } from "react-oidc-context"
 import { Logo } from "@/components/logo"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetPopup, SheetTitle } from "@/components/ui/sheet"
+import { modal } from "@/config"
 import { useDisclosure } from "@/hooks/use-disclosure"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { useSignOut } from "@/hooks/use-sign-out"
@@ -272,12 +273,12 @@ export function AppSidebar({
       </Sheet>
 
       {showSettings && settings.isOpen ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className={modal.overlayCenter}>
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0"
             onClick={settings.close}
           />
-          <div className="relative w-full max-w-md space-y-4 rounded-2xl border border-neutral-200 bg-white p-5 shadow-xl sm:p-6">
+          <div className={cn(modal.shell, modal.sm, "relative z-10 space-y-4 rounded-2xl p-5 sm:p-6")}>
             <div className="flex items-center justify-between gap-3 border-b border-neutral-200 pb-3">
               <div className="flex min-w-0 items-center gap-2">
                 <SettingsIcon className="h-5 w-5 shrink-0 text-neutral-700" />
@@ -288,7 +289,7 @@ export function AppSidebar({
               <button
                 type="button"
                 onClick={settings.close}
-                className="inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-lg text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-700"
+                className={modal.close}
                 aria-label="Close settings"
               >
                 <XIcon className="h-4 w-4" />

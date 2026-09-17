@@ -1,3 +1,6 @@
+import { layout, modal } from "@/config"
+import { cn } from "@/lib/utils"
+
 export function ConfirmSubmitModal({
   open,
   title = "Are you sure you want to submit?",
@@ -18,11 +21,11 @@ export function ConfirmSubmitModal({
   return (
     <div
       onClick={onClose}
-      className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 duration-200"
+      className={modal.overlayCenter}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-in zoom-in-95 flex min-h-[200px] w-full max-w-[560px] flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-2xl duration-150"
+        className={cn(modal.shell, modal.md, "min-h-[200px] justify-between rounded-2xl")}
       >
         <div className="bg-[#333333] px-6 py-4 text-center">
           <h3 className="text-base font-bold tracking-normal text-white sm:text-lg">
@@ -38,7 +41,7 @@ export function ConfirmSubmitModal({
             </strong>
           </p>
 
-          <div className="flex flex-col items-stretch justify-center gap-3 pt-1 sm:flex-row sm:items-center sm:gap-4">
+          <div className={cn(layout.actionRow, "justify-center pt-1 sm:items-center sm:gap-4")}>
             <button
               type="button"
               onClick={onClose}

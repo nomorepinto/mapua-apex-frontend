@@ -29,7 +29,7 @@ export function StudentsLayout() {
     <AuthGuard allowedGroups={["admin", "org_adviser", "org_submitter"]}>
       <div className={layout.frame}>
         <AppSidebar homeTo="/students/dashboard" items={STUDENT_NAV} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
+        <main className={layout.main}>
           <Outlet />
         </main>
       </div>

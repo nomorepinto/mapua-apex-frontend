@@ -20,10 +20,10 @@ export function Dashboard() {
     <div className={layout.page}>
       <div className={cn(layout.container, layout.stack)}>
         <div className="space-y-1">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 font-sans">
+          <h1 className={layout.pageTitle}>
             {dashboard.roleLabel} Review Dashboard
           </h1>
-          <p className="text-xs sm:text-sm text-neutral-500 font-normal">
+          <p className={layout.pageSubtitle}>
             Academic Term: 2026-2027 • Pending institutional approvals for student activities.
           </p>
         </div>
@@ -40,8 +40,8 @@ export function Dashboard() {
         </div>
 
         <div className={layout.sectionFlush}>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[40rem]">
+          <div className={layout.tableWrap}>
+            <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500 text-xs font-bold uppercase tracking-wider hover:bg-transparent">
                   <TableHead className="py-4 px-6 font-bold text-neutral-500">

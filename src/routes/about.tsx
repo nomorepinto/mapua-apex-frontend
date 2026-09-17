@@ -117,16 +117,16 @@ export function About() {
       <div className={cn(layout.container, layout.stack)}>
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+          <h1 className={layout.pageTitle}>
             About APEX
           </h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
+          <p className={layout.pageSubtitle}>
             Administrative Portal For Events Exchange — Mapúa University
           </p>
         </div>
 
         {/* System Description + Institutional Alignment */}
-        <div className={cn("grid grid-cols-1 md:grid-cols-2", layout.gap)}>
+        <div className={cn(layout.grid2, layout.gap)}>
           <div className={cn(layout.section, "space-y-3")}>
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-[#D9291C]">
@@ -227,7 +227,7 @@ export function About() {
         </div>
 
         {/* Developer Cards Grid */}
-        <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4", layout.gap)}>
+        <div className={cn(layout.grid4, layout.gap)}>
           {TEAM_MEMBERS.map((member) => (
             <DevCard key={member.name} member={member} />
           ))}

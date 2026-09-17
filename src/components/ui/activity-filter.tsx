@@ -56,7 +56,7 @@ const ActivityFilter = memo(function ActivityFilter({
         <div
           role="dialog"
           aria-label="Filter by Department and Organization"
-          className="absolute right-0 top-full z-30 mt-2 max-h-[min(24rem,70vh)] w-[min(21.25rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-2xl border border-neutral-200 bg-white py-2 shadow-xl"
+          className="absolute right-0 top-full z-30 mt-2 max-h-[min(24rem,70dvh)] w-[min(21.25rem,calc(100vw-2rem))] overflow-y-auto overflow-x-hidden rounded-2xl border border-neutral-200 bg-white py-2 shadow-xl"
         >
           <div className="px-3 pt-1 pb-0.5">
             <p className="text-[10px] font-bold uppercase tracking-widest text-neutral-400 px-1 mb-1">

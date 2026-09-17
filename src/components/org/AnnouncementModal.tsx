@@ -1,6 +1,6 @@
 import { X, Megaphone, Calendar, AlertCircle, Bookmark } from "lucide-react"
 import { useOrgStore, type Announcement } from "@/stores/org-store"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 
 interface AnnouncementModalProps {
@@ -20,40 +20,41 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
     : announcements;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 sm:p-6 animate-in fade-in duration-200">
-      <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col h-[90vh]">
-        
-        {/* Institutional Bulletin Header */}
-        <div className="px-8 pt-7 pb-5 border-b border-neutral-200/80 bg-[#F8FAFC] shrink-0 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-[#D9291C] text-white flex items-center justify-center shadow-xs">
+    <div className={modal.overlay}>
+      <div className={cn(modal.shell, modal.xl, modal.tall)}>
+        <div className={cn(modal.header, "bg-[#F8FAFC]")}>
+          <div className="flex min-w-0 items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-[#D9291C] text-white shadow-xs">
               <Megaphone className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl font-bold text-[#1E293B]">Institutional Bulletin Board</h2>
-                <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#D9291C] bg-red-50 border border-red-200/60 px-2 py-0.5 rounded-md">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-lg font-bold text-[#1E293B] sm:text-xl">
+                  Institutional Bulletin Board
+                </h2>
+                <span className="rounded-md border border-red-200/60 bg-red-50 px-2 py-0.5 text-[10px] font-extrabold tracking-wider text-[#D9291C] uppercase">
                   Official Memos
                 </span>
               </div>
-              <p className="text-xs text-[#64748B] mt-0.5">
+              <p className="mt-0.5 text-xs text-[#64748B]">
                 Administrative notices, SAAF policy timelines, and facility maintenance updates
               </p>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors p-2 rounded-full hover:bg-neutral-200/60 cursor-pointer"
+            className={cn(modal.close, "self-end sm:self-center")}
+            aria-label="Close bulletin board"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Scrollable Bulletin Board Posts */}
-        <div className={cn("flex-1 overflow-y-auto bg-page p-6 sm:p-8", layout.stack)}>
+        <div className={cn(modal.body, layout.stack)}>
           {displayAnnouncements.length === 0 ? (
-            <div className={cn(layout.section, "flex flex-col items-center justify-center p-12 text-center text-[#94A3B8]")}>
+            <div className={cn(layout.empty, "text-[#94A3B8]")}>
               <Megaphone className="w-8 h-8 text-neutral-300 mb-3" />
               <h3 className="text-sm font-bold text-[#1E293B] mb-1">No announcements at this time</h3>
               <p className="text-xs text-[#64748B]">Official administrative notices and memorandums will appear here.</p>
@@ -65,7 +66,7 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
                 className={cn(layout.sectionFlush, "transition-all hover:shadow-md")}
               >
                 {/* Post Header Line */}
-                <div className="px-7 pt-5 pb-3 border-b border-neutral-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-neutral-50/50">
+                <div className="flex flex-col justify-between gap-2 border-b border-neutral-100 bg-neutral-50/50 px-4 py-3 sm:flex-row sm:items-center sm:px-7 sm:pt-5">
                   <div className="flex items-center gap-2.5">
                     <span className={`text-xs font-extrabold px-2.5 py-1 rounded-md ${
                       post.category === 'Policy'
@@ -97,21 +98,21 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
                 </div>
 
                 {/* Headline Title */}
-                <div className="px-7 pt-5 pb-3">
+                <div className="px-4 pt-5 pb-3 sm:px-7">
                   <h3 className="text-lg sm:text-xl font-bold text-[#1E293B] leading-snug">
                     {post.title}
                   </h3>
                 </div>
 
                 {/* Formatted Memo Body Text Container (Internal Scroll for Long Content) */}
-                <div className="mx-7 mb-5 p-5 sm:p-6 bg-[#F8FAFC] rounded-xl border border-neutral-200/80 max-h-[250px] overflow-y-auto pr-3 scrollbar-thin shadow-inner">
+                <div className="mx-4 mb-5 max-h-[250px] overflow-y-auto rounded-xl border border-neutral-200/80 bg-[#F8FAFC] p-4 shadow-inner scrollbar-thin sm:mx-7 sm:p-6">
                   <p className="text-xs sm:text-sm text-[#334155] font-sans leading-relaxed whitespace-pre-line">
                     {post.content}
                   </p>
                 </div>
 
                 {/* Post Footer / Author Sign-off */}
-                <div className="px-7 py-3.5 bg-[#F8FAFC] border-t border-neutral-100 flex items-center justify-between text-xs text-[#64748B]">
+                <div className="flex flex-col gap-2 border-t border-neutral-100 bg-[#F8FAFC] px-4 py-3.5 text-xs text-[#64748B] sm:flex-row sm:items-center sm:justify-between sm:px-7">
                   <div className="flex items-center gap-2">
                     <Bookmark className="w-4 h-4 text-[#D9291C]" />
                     <span className="font-semibold text-[#1E293B]">{post.author}</span>
@@ -124,14 +125,14 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
           )}
         </div>
 
-        {/* Footer */}
-        <div className="px-8 py-4 bg-white border-t border-neutral-200/80 shrink-0 flex justify-between items-center">
+        <div className={modal.footer}>
           <span className="text-xs text-[#94A3B8]">
             Showing {displayAnnouncements.length} official memorandum posts
           </span>
           <button
+            type="button"
             onClick={onClose}
-            className="px-5 py-2 bg-[#1E293B] text-white text-xs font-semibold rounded-xl hover:bg-neutral-800 transition-colors cursor-pointer"
+            className="min-h-11 w-full cursor-pointer rounded-xl bg-[#1E293B] px-5 py-2 text-xs font-semibold text-white transition-colors hover:bg-neutral-800 sm:w-auto"
           >
             Close Bulletin Board
           </button>

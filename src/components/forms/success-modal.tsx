@@ -1,5 +1,8 @@
 import { CheckIcon } from "lucide-react"
 
+import { modal } from "@/config"
+import { cn } from "@/lib/utils"
+
 export function SuccessModal({
   open,
   title,
@@ -16,11 +19,11 @@ export function SuccessModal({
   return (
     <div
       onClick={onAction}
-      className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 duration-200"
+      className={modal.overlayCenter}
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="animate-in zoom-in-95 flex min-h-[190px] w-full max-w-[380px] flex-col justify-between overflow-hidden rounded-2xl bg-white shadow-2xl duration-150"
+        className={cn(modal.shell, modal.sm, "min-h-[190px] justify-between rounded-2xl")}
       >
         <div className="flex items-center justify-center bg-[#333333] py-6">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#52A41C] shadow-md">

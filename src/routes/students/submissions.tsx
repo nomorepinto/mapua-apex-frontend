@@ -6,7 +6,6 @@ import { FormPageHeader } from "@/components/forms/form-page-header"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
-  DialogClose,
   DialogDescription,
   DialogFooter,
   DialogHeader,
@@ -19,7 +18,7 @@ import { Input } from "@/components/ui/input"
 import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
 import { HowItWorks } from "@/components/submission/how-it-works"
 import { useOrgStore } from "@/stores/org-store"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 
 export function SubmissionsStart() {
@@ -62,13 +61,8 @@ export function SubmissionsStart() {
   }
 
   return (
-    <div
-      className={cn(
-        "relative flex min-h-full flex-col items-center justify-center py-10 sm:py-14",
-        layout.page
-      )}
-    >
-      <div className="w-full max-w-xl space-y-5">
+    <div className={cn("relative flex min-h-full flex-col items-center justify-center py-10 sm:py-14", layout.page)}>
+      <div className={cn(layout.containerNarrow, layout.stack, "!gap-5")}>
         {/* Event Setup Form Section */}
         <div
           id="submission-start-form"
@@ -153,13 +147,9 @@ export function SubmissionsStart() {
       {/* Guide Modal Showcase */}
       <Dialog open={isGuideOpen} onOpenChange={setIsGuideOpen}>
         <DialogPopup
-          bottomStickOnMobile={false}
-          viewportProps={{
-            className: "grid-rows-[1fr_auto_1fr] items-center justify-items-center",
-          }}
-          className="my-auto flex max-h-[85dvh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl dark:border-neutral-800 dark:bg-neutral-950"
+          className={cn(modal.dialogLg, "overflow-hidden rounded-3xl border border-neutral-200/80 bg-white shadow-2xl")}
         >
-          <DialogHeader className="border-b border-neutral-200/80 bg-white px-6 py-5 shrink-0 dark:border-neutral-800 dark:bg-neutral-900">
+          <DialogHeader className="shrink-0 border-b border-neutral-200/80 bg-white px-4 py-5 sm:px-6">
             <div className="pr-8">
               <div className="flex items-center gap-2 mb-1.5">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-[#8B0000]/10 px-2.5 py-0.5 text-xs font-semibold text-[#8B0000] border border-[#8B0000]/20 dark:bg-[#8B0000]/30 dark:text-[#FBC02D] dark:border-[#8B0000]/40">
@@ -176,11 +166,11 @@ export function SubmissionsStart() {
             </div>
           </DialogHeader>
 
-          <DialogPanel className="flex-1 overflow-y-auto px-4 sm:px-8 py-6 bg-neutral-50/50 dark:bg-neutral-950">
+          <DialogPanel className="flex-1 overflow-y-auto bg-neutral-50/50 px-4 py-6 sm:px-8">
             <HowItWorks hideHeader className="py-2" />
           </DialogPanel>
 
-          <DialogFooter className="border-t border-neutral-200/80 bg-white px-6 py-3.5 shrink-0 flex flex-row justify-between sm:justify-between items-center dark:border-neutral-800 dark:bg-neutral-900">
+          <DialogFooter className="shrink-0 flex-row items-center justify-between border-t border-neutral-200/80 bg-white px-4 py-3.5 sm:px-6">
             <p className="text-xs text-neutral-400 dark:text-neutral-500 hidden sm:block">
               Follow these 3 steps to successfully submit your activity proposal
             </p>

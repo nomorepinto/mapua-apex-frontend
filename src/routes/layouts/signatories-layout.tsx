@@ -24,7 +24,7 @@ export function SignatoriesLayout() {
     <AuthGuard allowedGroups={["admin", "osaar", "cdm_reviewer", "org_adviser", "dean"]}>
       <div className={layout.frame}>
         <AppSidebar homeTo="/signatories/dashboard" items={SIGNATORY_NAV} />
-        <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
+        <main className={layout.main}>
           <Outlet />
         </main>
       </div>

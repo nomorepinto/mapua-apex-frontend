@@ -104,26 +104,26 @@ export function OrgDashboard() {
 
   return (
     <div className={cn(layout.page, layout.stack)}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+          <h1 className={layout.pageTitle}>
             {organizationQuery.data?.name || "Organization"} Dashboard
           </h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
+          <p className={layout.pageSubtitle}>
             Overview of active submittals, official announcements, and reminders timeline
           </p>
         </div>
 
         <Link
           to="/students/submissions"
-          className="bg-[#1E293B] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2 self-start sm:self-auto shrink-0"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#1E293B] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-neutral-800 sm:self-auto"
         >
           <span>Create Project/Event</span>
           <ArrowUpRight className="w-4 h-4" />
         </Link>
       </div>
 
-      <div className={cn("grid grid-cols-1 items-start xl:grid-cols-3", layout.gap)}>
+      <div className={cn(layout.grid3, layout.gap)}>
         <div className={cn("xl:col-span-2", layout.stack)}>
           <div className={layout.section}>
             <div className="flex items-center justify-between mb-5">
@@ -183,7 +183,7 @@ export function OrgDashboard() {
               </p>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className={layout.tableWrap}>
               <Table className="w-full text-left">
                 <TableHeader>
                   <TableRow className="text-[#94A3B8] text-xs font-bold uppercase tracking-wider border-b border-neutral-200">
@@ -268,7 +268,7 @@ export function OrgDashboard() {
 
           <div className={layout.section}>
             <h2 className="text-base font-bold text-[#1E293B] mb-4">Resource Quick Links</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className={cn(layout.gridAuto, layout.gap, "sm:grid-cols-3")}>
               <button
                 type="button"
                 className="flex items-center gap-3 text-left cursor-pointer group hover:bg-neutral-50 p-2 rounded-xl transition-colors"
@@ -337,7 +337,7 @@ export function OrgDashboard() {
                 {deadlinesQuery.isLoading ? (
                   <div className="p-8 text-center text-xs text-[#94A3B8]">Loading deadlines…</div>
                 ) : reminders.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#94A3B8] bg-[#F8FAFC] rounded-xl border border-neutral-200 flex flex-col items-center justify-center gap-1.5">
+                  <div className={cn(layout.empty, "gap-1.5 border border-neutral-200")}>
                     <Bell className="w-6 h-6 text-neutral-300 mb-1" />
                     <p className="font-bold text-[#1E293B]">No reminders at this time</p>
                     <p className="text-[11px] text-[#64748B]">
@@ -386,7 +386,7 @@ export function OrgDashboard() {
                                 onClick={() =>
                                   setDismissedReminderIds((prev) => [...prev, item.id])
                                 }
-                                className="bg-neutral-200/80 hover:bg-neutral-300 text-[#475569] font-bold text-[11px] px-3 py-1 rounded transition-all cursor-pointer shrink-0 mt-1"
+                                className="mt-1 min-h-11 shrink-0 cursor-pointer rounded bg-neutral-200/80 px-3 py-1 text-[11px] font-bold text-[#475569] transition-all hover:bg-neutral-300"
                               >
                                 Dismiss
                               </button>
@@ -436,7 +436,7 @@ export function OrgDashboard() {
                                 onClick={() =>
                                   setDismissedReminderIds((prev) => [...prev, item.id])
                                 }
-                                className="bg-neutral-200/80 hover:bg-neutral-300 text-[#475569] font-bold text-[11px] px-3 py-1 rounded transition-all cursor-pointer shrink-0 mt-1"
+                                className="mt-1 min-h-11 shrink-0 cursor-pointer rounded bg-neutral-200/80 px-3 py-1 text-[11px] font-bold text-[#475569] transition-all hover:bg-neutral-300"
                               >
                                 Dismiss
                               </button>

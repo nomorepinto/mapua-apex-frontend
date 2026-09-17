@@ -31,7 +31,7 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 import {
   Combobox,
@@ -532,7 +532,7 @@ export function AdminOrganizationsPage() {
           </Alert>
         ) : null}
 
-        <div className={cn("grid lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]", layout.gap)}>
+        <div className={cn("grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]", layout.gap)}>
           <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add organization</CardTitle>
@@ -842,7 +842,7 @@ export function AdminOrganizationsPage() {
         }}
         open={editing !== null}
       >
-        <DialogPopup>
+        <DialogPopup className={modal.dialogMd}>
           <DialogHeader>
             <DialogTitle>Edit organization</DialogTitle>
             <DialogDescription>

@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { layout, modal } from "@/config"
+import { cn } from "@/lib/utils"
 import type { Activity } from "./activity.types"
 
 export interface ReturnProposalModalProps {
@@ -75,7 +77,7 @@ const ReturnProposalModal = memo(function ReturnProposalModal({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogPopup className="max-w-lg w-full">
+      <DialogPopup className={modal.dialogMd}>
         <DialogHeader className="p-6 pb-3">
           <DialogTitle className="text-xl font-bold text-neutral-900">
             {copy.title}
@@ -124,7 +126,7 @@ const ReturnProposalModal = memo(function ReturnProposalModal({
             </div>
           </DialogPanel>
 
-          <DialogFooter className="p-6 pt-3 flex items-center justify-end gap-2.5 border-t border-neutral-100">
+          <DialogFooter className={cn(layout.actions, "border-t border-neutral-100 p-4 pt-3 sm:p-6")}>
             <DialogClose render={<Button variant="outline" type="button" />}>
               Cancel
             </DialogClose>

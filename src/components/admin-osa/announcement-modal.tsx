@@ -3,6 +3,8 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { layout, modal } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function AnnouncementModal({
   open,
@@ -34,14 +36,14 @@ export function AnnouncementModal({
   const isEdit = mode === "edit"
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className={modal.overlayCenter}>
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0"
         onClick={onClose}
       />
 
-      <div className="relative mx-4 max-h-[min(90dvh,40rem)] w-full max-w-[797px] overflow-y-auto overflow-x-hidden rounded-2xl bg-white shadow-xl">
-        <div className="space-y-2 bg-[#2D2D2D] px-6 py-5">
+      <div className={cn(modal.shell, modal.lg, "relative z-10 overflow-y-auto rounded-2xl")}>
+        <div className="space-y-2 bg-[#2D2D2D] px-4 py-5 sm:px-6">
           <h3 className="text-lg font-bold text-white">
             {isEdit ? "Edit Announcement" : "Announcement"}
           </h3>
@@ -53,7 +55,7 @@ export function AnnouncementModal({
           </span>
         </div>
 
-        <div className="space-y-4 px-6 py-5">
+        <div className="space-y-4 px-4 py-5 sm:px-6">
           <div className="space-y-1.5">
             <label className="text-sm font-semibold text-neutral-900">
               {isEdit ? "Edit Title" : "Create Title"}{" "}
@@ -82,7 +84,7 @@ export function AnnouncementModal({
           </div>
         </div>
 
-        <div className="flex flex-col items-stretch gap-2 px-6 pb-5 sm:items-end">
+        <div className={cn(layout.actions, "px-4 pb-5 sm:items-end sm:px-6")}>
           <Button
             onClick={handleSubmit}
             disabled={!title.trim() || !message.trim()}

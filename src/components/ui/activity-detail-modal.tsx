@@ -12,6 +12,8 @@ import {
 import { ReturnProposalModal } from "./return-proposal-modal"
 import type { Activity } from "./activity.types"
 import { useActivityDetail } from "@/hooks/use-activity-detail"
+import { modal } from "@/config"
+import { cn } from "@/lib/utils"
 
 export interface ActivityDetailModalProps {
   activity: Activity | null
@@ -44,8 +46,8 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   return (
     <>
       <Dialog open={activity !== null} onOpenChange={handleOpenChange}>
-        <DialogPopup className="flex max-h-[90dvh] w-full max-w-4xl flex-col">
-          <DialogHeader className="bg-[#2B2E35] text-white px-6 sm:px-8 py-6 shrink-0 rounded-t-2xl">
+        <DialogPopup className={cn(modal.dialogXl, "flex-col")}>
+          <DialogHeader className="shrink-0 rounded-t-2xl bg-[#2B2E35] px-4 py-6 text-white sm:px-8">
             <div className="w-full pr-10">
               <div className="flex items-center gap-2 mb-2.5 flex-wrap">
                 <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-sm uppercase tracking-wider">
@@ -64,7 +66,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             </div>
           </DialogHeader>
 
-          <DialogPanel className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 bg-white text-neutral-800">
+          <DialogPanel className="flex-1 overflow-y-auto bg-white px-4 py-6 text-neutral-800 sm:px-8">
             {activity && (
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -146,7 +148,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             )}
           </DialogPanel>
 
-          <DialogFooter className="border-t border-neutral-200 px-6 sm:px-8 py-4 bg-white shrink-0 rounded-b-2xl">
+          <DialogFooter className="shrink-0 rounded-b-2xl border-t border-neutral-200 bg-white px-4 py-4 sm:px-8">
             <div className="flex w-full flex-col items-stretch justify-end gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {actionError ? (
                 <p className="mr-auto text-xs font-semibold text-rose-600">{actionError}</p>

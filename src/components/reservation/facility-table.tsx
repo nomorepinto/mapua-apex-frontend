@@ -6,6 +6,7 @@ import {
 } from "@/components/reservation/constants"
 import type { FacilityItem } from "@/components/reservation/types"
 import { layout } from "@/config"
+import { cn } from "@/lib/utils"
 
 export function FacilityTable({
   purpose = "",
@@ -43,8 +44,8 @@ export function FacilityTable({
       </div>
 
       <div className={layout.sectionFlush}>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[54rem] border-collapse text-left text-sm">
+        <div className={layout.tableWrap}>
+          <table className={cn("border-collapse text-left text-sm", layout.tableWide)}>
             <thead>
               <tr className="border-b border-neutral-300 bg-neutral-50/80 text-xs font-semibold tracking-wider text-neutral-700 uppercase">
                 <th className="w-56 border-r border-neutral-300 px-4 py-3 text-center">

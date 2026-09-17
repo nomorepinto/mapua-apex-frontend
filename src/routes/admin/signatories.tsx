@@ -26,7 +26,7 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 import {
   Dialog,
@@ -423,7 +423,7 @@ export function AdminSignatoriesPage() {
           </Alert>
         ) : null}
 
-        <div className={cn("grid lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]", layout.gap)}>
+        <div className={cn("grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]", layout.gap)}>
           <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add signatory</CardTitle>
@@ -695,7 +695,7 @@ export function AdminSignatoriesPage() {
         }}
         open={editing !== null}
       >
-        <DialogPopup>
+        <DialogPopup className={modal.dialogMd}>
           <DialogHeader>
             <DialogTitle>Edit signatory</DialogTitle>
             <DialogDescription>
