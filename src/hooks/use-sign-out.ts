@@ -1,9 +1,6 @@
 import { useCallback } from "react"
-import { useAuth } from "react-oidc-context"
 
 export function useSignOut() {
-  const auth = useAuth()
-
   return useCallback(() => {
     // Cognito's /logout endpoint expects `client_id` + `logout_uri`,
     // NOT the standard OIDC `post_logout_redirect_uri` that oidc-client-ts sends.
