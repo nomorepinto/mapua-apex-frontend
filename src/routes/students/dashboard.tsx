@@ -13,6 +13,15 @@ import {
   Bell,
 } from "lucide-react"
 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+
 import { SubmissionTrackerModal } from "@/components/org/SubmissionTrackerModal"
 import { layout } from "@/config"
 import {
@@ -175,32 +184,32 @@ export function OrgDashboard() {
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="text-[#94A3B8] text-xs font-bold uppercase tracking-wider border-b border-neutral-100">
-                    <th className="pb-3 pr-4 font-bold">DOCUMENT ID</th>
-                    <th className="pb-3 pr-6 font-bold">EVENT TITLE</th>
-                    <th className="pb-3 pr-4 font-bold">CLASSIFICATION</th>
-                    <th className="pb-3 pr-4 font-bold">CURRENT SIGNATORY</th>
-                    <th className="pb-3 font-bold text-right">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-neutral-50">
+              <Table className="w-full text-left">
+                <TableHeader>
+                  <TableRow className="text-[#94A3B8] text-xs font-bold uppercase tracking-wider border-b border-neutral-200">
+                    <TableHead className="pb-3 pr-4 font-bold">DOCUMENT ID</TableHead>
+                    <TableHead className="pb-3 pr-6 font-bold">EVENT TITLE</TableHead>
+                    <TableHead className="pb-3 pr-4 font-bold">CLASSIFICATION</TableHead>
+                    <TableHead className="pb-3 pr-4 font-bold">CURRENT SIGNATORY</TableHead>
+                    <TableHead className="pb-3 font-bold text-right">STATUS</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody className="divide-y divide-neutral-50">
                   {submissionsQuery.isLoading ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-sm font-semibold text-[#94A3B8]">
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-12 text-center text-sm font-semibold text-[#94A3B8]">
                         Loading submissions…
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : submissionsQuery.isError ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center text-sm font-semibold text-rose-600">
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-12 text-center text-sm font-semibold text-rose-600">
                         Could not load submissions.
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : submissions.length === 0 ? (
-                    <tr>
-                      <td colSpan={5} className="py-12 text-center">
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p className="text-sm font-bold text-[#1E293B]">No submissions yet</p>
                           <p className="text-xs text-[#94A3B8] mb-2">
@@ -213,47 +222,47 @@ export function OrgDashboard() {
                             <span>+ Create Project / Event</span>
                           </Link>
                         </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ) : (
                     submissions.map((sub) => (
-                      <tr
+                      <TableRow
                         key={`${sub.event_id}:${sub.submission_id}`}
                         className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
                         onClick={() => openTracker(sub.event_id, sub.submission_id)}
                       >
-                        <td
+                        <TableCell
                           className="py-3.5 pr-4 font-mono text-xs text-[#1E293B] font-bold whitespace-nowrap group-hover:text-[#D9291C]"
                           title={sub.submission_id}
                         >
                           {formatDocumentId(sub.submission_id)}
-                        </td>
-                        <td className="py-3.5 pr-6 text-xs text-[#1E293B] font-semibold">
+                        </TableCell>
+                        <TableCell className="py-3.5 pr-6 text-xs text-[#1E293B] font-semibold">
                           {sub.activity_details.title}
                           {sub.requires_venue && (
                             <span className="ml-2 text-[10px] text-[#3B82F6] font-normal">
                               ({sub.activity_details.venue})
                             </span>
                           )}
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs text-[#64748B] capitalize">
+                        </TableCell>
+                        <TableCell className="py-3.5 pr-4 text-xs text-[#64748B] capitalize">
                           {sub.activity_classification}
-                        </td>
-                        <td className="py-3.5 pr-4 text-xs font-medium text-[#475569]">
+                        </TableCell>
+                        <TableCell className="py-3.5 pr-4 text-xs font-medium text-[#475569]">
                           {sub.current_signatory}
-                        </td>
-                        <td className="py-3.5 text-right whitespace-nowrap">
+                        </TableCell>
+                        <TableCell className="py-3.5 text-right whitespace-nowrap">
                           <span
                             className={`text-xs font-bold px-2.5 py-1 rounded-md ${getStatusTextColor(sub.status)}`}
                           >
                             {sub.status}
                           </span>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     ))
                   )}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </div>
           </div>
 
@@ -324,11 +333,11 @@ export function OrgDashboard() {
             </div>
 
             {isRemindersExpanded && (
-              <div className="mt-4 pt-3 border-t border-neutral-100 max-h-[560px] overflow-y-auto pr-2 scrollbar-thin">
+              <div className="mt-4 pt-3 border-t border-neutral-200 max-h-[560px] overflow-y-auto pr-2 scrollbar-thin">
                 {deadlinesQuery.isLoading ? (
                   <div className="p-8 text-center text-xs text-[#94A3B8]">Loading deadlines…</div>
                 ) : reminders.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#94A3B8] bg-[#F8FAFC] rounded-xl border border-neutral-100 flex flex-col items-center justify-center gap-1.5">
+                  <div className="p-8 text-center text-xs text-[#94A3B8] bg-[#F8FAFC] rounded-xl border border-neutral-200 flex flex-col items-center justify-center gap-1.5">
                     <Bell className="w-6 h-6 text-neutral-300 mb-1" />
                     <p className="font-bold text-[#1E293B]">No reminders at this time</p>
                     <p className="text-[11px] text-[#64748B]">

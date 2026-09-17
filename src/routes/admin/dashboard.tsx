@@ -275,7 +275,7 @@ export function AdminOsaPanel() {
           <div className="min-h-0 flex-1 overflow-x-auto">
             <Table className="min-w-[28rem]">
               <TableHeader>
-                <TableRow className="border-b border-neutral-100 text-neutral-500">
+                <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Event</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Type</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
@@ -347,7 +347,7 @@ export function AdminOsaPanel() {
           <div className="overflow-x-auto">
             <Table className="min-w-[32rem]">
               <TableHeader>
-                <TableRow className="border-b border-neutral-100 text-neutral-500">
+                <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Posted</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Notice</TableHead>
                 </TableRow>

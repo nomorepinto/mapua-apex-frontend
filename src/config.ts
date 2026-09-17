@@ -19,9 +19,9 @@ export const layout = {
   container: "mx-auto w-full max-w-6xl",
   containerNarrow: "mx-auto w-full max-w-xl",
   /** White section with no border. */
-  section: "border-1 border-gray-200 rounded-2xl bg-white p-6 shadow-xs md:p-7",
+  section: "border-1 border-neutral-300 rounded-2xl bg-white p-6 shadow-xs md:p-7",
   /** White table/panel wrapper with no border and no inner padding. */
-  sectionFlush: "border-1 border-gray-200 overflow-hidden rounded-2xl bg-white shadow-xs",
+  sectionFlush: "border-1 border-neutral-300 overflow-hidden rounded-2xl bg-white shadow-xs",
   /** Override for shadcn Card (drops its default border). */
-  card: "border-1 border-gray-200 bg-white shadow-xs",
+  card: "border-1 border-neutral-300 bg-white shadow-xs",
 } as const
