@@ -1,0 +1,31 @@
+---
+description: Type check is the last step before completion; never open the browser after it
+globs: **/*.{ts,tsx,js,jsx,css,html}
+alwaysApply: false
+---
+
+# Type Check Last
+
+Type check is the final verification step. After it passes, stop and declare the task complete.
+
+## Order of work
+
+1. Implement the change
+2. If UI/layout/behavior needs checking, do that **before** type check
+3. Run type check last
+4. Complete — do not start more verification
+
+```text
+❌ BAD
+typecheck → open browser → click around → done
+
+✅ GOOD
+browser/UI check (if needed) → typecheck → done
+```
+
+## After type check
+
+- Do **not** open the browser, take screenshots, or re-exercise the UI
+- Do **not** start another verification pass “just to be sure”
+- If type check fails, fix the types and re-run type check only
+- If you still need a browser check, you ran steps out of order — do the UI check first next time, then type check again as the last step

@@ -30,18 +30,31 @@ export function Submission() {
   const form = useSaafForm()
   const { draft } = form
   const [step, setStep] = useState<SaafStepIndex>(0)
+  const [farthestStep, setFarthestStep] = useState<SaafStepIndex>(0)
+
+  const goToStep = (next: SaafStepIndex) => {
+    if (next === step || next > farthestStep) return
+    if (next > step && !form.validateStep(step, formRef.current)) return
+    if (next < step) {
+      form.setShowErrors(false)
+      form.setStepError(null)
+    }
+    setStep(next)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   const goNext = () => {
     if (!form.validateStep(step, formRef.current)) return
-    setStep((current) => (current < 3 ? ((current + 1) as SaafStepIndex) : current))
+    if (step >= 3) return
+    const next = (step + 1) as SaafStepIndex
+    setFarthestStep((current) => (next > current ? next : current))
+    setStep(next)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   const goBack = () => {
-    form.setShowErrors(false)
-    form.setStepError(null)
-    setStep((current) => (current > 0 ? ((current - 1) as SaafStepIndex) : current))
-    window.scrollTo({ top: 0, behavior: "smooth" })
+    if (step === 0) return
+    goToStep((step - 1) as SaafStepIndex)
   }
 
   return (
@@ -62,7 +75,12 @@ export function Submission() {
             }
           />
 
-          <SaafStepper step={step} eventTitle={draft.activityTitle} />
+          <SaafStepper
+            step={step}
+            farthestStep={farthestStep}
+            eventTitle={draft.activityTitle}
+            onStepSelect={goToStep}
+          />
 
           <div
             data-saaf-step="0"
@@ -174,7 +192,11 @@ export function Submission() {
         title="Are you sure you want to clear?"
         description="This action will clear your student activity form with the data you have inputted."
         onClose={() => form.setShowConfirmClearModal(false)}
-        onConfirm={form.handleClearForm}
+        onConfirm={() => {
+          form.handleClearForm()
+          setStep(0)
+          setFarthestStep(0)
+        }}
       />
 
       <ConfirmSubmitModal

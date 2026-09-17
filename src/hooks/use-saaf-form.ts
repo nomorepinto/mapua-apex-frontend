@@ -52,21 +52,32 @@ export function useSaafForm() {
 
   // Directly select draft from Zustand with fallback to default
   const saafDraft = useOrgStore((state) => state.saafDraft)
-  const draft: SaafDraft = saafDraft ?? DEFAULT_SAAF_DRAFT
+  const draft: SaafDraft = {
+    ...DEFAULT_SAAF_DRAFT,
+    ...(saafDraft ?? {}),
+    proponents: saafDraft?.proponents ?? DEFAULT_SAAF_DRAFT.proponents,
+    budgetItems: saafDraft?.budgetItems ?? DEFAULT_SAAF_DRAFT.budgetItems,
+    departmentValues:
+      saafDraft?.departmentValues ?? DEFAULT_SAAF_DRAFT.departmentValues,
+  }
 
   useScrollToTop()
 
   // Ensure submission date is always locked to today's date upon opening
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0]
-    const current = useOrgStore.getState().saafDraft ?? DEFAULT_SAAF_DRAFT
-    const needsDateUpdate = current.proponents.some(
+    const current = {
+      ...DEFAULT_SAAF_DRAFT,
+      ...(useOrgStore.getState().saafDraft ?? {}),
+    }
+    const proponents = current.proponents ?? DEFAULT_SAAF_DRAFT.proponents
+    const needsDateUpdate = proponents.some(
       (p) => p.dateOfSubmission !== today
     )
 
     if (needsDateUpdate) {
       useOrgStore.getState().patchSaafDraft({
-        proponents: current.proponents.map((p) => ({
+        proponents: proponents.map((p) => ({
           ...p,
           dateOfSubmission: today,
         })),

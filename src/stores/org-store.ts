@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import { DEFAULT_SAAF_DRAFT } from '@/components/submission/constants'
 import type { SaafDraft } from '@/components/submission/types'
 import type { ReservationDraft } from '@/components/reservation/types'
 
@@ -384,7 +385,11 @@ export const useOrgStore = create<OrgState>()(
   setSaafDraft: (draft) => set({ saafDraft: draft }),
   patchSaafDraft: (patch) =>
     set((state) => ({
-      saafDraft: { ...(state.saafDraft ?? {}), ...patch } as SaafDraft,
+      saafDraft: {
+        ...DEFAULT_SAAF_DRAFT,
+        ...(state.saafDraft ?? {}),
+        ...patch,
+      },
     })),
   clearSaafDraft: () => set({ saafDraft: null }),
 
