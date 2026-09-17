@@ -306,12 +306,23 @@ export function AdminOsaPanel() {
                     <TableRow
                       key={`${row.event_id}:${row.submission_id}`}
                       className="cursor-pointer hover:bg-neutral-50"
+                      role="button"
+                      tabIndex={0}
                       onClick={() =>
                         setSelectedKeys({
                           eventId: row.event_id,
                           submissionId: row.submission_id,
                         })
                       }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          setSelectedKeys({
+                            eventId: row.event_id,
+                            submissionId: row.submission_id,
+                          })
+                        }
+                      }}
                     >
                       <TableCell className="text-sm font-semibold">
                         {row.activity_details.title}
@@ -376,7 +387,15 @@ export function AdminOsaPanel() {
                     <TableRow
                       key={announcement.sent_at}
                       className="cursor-pointer hover:bg-neutral-50"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openEdit(announcement)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          openEdit(announcement)
+                        }
+                      }}
                     >
                       <TableCell className="whitespace-nowrap text-sm text-neutral-500">
                         {formatDisplayDateTime(announcement.sent_at)}

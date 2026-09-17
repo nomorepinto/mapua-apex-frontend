@@ -30,8 +30,8 @@ export function InstitutionalAlignmentSection({
   return (
     <div className="space-y-6 pt-4">
       <div className="border-b border-neutral-200 pb-2">
-        <h2 className="text-base font-bold tracking-wide text-neutral-900 uppercase">
-          ALIGNMENT WITH INSTITUTIONAL VISION, MISSION AND FORMATION GOALS:
+        <h2 className="text-base font-bold tracking-tight text-neutral-900">
+          Alignment with institutional vision, mission, and formation goals
         </h2>
       </div>
 
@@ -129,7 +129,7 @@ export function InstitutionalAlignmentSection({
             value={values.peoExplanation}
             minLength={30}
             onChange={(e) => onChange("peoExplanation", e.target.value)}
-            placeholder="Indicate which academic objectives are satisfied (if applicable, minimum 30 characters)..."
+            placeholder="Indicate which academic objectives are satisfied, if this applies."
             rows={4}
             style={{ color: "#171717" }}
             className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"

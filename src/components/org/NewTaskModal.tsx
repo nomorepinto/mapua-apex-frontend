@@ -38,7 +38,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5 p-4 sm:p-6">
           <div>
-            <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Task Title</label>
+            <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">Task Title</label>
             <input 
               type="text" 
               required
@@ -51,7 +51,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Responsible Person/Team</label>
+            <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">Responsible Person/Team</label>
             <input 
               type="text" 
               value={responsible}
@@ -62,7 +62,7 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">Due Date (Optional)</label>
+            <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">Due Date (Optional)</label>
             <input 
               type="date"
               value={dueDate}

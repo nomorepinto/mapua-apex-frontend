@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { Building2Icon, CircleAlertIcon, DownloadIcon, PlusIcon } from "lucide-react"
+import { Building2Icon, CircleAlertIcon, DownloadIcon, PencilIcon, PlusIcon } from "lucide-react"
 import { Link } from "react-router"
 
 import { CsvFileField } from "@/components/admin-osa/csv-file-field"
@@ -20,7 +20,6 @@ import {
   AlertDescription,
   AlertTitle,
 } from "@/components/ui/alert"
-import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -172,7 +171,7 @@ function DeskName({
     return <span className="whitespace-normal">{person.name}</span>
   }
   if (signatoryId) {
-    return <Badge variant="outline">{signatoryId}</Badge>
+    return <span className="text-muted-foreground">Unassigned</span>
   }
   return <span className="text-muted-foreground">—</span>
 }
@@ -722,7 +721,7 @@ export function AdminOrganizationsPage() {
                   ? "Loading…"
                   : `${organizations.length} organization${
                       organizations.length === 1 ? "" : "s"
-                    } · right-click a row to edit`}
+                    } · use Edit to update a row`}
               </CardDescription>
               <CardAction>
                 <Input
@@ -774,6 +773,9 @@ export function AdminOrganizationsPage() {
                         <TableHead>Organization</TableHead>
                         <TableHead>Dean</TableHead>
                         <TableHead>Adviser</TableHead>
+                        <TableHead className="w-28 text-right">
+                          <span className="sr-only">Actions</span>
+                        </TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -781,7 +783,7 @@ export function AdminOrganizationsPage() {
                         <TableRow>
                           <TableCell
                             className="text-muted-foreground"
-                            colSpan={3}
+                            colSpan={4}
                           >
                             No organizations match “{search}”.
                           </TableCell>
@@ -789,19 +791,15 @@ export function AdminOrganizationsPage() {
                       ) : (
                         filtered.map((org) => (
                           <TableRow
-                            className="cursor-context-menu"
+                            className="cursor-pointer"
                             key={org.organization_id}
                             onContextMenu={(event) => {
                               event.preventDefault()
                               openEdit(org)
                             }}
-                            title="Right-click to edit"
                           >
                             <TableCell className="whitespace-normal">
                               <div className="font-medium">{org.name}</div>
-                              <Badge className="mt-1" variant="outline">
-                                {org.organization_id}
-                              </Badge>
                             </TableCell>
                             {ORGANIZATION_ASSIGNABLE_DESK_ITEMS.map((item) => {
                               const signatoryId = deskAssignment(
@@ -821,6 +819,17 @@ export function AdminOrganizationsPage() {
                                 </TableCell>
                               )
                             })}
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEdit(org)}
+                              >
+                                <PencilIcon />
+                                Edit
+                              </Button>
+                            </TableCell>
                           </TableRow>
                         ))
                       )}

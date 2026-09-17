@@ -40,7 +40,7 @@ export function MilestonePreview({
 
       <div className="flex flex-col gap-4">
         {tasks.length === 0 ? (
-          <p className="py-4 text-sm text-[#94A3B8]">
+          <p className="py-4 text-sm text-neutral-600">
             No milestone tasks yet. Open the tracker to add the first one.
           </p>
         ) : null}
@@ -78,7 +78,7 @@ export function MilestonePreview({
                     </span>
                   ) : null}
                 </div>
-                <p className="text-xs text-[#94A3B8]">
+                <p className="text-xs text-neutral-600">
                   {isCompleted
                     ? `Completed ${task.dueDate}`
                     : `Due ${task.dueDate}`}

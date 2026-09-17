@@ -27,7 +27,7 @@ export function ConfirmSubmitModal({
         onClick={(e) => e.stopPropagation()}
         className={cn(modal.shell, modal.md, "min-h-[200px] justify-between rounded-2xl")}
       >
-        <div className="bg-[#333333] px-6 py-4 text-center">
+        <div className="bg-[#8B0000] px-6 py-4 text-center">
           <h3 className="text-base font-bold tracking-normal text-white sm:text-lg">
             {title}
           </h3>
@@ -53,7 +53,7 @@ export function ConfirmSubmitModal({
               type="button"
               onClick={onConfirm}
               disabled={isSubmitting}
-              className="min-h-11 w-full cursor-pointer rounded-xl bg-[#4E9B26] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#438721] sm:w-40"
+              className="min-h-11 w-full cursor-pointer rounded-xl bg-[#8B0000] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6B0000] sm:w-40"
             >
               {isSubmitting ? "Submitting..." : "Proceed"}
             </button>

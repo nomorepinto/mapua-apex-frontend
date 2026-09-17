@@ -76,8 +76,9 @@ function StageCard({
 }) {
   return (
     <div
-      className={`flex h-full flex-col justify-between gap-4 rounded-b-2xl border-t-4 ${borderClass} ${backgroundClass} p-5`}
+      className={`flex h-full flex-col justify-between gap-4 rounded-2xl border border-neutral-200 ${backgroundClass} p-5`}
     >
+      <span className={`h-1 w-10 rounded-full ${borderClass.replace("border-", "bg-")}`} />
       <span
         className={`text-sm font-extrabold tracking-wider uppercase ${labelClass}`}
       >
@@ -115,7 +116,7 @@ function StageCard({
             )}
           </>
         ) : (
-          <p className="text-sm font-medium text-[#94A3B8]">{emptyText}</p>
+          <p className="text-sm font-medium text-neutral-600">{emptyText}</p>
         )}
       </div>
     </div>
@@ -145,7 +146,7 @@ export function PortfolioSection() {
         <h2 className="mb-1 text-xl font-bold text-[#1E293B] sm:text-2xl">
           Project & Event Portfolio
         </h2>
-        <p className="mb-6 text-sm text-[#94A3B8]">
+        <p className="mb-6 text-sm text-neutral-600">
           Overall project health, upcoming events, and committee tasks.
         </p>
       </div>

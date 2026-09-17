@@ -75,8 +75,8 @@ export function ActivityDetailsSection({
   return (
     <div className="space-y-6 pt-4">
       <div className="border-b border-neutral-200 pb-2">
-        <h2 className="text-lg font-bold tracking-wide text-neutral-900 uppercase">
-          DETAILS OF ACTIVITY
+        <h2 className="text-lg font-bold tracking-tight text-neutral-900">
+          Details of activity
         </h2>
       </div>
 

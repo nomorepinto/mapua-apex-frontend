@@ -4,6 +4,20 @@
  */
 export const colors = {
   page: "#F5F6F8",
+  maroon: "#8B0000",
+  maroonHover: "#6B0000",
+  gold: "#FBC02D",
+} as const
+
+/** Institutional yes — Approve, Continue, Submit, Create. */
+export const brand = {
+  action:
+    "inline-flex min-h-11 items-center justify-center rounded-xl bg-[#8B0000] px-5 text-sm font-semibold text-white shadow-xs transition-colors hover:bg-[#6B0000] disabled:pointer-events-none disabled:opacity-50",
+  actionGhost:
+    "inline-flex min-h-11 items-center justify-center rounded-xl border border-neutral-300 bg-white px-5 text-sm font-semibold text-neutral-800 shadow-xs transition-colors hover:bg-neutral-50",
+  chip: "rounded-sm bg-[#8B0000] px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-white uppercase",
+  chipGold:
+    "rounded-sm bg-[#FBC02D] px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#5C4300] uppercase",
 } as const
 
 export const layout = {
@@ -13,7 +27,8 @@ export const layout = {
   frame: "flex h-dvh w-full flex-col overflow-hidden bg-page lg:flex-row",
   /** Scrollable main column next to the sidebar. */
   main: "min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto",
-  fallback: "min-h-dvh w-full bg-page",
+  fallback:
+    "flex min-h-dvh w-full items-center justify-center bg-page text-sm font-medium text-neutral-600",
   center: "flex min-h-dvh w-full items-center justify-center bg-page p-4",
   /** Space between page sections. */
   stack: "flex flex-col gap-4",

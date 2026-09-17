@@ -166,7 +166,7 @@ export function SubmissionTrackerModal({
                   <div className={layout.tableWrap}>
                     <table className="w-full text-left border-collapse">
                       <thead>
-                        <tr className="border-b border-neutral-100 text-xs font-bold text-[#94A3B8] tracking-wider">
+                        <tr className="border-b border-neutral-100 text-xs font-bold text-neutral-600 tracking-wider">
                           <th className="pb-3 pr-4 w-1/3">Field</th>
                           <th className="pb-3">Detail</th>
                         </tr>
@@ -230,7 +230,7 @@ export function SubmissionTrackerModal({
 
                 <div className="flex flex-col gap-4">
                   <div className={cn(layout.section, "flex-1 flex flex-col min-h-[220px]")}>
-                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2 shrink-0">
+                    <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2 shrink-0">
                       Description
                     </h4>
                     <div className="flex-1 overflow-y-auto max-h-[260px] pr-2 space-y-3 [overflow-wrap:anywhere] break-words whitespace-pre-wrap">
@@ -239,7 +239,7 @@ export function SubmissionTrackerModal({
                       </p>
                       {submission.activity_details.objectives ? (
                         <div className="pt-3 border-t border-neutral-100">
-                          <h5 className="text-[11px] font-bold text-[#94A3B8] uppercase tracking-wider mb-1">
+                          <h5 className="text-[11px] font-bold text-neutral-600 uppercase tracking-wider mb-1">
                             Objectives
                           </h5>
                           <p className="text-sm text-[#1E293B] leading-relaxed">
@@ -251,7 +251,7 @@ export function SubmissionTrackerModal({
                   </div>
 
                   <div className={cn(layout.section, "shrink-0")}>
-                    <h4 className="text-xs font-bold text-[#94A3B8] uppercase tracking-wider mb-2">
+                    <h4 className="text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">
                       Proponent & Routing
                     </h4>
                     <p className="text-xs text-[#64748B] mb-3">
@@ -274,7 +274,7 @@ export function SubmissionTrackerModal({
               <div className={layout.section}>
                 <div className="flex items-center justify-between mb-1">
                   <h3 className="text-lg font-extrabold text-[#1E293B]">Progress</h3>
-                  <span className="text-xs text-[#94A3B8] font-medium">
+                  <span className="text-xs text-neutral-600 font-medium">
                     {notificationsQuery.isLoading ? "Loading notifications…" : "From review notifications"}
                   </span>
                 </div>

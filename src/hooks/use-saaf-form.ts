@@ -7,12 +7,18 @@ import {
   createEmptyProponent,
   DEFAULT_SAAF_DRAFT,
 } from "@/components/submission/constants"
+import type { SaafStepIndex } from "@/components/submission/saaf-stepper"
 import type {
   BudgetItem,
   Proponent,
   SaafDraft,
   SubmissionActionData,
 } from "@/components/submission/types"
+import {
+  getSaafStepIssue,
+  isStepHtmlValid,
+  STEP_INVALID_FOCUS_SELECTOR,
+} from "@/components/submission/validate-saaf-step"
 import {
   calculateRowTotal,
   sanitizeDecimalInput,
@@ -34,6 +40,7 @@ export function useSaafForm() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showConfirmClearModal, setShowConfirmClearModal] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
+  const [stepError, setStepError] = useState<string | null>(null)
   const [successDismissed, setSuccessDismissed] = useState(false)
   const showSuccessModal = Boolean(fetcher.data?.success) && !successDismissed
   const submitError =
@@ -172,6 +179,43 @@ export function useSaafForm() {
     0
   )
 
+  const revealInvalidFields = useCallback((root: ParentNode) => {
+    setShowErrors(false)
+    requestAnimationFrame(() => {
+      setShowErrors(true)
+    })
+    window.setTimeout(() => {
+      const firstInvalid = root.querySelector<HTMLElement>(
+        STEP_INVALID_FOCUS_SELECTOR
+      )
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
+        firstInvalid.focus?.()
+      }
+    }, 50)
+  }, [])
+
+  const validateStep = useCallback(
+    (step: SaafStepIndex, form: HTMLFormElement | null): boolean => {
+      if (!form) return false
+
+      const panel = form.querySelector<HTMLElement>(`[data-saaf-step="${step}"]`)
+      const htmlValid = panel ? isStepHtmlValid(panel) : false
+      const issue = getSaafStepIssue(step, draft)
+
+      if (!htmlValid || issue) {
+        revealInvalidFields(panel ?? form)
+        setStepError(issue ?? "Fill in every required field on this step before continuing.")
+        return false
+      }
+
+      setStepError(null)
+      setShowErrors(false)
+      return true
+    },
+    [draft, revealInvalidFields]
+  )
+
   // Validates standard HTML5 constraints and specific custom form rules
   const validateForm = useCallback(
     (form: HTMLFormElement | null): boolean => {
@@ -190,19 +234,7 @@ export function useSaafForm() {
       )
 
       if (!isHtmlValid || !hasMission || !hasDepartments) {
-        setShowErrors(false)
-        requestAnimationFrame(() => {
-          setShowErrors(true)
-        })
-        setTimeout(() => {
-          const firstInvalid = form.querySelector<HTMLElement>(
-            ":invalid, .saaf-glow-invalid"
-          )
-          if (firstInvalid) {
-            firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
-            firstInvalid.focus?.()
-          }
-        }, 50)
+        revealInvalidFields(form)
         return false
       }
 
@@ -280,6 +312,7 @@ export function useSaafForm() {
       }
 
       setShowErrors(false)
+      setStepError(null)
       return true
     },
     [
@@ -296,6 +329,7 @@ export function useSaafForm() {
       draft.peoExplanation,
       draft.sdgExplanation,
       draft.totalOrgMembers,
+      revealInvalidFields,
     ]
   )
 
@@ -311,6 +345,7 @@ export function useSaafForm() {
       ],
     })
     setShowErrors(false)
+    setStepError(null)
     setShowConfirmClearModal(false)
   }, [])
 
@@ -362,6 +397,7 @@ export function useSaafForm() {
     showConfirmClearModal,
     showSuccessModal,
     showErrors,
+    stepError,
     submitError,
     grandTotal,
     reserveFacilities,
@@ -378,9 +414,11 @@ export function useSaafForm() {
     handleInitiateSubmit,
     handleConfirmProceed,
     handleSavePdf,
+    validateStep,
     setShowConfirmModal,
     setShowConfirmClearModal,
     setShowErrors,
+    setStepError,
     setSuccessDismissed,
   }
 }

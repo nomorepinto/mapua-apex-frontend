@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { CircleAlertIcon, DownloadIcon, PlusIcon, StampIcon } from "lucide-react"
+import { CircleAlertIcon, DownloadIcon, PencilIcon, PlusIcon, StampIcon } from "lucide-react"
 
 import { CsvFileField } from "@/components/admin-osa/csv-file-field"
 import {
@@ -591,7 +591,7 @@ export function AdminSignatoriesPage() {
                   ? "Loading…"
                   : `${signatories.length} signator${
                       signatories.length === 1 ? "y" : "ies"
-                    } · sorted by role · right-click a row to edit`}
+                    } · sorted by role · use Edit to update a row`}
               </CardDescription>
               <CardAction>
                 <Input
@@ -632,7 +632,9 @@ export function AdminSignatoriesPage() {
                       <TableHead>Name</TableHead>
                       <TableHead>Role</TableHead>
                       <TableHead>Department</TableHead>
-                      <TableHead>Signatory ID</TableHead>
+                      <TableHead className="w-28 text-right">
+                        <span className="sr-only">Actions</span>
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -645,13 +647,12 @@ export function AdminSignatoriesPage() {
                     ) : (
                       filtered.map((person) => (
                         <TableRow
-                          className="cursor-context-menu"
+                          className="cursor-pointer"
                           key={person.signatory_id}
                           onContextMenu={(event) => {
                             event.preventDefault()
                             openEdit(person)
                           }}
-                          title="Right-click to edit"
                         >
                           <TableCell className="font-medium whitespace-normal">
                             {person.name}
@@ -670,10 +671,16 @@ export function AdminSignatoriesPage() {
                               <span className="text-muted-foreground">—</span>
                             )}
                           </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {person.signatory_id}
-                            </Badge>
+                          <TableCell className="text-right">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openEdit(person)}
+                            >
+                              <PencilIcon />
+                              Edit
+                            </Button>
                           </TableCell>
                         </TableRow>
                       ))

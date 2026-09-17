@@ -53,7 +53,7 @@ export function CalendarCard({
         {selectedDate ? (
           selectedEvents && selectedEvents.length > 0 ? (
             <>
-              <h3 className="text-xs font-bold tracking-wider text-[#94A3B8] uppercase">
+              <h3 className="text-xs font-bold tracking-wider text-neutral-600 uppercase">
                 Events on{" "}
                 {selectedDate.toLocaleDateString(undefined, {
                   month: "short",
@@ -77,10 +77,10 @@ export function CalendarCard({
               </div>
             </>
           ) : (
-            <p className="text-xs text-[#94A3B8]">No events on this date.</p>
+            <p className="text-xs text-neutral-600">No events on this date.</p>
           )
         ) : (
-          <p className="text-xs text-[#94A3B8]">Select a date to see events.</p>
+          <p className="text-xs text-neutral-600">Select a date to see events.</p>
         )}
       </div>
     </div>

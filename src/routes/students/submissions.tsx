@@ -112,8 +112,8 @@ export function SubmissionsStart() {
                 <option value="" disabled>
                   Select an option
                 </option>
-                <option value="yes">Yes I want to</option>
-                <option value="no">No I don&apos;t want to</option>
+                <option value="yes">Yes, reserve school facilities</option>
+                <option value="no">No, do not reserve facilities</option>
               </select>
             </Field>
 
@@ -128,7 +128,7 @@ export function SubmissionsStart() {
         </div>
 
         {/* Guide Trigger Button below the section (75% transparency) */}
-        <div className="flex flex-col items-center justify-center gap-2 pt-1 text-center opacity-75 hover:opacity-100 transition-opacity duration-200">
+        <div className="flex flex-col items-center justify-center gap-2 pt-1 text-center">
           <Button
             type="button"
             variant="outline"
@@ -138,7 +138,7 @@ export function SubmissionsStart() {
             <BookOpen className="h-4 w-4 text-[#FBC02D]" />
             Guide
           </Button>
-          <p className="text-xs text-neutral-400 dark:text-neutral-500">
+          <p className="text-xs text-neutral-600">
             Need help? Learn how to submit an event activity application
           </p>
         </div>

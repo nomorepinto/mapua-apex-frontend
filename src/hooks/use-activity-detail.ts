@@ -18,16 +18,26 @@ export function useActivityDetail({
   ) => void | Promise<void>
 }) {
   const [commentAction, setCommentAction] = useState<ActivityCommentAction | null>(null)
+  const [confirmingApprove, setConfirmingApprove] = useState(false)
 
   const handleOpenChange = useCallback(
     (open: boolean) => {
-      if (!open) onClose()
+      if (!open) {
+        setConfirmingApprove(false)
+        onClose()
+      }
     },
     [onClose]
   )
 
+  const requestApprove = useCallback(() => {
+    if (!activity) return
+    setConfirmingApprove(true)
+  }, [activity])
+
   const handleApprove = useCallback(async () => {
     if (!activity) return
+    setConfirmingApprove(false)
     await onAction?.("approve", activity.id)
   }, [activity, onAction])
 
@@ -48,7 +58,10 @@ export function useActivityDetail({
   return {
     commentAction,
     setCommentAction,
+    confirmingApprove,
+    setConfirmingApprove,
     handleOpenChange,
+    requestApprove,
     handleApprove,
     handleDefer,
     handleCommentSubmit,

@@ -35,7 +35,7 @@ export function RecentActivities({ activities }: { activities: ActivityLog[] }) 
 
       <div className="flex flex-col gap-3">
         {activities.length === 0 ? (
-          <p className="text-xs text-[#94A3B8] italic">No recent activities.</p>
+          <p className="text-xs text-neutral-600 italic">No recent activities.</p>
         ) : (
           activities.slice(0, 5).map((activity) => {
             const style = ACTIVITY_STYLES[activity.type]
@@ -56,7 +56,7 @@ export function RecentActivities({ activities }: { activities: ActivityLog[] }) 
                     <h4 className="text-xs leading-snug font-bold text-[#1E293B] sm:text-sm">
                       {activity.title}
                     </h4>
-                    <span className="ml-2 shrink-0 text-[10px] text-[#94A3B8] sm:text-xs">
+                    <span className="ml-2 shrink-0 text-[10px] text-neutral-600 sm:text-xs">
                       {formatRelativeTime(activity.timestamp)}
                     </span>
                   </div>

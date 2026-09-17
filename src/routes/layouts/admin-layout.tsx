@@ -1,4 +1,4 @@
-import { Building2Icon, HomeIcon, StampIcon, UsersIcon } from "lucide-react"
+import { Building2Icon, HomeIcon, StampIcon } from "lucide-react"
 import { Outlet } from "react-router"
 
 import { AuthGuard } from "@/components/auth/AuthGuard"
@@ -22,18 +22,13 @@ const ADMIN_NAV = [
     to: "/admin/signatories",
     icon: StampIcon,
   },
-  {
-    label: "About the Devs",
-    to: "/admin/about",
-    icon: UsersIcon,
-  },
 ]
 
 export function AdminLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar"]}>
       <div className={layout.frame}>
-        <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} showSettings />
+        <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} />
         <main className={layout.main}>
           <Outlet />
         </main>

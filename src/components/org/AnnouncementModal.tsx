@@ -54,7 +54,7 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
 
         <div className={cn(modal.body, layout.stack)}>
           {displayAnnouncements.length === 0 ? (
-            <div className={cn(layout.empty, "text-[#94A3B8]")}>
+            <div className={cn(layout.empty, "text-neutral-600")}>
               <Megaphone className="w-8 h-8 text-neutral-300 mb-3" />
               <h3 className="text-sm font-bold text-[#1E293B] mb-1">No announcements at this time</h3>
               <p className="text-xs text-[#64748B]">Official administrative notices and memorandums will appear here.</p>
@@ -92,7 +92,7 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
                   </div>
 
                   <div className="flex items-center gap-1.5 text-xs font-medium text-[#64748B]">
-                    <Calendar className="w-3.5 h-3.5 text-[#94A3B8]" />
+                    <Calendar className="w-3.5 h-3.5 text-neutral-600" />
                     <span>Effective: {post.dateRange}</span>
                   </div>
                 </div>
@@ -116,9 +116,9 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
                   <div className="flex items-center gap-2">
                     <Bookmark className="w-4 h-4 text-[#D9291C]" />
                     <span className="font-semibold text-[#1E293B]">{post.author}</span>
-                    <span className="text-[#94A3B8]">• {post.authorRole}</span>
+                    <span className="text-neutral-600">• {post.authorRole}</span>
                   </div>
-                  <span className="text-[11px] text-[#94A3B8] font-medium">APEX Institutional Bulletin</span>
+                  <span className="text-[11px] text-neutral-600 font-medium">APEX Institutional Bulletin</span>
                 </div>
               </div>
             ))
@@ -126,7 +126,7 @@ export function AnnouncementModal({ isOpen, onClose, selectedAnnouncement }: Ann
         </div>
 
         <div className={modal.footer}>
-          <span className="text-xs text-[#94A3B8]">
+          <span className="text-xs text-neutral-600">
             Showing {displayAnnouncements.length} official memorandum posts
           </span>
           <button

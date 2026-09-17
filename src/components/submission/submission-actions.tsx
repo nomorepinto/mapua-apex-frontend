@@ -48,7 +48,7 @@ export function SubmissionActions({
           <Button
             type="button"
             onClick={onNextPage}
-            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#242424] px-10 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-black sm:h-10 sm:w-auto"
+            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#6B0000] sm:h-10 sm:w-auto"
           >
             Next page
           </Button>
@@ -57,7 +57,7 @@ export function SubmissionActions({
             type="button"
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#0B6623] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#084D1A] sm:h-10 sm:w-auto"
+            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6B0000] sm:h-10 sm:w-auto"
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
