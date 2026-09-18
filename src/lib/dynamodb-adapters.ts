@@ -393,6 +393,18 @@ export interface DeadlineReminder {
   isUrgent: boolean
 }
 
+export interface ReviewNotice {
+  id: string
+  eventId: string
+  submissionId: string
+  sentAt: string
+  dateStr: string
+  title: string
+  notifType: "denied" | "returned"
+  comment: string
+  signatoryLabel: string
+}
+
 export function formatDisplayDate(value?: string | null): string {
   if (!value) return "—"
   const parsed = new Date(value)
@@ -827,6 +839,41 @@ export function apiDeadlinesToReminders(
       isUrgent,
     }
   })
+}
+
+export function apiNotificationsToReviewNotices(
+  submissions: ApiSubmission[],
+  notificationsBySubmission: Map<string, ApiNotification[]>,
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+): ReviewNotice[] {
+  const notices: ReviewNotice[] = []
+
+  for (const submission of submissions) {
+    const notifications = notificationsBySubmission.get(submission.submission_id) || []
+    const title =
+      submission.activity_details?.title_and_nature || submission.submission_id
+
+    for (const item of notifications) {
+      if (item.notif_type !== "denied" && item.notif_type !== "returned") continue
+      const comment = (item.comment || "").trim()
+      if (!comment) continue
+
+      notices.push({
+        id: `${submission.submission_id}:${item.sent_at}`,
+        eventId: submission.event_id,
+        submissionId: submission.submission_id,
+        sentAt: item.sent_at,
+        dateStr: formatDisplayDateTime(item.sent_at),
+        title,
+        notifType: item.notif_type,
+        comment,
+        signatoryLabel: formatSignatoryRole(item.signatory, orgSignatories),
+      })
+    }
+  }
+
+  notices.sort((left, right) => right.sentAt.localeCompare(left.sentAt))
+  return notices
 }
 
 export function apiSubmissionToDrafts(submission: ApiSubmission): {

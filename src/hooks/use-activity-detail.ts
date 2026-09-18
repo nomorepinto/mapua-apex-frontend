@@ -14,7 +14,7 @@ export function useActivityDetail({
   onAction?: (
     action: "approve" | "return" | "reject" | "defer",
     activityId: string,
-    details?: { title: string; message: string }
+    details?: { comment: string }
   ) => void | Promise<void>
 }) {
   const [commentAction, setCommentAction] = useState<ActivityCommentAction | null>(null)
@@ -23,11 +23,15 @@ export function useActivityDetail({
   const handleOpenChange = useCallback(
     (open: boolean) => {
       if (!open) {
-        setConfirmingApprove(false)
+        if (confirmingApprove || commentAction) {
+          setConfirmingApprove(false)
+          setCommentAction(null)
+          return
+        }
         onClose()
       }
     },
-    [onClose]
+    [commentAction, confirmingApprove, onClose]
   )
 
   const requestApprove = useCallback(() => {
@@ -42,14 +46,16 @@ export function useActivityDetail({
   }, [activity, onAction])
 
   const handleDefer = useCallback(async () => {
+    setConfirmingApprove(false)
+    setCommentAction(null)
     if (!activity) return
     await onAction?.("defer", activity.id)
   }, [activity, onAction])
 
   const handleCommentSubmit = useCallback(
-    async (title: string, message: string) => {
+    async (comment: string) => {
       if (!activity || !commentAction) return
-      await onAction?.(commentAction, activity.id, { title, message })
+      await onAction?.(commentAction, activity.id, { comment })
       setCommentAction(null)
     },
     [activity, commentAction, onAction]

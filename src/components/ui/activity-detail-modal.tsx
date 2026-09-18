@@ -24,7 +24,7 @@ export interface ActivityDetailModalProps {
   onAction?: (
     action: "approve" | "return" | "reject" | "defer",
     activityId: string,
-    details?: { title: string; message: string }
+    details?: { comment: string }
   ) => void | Promise<void>
 }
 
@@ -197,24 +197,26 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             </div>
           </DialogFooter>
         </DialogPopup>
+
+        <ConfirmSubmitModal
+          open={confirmingApprove}
+          title={activity ? `Endorse ${activity.title}?` : "Endorse this proposal?"}
+          description="This will record your approval on the proposal."
+          isSubmitting={isActing}
+          onClose={() => setConfirmingApprove(false)}
+          onConfirm={handleApprove}
+        />
+
+        <ReturnProposalModal
+          activity={activity}
+          variant={commentAction ?? "return"}
+          open={commentAction !== null}
+          isSubmitting={isActing}
+          error={actionError}
+          onClose={() => setCommentAction(null)}
+          onSubmit={handleCommentSubmit}
+        />
       </Dialog>
-
-      <ConfirmSubmitModal
-        open={confirmingApprove}
-        title={activity ? `Endorse ${activity.title}?` : "Endorse this proposal?"}
-        description="This will record your approval on the proposal."
-        isSubmitting={isActing}
-        onClose={() => setConfirmingApprove(false)}
-        onConfirm={handleApprove}
-      />
-
-      <ReturnProposalModal
-        activity={activity}
-        variant={commentAction ?? "return"}
-        open={commentAction !== null}
-        onClose={() => setCommentAction(null)}
-        onSubmit={handleCommentSubmit}
-      />
     </>
   )
 })

@@ -57,8 +57,7 @@ export function SubmissionTrackerModal({
       orgSignatories: orgQuery.data?.signatories,
     }
   )
-  const canResubmit =
-    submission?.api_status === "pending" || submission?.api_status === "returned"
+  const canResubmit = submission?.api_status === "returned"
   const isDenied = submission?.api_status === "denied"
 
   const handleResubmit = () => {

@@ -67,6 +67,7 @@ export function DialogPopup({
   showCloseButton = true,
   bottomStickOnMobile = true,
   fullScreen = false,
+  nested = false,
   closeProps,
   portalProps,
   viewportProps,
@@ -75,16 +76,20 @@ export function DialogPopup({
   showCloseButton?: boolean;
   bottomStickOnMobile?: boolean;
   fullScreen?: boolean;
+  nested?: boolean;
   closeProps?: DialogPrimitive.Close.Props;
   portalProps?: DialogPrimitive.Portal.Props;
   viewportProps?: DialogPrimitive.Viewport.Props;
 }): React.ReactElement {
+  const stack = nested ? "z-[70]" : undefined;
+
   return (
     <DialogPortal {...portalProps}>
-      <DialogBackdrop className={cn(fullScreen && "hidden")} />
+      <DialogBackdrop className={cn(fullScreen && "hidden", stack)} />
       <DialogViewport
         {...viewportProps}
         className={cn(
+          stack,
           bottomStickOnMobile &&
             !fullScreen &&
             "max-sm:grid-rows-[1fr_auto] max-sm:p-0 max-sm:pt-12",

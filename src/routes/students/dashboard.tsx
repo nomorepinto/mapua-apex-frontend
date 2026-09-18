@@ -8,6 +8,7 @@ import {
   ChevronUp,
   CheckSquare,
   Bell,
+  RotateCcw,
 } from "lucide-react"
 
 import {
@@ -20,11 +21,13 @@ import {
 } from "@/components/ui/table"
 
 import { SubmissionTrackerModal } from "@/components/org/SubmissionTrackerModal"
+import { ReviewNoticeModal } from "@/components/org/ReviewNoticeModal"
 import { layout } from "@/config"
 import {
   useCurrentOrganizationQuery,
   useOrgAnnouncementsQuery,
   useOrgDeadlinesQuery,
+  useOrgReviewNoticesQuery,
   useOrgSubmissionsQuery,
 } from "@/hooks/use-submissions"
 import {
@@ -32,6 +35,7 @@ import {
   apiSubmissionToDashboardRow,
   formatDisplayDateTime,
   formatDocumentId,
+  type ReviewNotice,
 } from "@/lib/dynamodb-adapters"
 import { cn } from "@/lib/utils"
 
@@ -43,6 +47,7 @@ export function OrgDashboard() {
   } | null>(null)
   const [isRemindersExpanded, setIsRemindersExpanded] = useState(true)
   const [dismissedReminderIds, setDismissedReminderIds] = useState<string[]>([])
+  const [selectedNotice, setSelectedNotice] = useState<ReviewNotice | null>(null)
 
   const organizationQuery = useCurrentOrganizationQuery()
   const submissionsQuery = useOrgSubmissionsQuery()
@@ -62,6 +67,13 @@ export function OrgDashboard() {
     })
   }, [submissionsQuery.data, organizationQuery.data?.signatories])
   const announcements = announcementsQuery.data || []
+  const reviewNoticesQuery = useOrgReviewNoticesQuery(
+    submissionsQuery.data || [],
+    organizationQuery.data?.signatories
+  )
+  const reviewNotices = reviewNoticesQuery.notices
+  const deniedNotices = reviewNotices.filter((notice) => notice.notifType === "denied")
+  const returnedNotices = reviewNotices.filter((notice) => notice.notifType === "returned")
 
   const reminders = useMemo(() => {
     const items = apiDeadlinesToReminders(
@@ -288,9 +300,9 @@ export function OrgDashboard() {
               </div>
 
               <div className="flex items-center gap-2">
-                {reminders.length > 0 && (
+                {reminders.length + reviewNotices.length > 0 && (
                   <span className="bg-red-50 text-[#D9291C] text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-red-200/60">
-                    {reminders.length}
+                    {reminders.length + reviewNotices.length}
                   </span>
                 )}
                 {isRemindersExpanded ? (
@@ -303,20 +315,96 @@ export function OrgDashboard() {
 
             {isRemindersExpanded && (
               <div className="mt-4 pt-3 border-t border-neutral-200 max-h-[560px] overflow-y-auto pr-2 scrollbar-thin">
-                {deadlinesQuery.isLoading ? (
-                  <div className="p-8 text-center text-xs text-neutral-600">Loading deadlines…</div>
-                ) : reminders.length === 0 ? (
+                {deadlinesQuery.isLoading || reviewNoticesQuery.isLoading ? (
+                  <div className="p-8 text-center text-sm text-neutral-500">Loading reminders…</div>
+                ) : reminders.length === 0 && reviewNotices.length === 0 ? (
                   <div className={cn(layout.empty, "gap-1.5 border border-neutral-200")}>
                     <Bell className="w-6 h-6 text-neutral-300 mb-1" />
                     <p className="font-bold text-[#1E293B]">No reminders at this time</p>
-                    <p className="text-[11px] text-[#64748B]">
-                      Upcoming action items and deadline alerts will appear here.
+                    <p className="text-sm text-neutral-500">
+                      Upcoming deadlines and review comments will appear here.
                     </p>
                   </div>
                 ) : (
                   <>
-                    {importantReminders.length > 0 && (
+                    {deniedNotices.length > 0 && (
                       <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-3 h-3 rounded-full border-2 border-red-500 bg-white flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                          </div>
+                          <h3 className="text-lg font-light text-[#D9291C] font-sans tracking-wide">
+                            Denied
+                          </h3>
+                        </div>
+                        <div className="border-l-2 border-red-300 ml-1.5 pl-4 space-y-4">
+                          {deniedNotices.map((notice) => (
+                            <button
+                              key={notice.id}
+                              type="button"
+                              onClick={() => setSelectedNotice(notice)}
+                              className="relative flex min-h-11 w-full items-start gap-3 rounded-xl p-1 text-left transition-colors hover:bg-red-50/60"
+                            >
+                              <div className="absolute -left-[27px] top-0.5 w-6 h-6 rounded-md bg-white border border-red-300 flex items-center justify-center text-red-600 shadow-2xs">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1 pl-1">
+                                <span className="mb-0.5 block text-sm text-neutral-500">
+                                  {notice.dateStr}
+                                </span>
+                                <h4 className="text-sm font-bold uppercase tracking-tight text-[#1E293B]">
+                                  {notice.title}
+                                </h4>
+                                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-red-600">
+                                  {notice.comment}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {returnedNotices.length > 0 && (
+                      <div className={deniedNotices.length > 0 ? "pt-4" : undefined}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-3 h-3 rounded-full border-2 border-amber-500 bg-white flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                          </div>
+                          <h3 className="text-lg font-light text-amber-800 font-sans tracking-wide">
+                            Returned
+                          </h3>
+                        </div>
+                        <div className="border-l-2 border-amber-300 ml-1.5 pl-4 space-y-4">
+                          {returnedNotices.map((notice) => (
+                            <button
+                              key={notice.id}
+                              type="button"
+                              onClick={() => setSelectedNotice(notice)}
+                              className="relative flex min-h-11 w-full items-start gap-3 rounded-xl p-1 text-left transition-colors hover:bg-amber-50/60"
+                            >
+                              <div className="absolute -left-[27px] top-0.5 w-6 h-6 rounded-md bg-white border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs">
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1 pl-1">
+                                <span className="mb-0.5 block text-sm text-neutral-500">
+                                  {notice.dateStr}
+                                </span>
+                                <h4 className="text-sm font-bold uppercase tracking-tight text-[#1E293B]">
+                                  {notice.title}
+                                </h4>
+                                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-amber-800">
+                                  {notice.comment}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {importantReminders.length > 0 && (
+                      <div className={reviewNotices.length > 0 ? "pt-4" : undefined}>
                         <div className="flex items-center gap-2 mb-4">
                           <div className="w-3 h-3 rounded-full border-2 border-red-500 bg-white flex items-center justify-center">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
@@ -430,6 +518,10 @@ export function OrgDashboard() {
         }}
         eventId={selectedKeys?.eventId}
         submissionId={selectedKeys?.submissionId}
+      />
+      <ReviewNoticeModal
+        notice={selectedNotice}
+        onClose={() => setSelectedNotice(null)}
       />
     </div>
   )
