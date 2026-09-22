@@ -132,7 +132,7 @@ function HigherCouncilField({
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={id}>Higher council</FieldLabel>
         <FieldDescription>
-          Skips adviser and dean on the approval path.
+          Skips dean on the approval path. Adviser still reviews first.
         </FieldDescription>
       </div>
     </div>

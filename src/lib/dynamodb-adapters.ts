@@ -467,12 +467,9 @@ function expectedSignatoryRoles(options?: {
   hasVenue?: boolean
   isHigherCouncil?: boolean
 }): string[] {
-  const roles: string[] = []
-  if (!options?.isHigherCouncil) {
-    roles.push("Adviser")
-    if (options?.activityType === "co-curricular") {
-      roles.push("Dean")
-    }
+  const roles: string[] = ["Adviser"]
+  if (options?.activityType === "co-curricular" && !options?.isHigherCouncil) {
+    roles.push("Dean")
   }
   roles.push("OSAAR")
   if (options?.hasVenue) {
