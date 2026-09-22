@@ -1,3 +1,11 @@
+import {
+  clockFromDraft,
+  clockMinutes,
+  EVENT_WINDOW_END,
+  EVENT_WINDOW_START,
+  format24,
+  splitEventTime,
+} from "@/components/submission/event-time"
 import type { SaafStepIndex } from "@/components/submission/saaf-stepper"
 import type { Proponent, SaafDraft } from "@/components/submission/types"
 import {
@@ -16,17 +24,33 @@ function isBlank(value: string | undefined): boolean {
 }
 
 function eventTimes(draft: SaafDraft): { start: string; end: string } {
-  const start =
-    draft.timeOfEventStart ||
-    (draft.timeOfEvent?.includes(" - ")
-      ? draft.timeOfEvent.split(" - ")[0]
-      : draft.timeOfEvent || "")
-  const end =
-    draft.timeOfEventEnd ||
-    (draft.timeOfEvent?.includes(" - ")
-      ? draft.timeOfEvent.split(" - ")[1]
-      : "")
-  return { start: start.trim(), end: end.trim() }
+  const split = splitEventTime(draft.timeOfEvent || "")
+  const start = format24(
+    clockFromDraft(
+      draft.timeOfEventStartHour,
+      draft.timeOfEventStartMinute,
+      draft.timeOfEventStartPeriod,
+      draft.timeOfEventStart || split.start
+    )
+  )
+  const end = format24(
+    clockFromDraft(
+      draft.timeOfEventEndHour,
+      draft.timeOfEventEndMinute,
+      draft.timeOfEventEndPeriod,
+      draft.timeOfEventEnd || split.end
+    )
+  )
+  return { start, end }
+}
+
+function isInsideEventWindow(value: string): boolean {
+  const total = clockMinutes(
+    clockFromDraft(undefined, undefined, undefined, value)
+  )
+  return (
+    total !== null && total >= EVENT_WINDOW_START && total <= EVENT_WINDOW_END
+  )
 }
 
 function isValidAbsoluteUrl(value: string): boolean {
@@ -111,6 +135,22 @@ export function getSaafStepIssue(
 
     const { start, end } = eventTimes(draft)
     if (!start || !end) return GENERIC_STEP_ERROR
+    if (!isInsideEventWindow(start) || !isInsideEventWindow(end)) {
+      return "Event time must be between 7:00 AM and 9:00 PM."
+    }
+    const startMinutes = clockMinutes(
+      clockFromDraft(undefined, undefined, undefined, start)
+    )
+    const endMinutes = clockMinutes(
+      clockFromDraft(undefined, undefined, undefined, end)
+    )
+    if (
+      startMinutes !== null &&
+      endMinutes !== null &&
+      endMinutes < startMinutes
+    ) {
+      return "End time cannot be earlier than the start time."
+    }
 
     if (
       isBlank(draft.expectedParticipants) ||

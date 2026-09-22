@@ -1,8 +1,20 @@
+import { EventTimeFields } from "@/components/submission/event-time-fields"
+import {
+  alignEndPeriod,
+  clockFromDraft,
+  combineEventTime,
+  constrainClock,
+  earliestEndMinutes,
+  format24,
+  splitEventTime,
+  withHour,
+  withPeriod,
+  type ClockParts,
+} from "@/components/submission/event-time"
 import type { SaafDraft } from "@/components/submission/types"
 import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { TimePicker } from "@/components/ui/time-picker"
 import {
   minEventDateKey,
   parseDateKey,
@@ -29,6 +41,12 @@ type DetailsFields = Pick<
   endDateOfEvent?: string
   timeOfEventStart?: string
   timeOfEventEnd?: string
+  timeOfEventStartHour?: string
+  timeOfEventStartMinute?: string
+  timeOfEventStartPeriod?: string
+  timeOfEventEndHour?: string
+  timeOfEventEndMinute?: string
+  timeOfEventEndPeriod?: string
   proponents?: Array<{ dateOfSubmission?: string }>
 }
 
@@ -56,26 +74,48 @@ export function ActivityDetailsSection({
     if (weekday) onChange("dayOfEvent", weekday)
   }
 
-  const timeStart =
-    values.timeOfEventStart ||
-    (values.timeOfEvent?.includes(" - ")
-      ? values.timeOfEvent.split(" - ")[0]
-      : values.timeOfEvent || "")
+  const storedTimes = splitEventTime(values.timeOfEvent || "")
+  const startParts = clockFromDraft(
+    values.timeOfEventStartHour,
+    values.timeOfEventStartMinute,
+    values.timeOfEventStartPeriod,
+    values.timeOfEventStart || storedTimes.start
+  )
+  const endParts = clockFromDraft(
+    values.timeOfEventEndHour,
+    values.timeOfEventEndMinute,
+    values.timeOfEventEndPeriod,
+    values.timeOfEventEnd || storedTimes.end
+  )
 
-  const timeEnd =
-    values.timeOfEventEnd ||
-    (values.timeOfEvent?.includes(" - ")
-      ? values.timeOfEvent.split(" - ")[1]
-      : "")
-
-  const handleStartTimeChange = (startVal: string) => {
-    onChange("timeOfEventStart", startVal)
-    onChange("timeOfEvent", timeEnd ? `${startVal} - ${timeEnd}` : startVal)
+  const commitTimes = (start: ClockParts, end: ClockParts) => {
+    const start24 = format24(start)
+    const end24 = format24(end)
+    onChange("timeOfEventStartHour", start.hour)
+    onChange("timeOfEventStartMinute", start.minute)
+    onChange("timeOfEventStartPeriod", start.period)
+    onChange("timeOfEventEndHour", end.hour)
+    onChange("timeOfEventEndMinute", end.minute)
+    onChange("timeOfEventEndPeriod", end.period)
+    onChange("timeOfEventStart", start24)
+    onChange("timeOfEventEnd", end24)
+    onChange("timeOfEvent", combineEventTime(start24, end24))
   }
 
-  const handleEndTimeChange = (endVal: string) => {
-    onChange("timeOfEventEnd", endVal)
-    onChange("timeOfEvent", timeStart ? `${timeStart} - ${endVal}` : endVal)
+  const updateStart = (next: ClockParts) => {
+    const start = constrainClock(next, null)
+    const end = constrainClock(
+      alignEndPeriod(start, endParts),
+      earliestEndMinutes(start)
+    )
+    commitTimes(start, end)
+  }
+
+  const updateEnd = (next: ClockParts) => {
+    commitTimes(
+      startParts,
+      constrainClock(next, earliestEndMinutes(startParts))
+    )
   }
 
   return (
@@ -175,8 +215,8 @@ export function ActivityDetailsSection({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12 items-start">
-          <div className="space-y-1.5 sm:col-span-3">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
               Start Date of Event <span className="text-red-500">*</span>
             </label>
@@ -194,7 +234,7 @@ export function ActivityDetailsSection({
             </span>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-3">
+          <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
               End Date of Event <span className="text-red-500">*</span>
             </label>
@@ -209,32 +249,25 @@ export function ActivityDetailsSection({
             />
           </div>
 
-          <div className="space-y-1.5 sm:col-span-6">
-            <label className="block text-xs font-semibold text-neutral-800">
-              Time of Event (Start to End) <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <TimePicker
-                name="timeOfEventStart"
-                value={timeStart}
-                onChange={handleStartTimeChange}
-                placeholder="Start"
-                aria-label="Event start time"
-                required
-              />
-              <span className="text-xs font-medium text-neutral-500">to</span>
-              <TimePicker
-                name="timeOfEventEnd"
-                value={timeEnd}
-                onChange={handleEndTimeChange}
-                placeholder="End"
-                aria-label="Event end time"
-                required
-              />
-            </div>
-            <input type="hidden" name="timeOfEvent" value={values.timeOfEvent} />
-          </div>
         </div>
+
+        <EventTimeFields
+          start={startParts}
+          end={endParts}
+          onStartHour={(hour) => updateStart(withHour(startParts, hour))}
+          onStartMinute={(minute) => updateStart({ ...startParts, minute })}
+          onStartPeriod={(period) => updateStart(withPeriod(startParts, period))}
+          onEndHour={(hour) => updateEnd(withHour(endParts, hour))}
+          onEndMinute={(minute) => updateEnd({ ...endParts, minute })}
+          onEndPeriod={(period) => updateEnd(withPeriod(endParts, period))}
+        />
+        <input type="hidden" name="timeOfEventStart" value={format24(startParts)} required />
+        <input type="hidden" name="timeOfEventEnd" value={format24(endParts)} required />
+        <input
+          type="hidden"
+          name="timeOfEvent"
+          value={combineEventTime(format24(startParts), format24(endParts))}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">
