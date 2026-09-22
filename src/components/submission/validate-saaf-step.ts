@@ -1,5 +1,9 @@
 import type { SaafStepIndex } from "@/components/submission/saaf-stepper"
 import type { Proponent, SaafDraft } from "@/components/submission/types"
+import {
+  EVENT_DATE_TOO_SOON_MESSAGE,
+  minEventDateKey,
+} from "@/lib/date-key"
 
 const EMAIL_PATTERN =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
@@ -116,18 +120,9 @@ export function getSaafStepIssue(
       return GENERIC_STEP_ERROR
     }
 
-    const submissionDateStr =
-      draft.proponents?.[0]?.dateOfSubmission ||
-      new Date().toISOString().split("T")[0]
-    const sDate = new Date(submissionDateStr)
-    const eDate = new Date(startDate)
-    if (!Number.isNaN(sDate.getTime()) && !Number.isNaN(eDate.getTime())) {
-      const diffDays = Math.ceil(
-        (eDate.getTime() - sDate.getTime()) / (1000 * 60 * 60 * 24)
-      )
-      if (diffDays <= 10) {
-        return "The date of event must be at least 11 days after the date of submission."
-      }
+    const minStart = minEventDateKey()
+    if (startDate < minStart) {
+      return EVENT_DATE_TOO_SOON_MESSAGE
     }
 
     if (endDate < startDate) {

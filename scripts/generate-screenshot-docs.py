@@ -150,7 +150,7 @@ DESCRIPTIONS: dict[str, tuple[str, str]] = {
         "Event description page: title and nature, description (minimum 100 "
         "characters), objectives, venue, start and end dates, times, expected "
         "participants, individual contribution, and proposed budget. The event "
-        "date must be at least 11 days after the date of submission.",
+        "date must be at least 10 days from today.",
     ),
     "students-saaf-step-4-alignment": (
         "SAAF step 4 — Institutional alignment and budget",

@@ -114,6 +114,7 @@ export type SignatoryCsvRow = {
 export type OrganizationCsvRow = {
   name: string
   desks: Record<OrganizationAssignableDeskRole, string>
+  is_higher_council: boolean
 }
 
 const ROLE_ALIASES: Record<string, SignatoryRole> = {
@@ -134,6 +135,14 @@ const DESK_ALIASES: Record<OrganizationAssignableDeskRole, string[]> = {
 const ORGANIZATION_CSV_COLUMNS: OrganizationAssignableDeskRole[] = [
   "dean",
   "adviser",
+]
+
+const HIGHER_COUNCIL_ALIASES = [
+  "is_higher_council",
+  "ishighercouncil",
+  "higher_council",
+  "higher council",
+  "highercouncil",
 ]
 
 export function parseSignatoryRole(value: string): SignatoryRole | null {
@@ -207,9 +216,23 @@ function isOrganizationHeader(row: string[]): boolean {
   return headerIndex(row, NAME_ALIASES) === 0
 }
 
+function parseCsvBoolean(value: string): boolean | null {
+  const normalized = value.trim().toLowerCase()
+  if (normalized === "") {
+    return false
+  }
+  if (["true", "yes", "1", "y"].includes(normalized)) {
+    return true
+  }
+  if (["false", "no", "0", "n"].includes(normalized)) {
+    return false
+  }
+  return null
+}
+
 /**
  * Parse an organization CSV.
- * Columns: name, dean, adviser. A header row is optional.
+ * Columns: name, dean, adviser, is_higher_council. A header row is optional.
  * Shared admin / CDM / OSAAR desks are not in the file.
  */
 export function parseOrganizationCsv(text: string): {
@@ -225,7 +248,7 @@ export function parseOrganizationCsv(text: string): {
 
   const first = rows[0]
   const hasHeader = isOrganizationHeader(first)
-  const header = hasHeader ? first : ["name", "dean", "adviser"]
+  const header = hasHeader ? first : ["name", "dean", "adviser", "is_higher_council"]
   const start = hasHeader ? 1 : 0
 
   const nameIdx =
@@ -242,6 +265,7 @@ export function parseOrganizationCsv(text: string): {
         ? headerIndex(header, DESK_ALIASES.adviser)
         : 2,
   }
+  const higherCouncilIdx = headerIndex(header, HIGHER_COUNCIL_ALIASES)
 
   const parsed: OrganizationCsvRow[] = []
 
@@ -252,9 +276,15 @@ export function parseOrganizationCsv(text: string): {
       dean: row[deskIdx.dean]?.trim() ?? "",
       adviser: row[deskIdx.adviser]?.trim() ?? "",
     }
+    const flagRaw =
+      higherCouncilIdx >= 0
+        ? (row[higherCouncilIdx]?.trim() ?? "")
+        : hasHeader
+          ? ""
+          : (row[3]?.trim() ?? "")
     const line = i + 1
 
-    if (!name && !desks.dean && !desks.adviser) {
+    if (!name && !desks.dean && !desks.adviser && !flagRaw) {
       continue
     }
 
@@ -264,7 +294,15 @@ export function parseOrganizationCsv(text: string): {
       continue
     }
 
-    parsed.push({ name, desks })
+    const isHigherCouncil = parseCsvBoolean(flagRaw)
+    if (isHigherCouncil === null) {
+      errors.push(
+        `Row ${line}: is_higher_council must be true, false, yes, no, 1, or 0.`
+      )
+      continue
+    }
+
+    parsed.push({ name, desks, is_higher_council: isHigherCouncil })
   }
 
   return { rows: parsed, errors }

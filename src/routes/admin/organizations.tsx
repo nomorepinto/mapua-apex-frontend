@@ -66,6 +66,7 @@ import {
 } from "@/components/ui/field"
 import { Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
@@ -110,7 +111,33 @@ function emptyDesks(): AssignableDesks {
 }
 
 const ORG_CSV_TEMPLATE =
-  "name,dean,adviser\nMapua Computing Society,Dr. Ana Reyes,Prof. Juan Dela Cruz\nIEEE Mapua,Dr. Ana Reyes,Prof. Elena Tan\n"
+  "name,dean,adviser,is_higher_council\nMapua Computing Society,Dr. Ana Reyes,Prof. Juan Dela Cruz,false\nIEEE Mapua,Dr. Ana Reyes,Prof. Elena Tan,true\n"
+
+function HigherCouncilField({
+  checked,
+  id,
+  onCheckedChange,
+}: {
+  checked: boolean
+  id: string
+  onCheckedChange: (checked: boolean) => void
+}) {
+  return (
+    <div className="flex items-start gap-2">
+      <Checkbox
+        checked={checked}
+        id={id}
+        onCheckedChange={(value) => onCheckedChange(value === true)}
+      />
+      <div className="flex flex-col gap-1">
+        <FieldLabel htmlFor={id}>Higher council</FieldLabel>
+        <FieldDescription>
+          Skips adviser and dean on the approval path.
+        </FieldDescription>
+      </div>
+    </div>
+  )
+}
 
 function toastBulkResult(created: number, failed: number, noun: string) {
   if (created > 0 && failed === 0) {
@@ -230,6 +257,7 @@ export function AdminOrganizationsPage() {
 
   const [name, setName] = useState("")
   const [desks, setDesks] = useState<AssignableDesks>(emptyDesks)
+  const [isHigherCouncil, setIsHigherCouncil] = useState(false)
   const [formError, setFormError] = useState("")
   const [csvRows, setCsvRows] = useState<OrganizationCsvRow[]>([])
   const [csvParseErrors, setCsvParseErrors] = useState<string[]>([])
@@ -239,6 +267,7 @@ export function AdminOrganizationsPage() {
   const [editing, setEditing] = useState<ApiOrganization | null>(null)
   const [editName, setEditName] = useState("")
   const [editDesks, setEditDesks] = useState<AssignableDesks>(emptyDesks)
+  const [editIsHigherCouncil, setEditIsHigherCouncil] = useState(false)
   const [editError, setEditError] = useState("")
 
   const organizations = orgsQuery.data ?? EMPTY_ORGANIZATIONS
@@ -330,7 +359,11 @@ export function AdminOrganizationsPage() {
         continue
       }
 
-      payloads.push({ name: row.name.trim(), signatories: assignments })
+      payloads.push({
+        name: row.name.trim(),
+        signatories: assignments,
+        is_higher_council: row.is_higher_council,
+      })
     }
 
     return { payloads, errors, skippedDuplicates }
@@ -345,6 +378,7 @@ export function AdminOrganizationsPage() {
       const haystack = [
         org.name,
         org.organization_id,
+        org.is_higher_council ? "higher council" : "",
         ...ORGANIZATION_ASSIGNABLE_DESK_ITEMS.map((item) => {
           const id = deskAssignment(org, item.value)
           return id ? (peopleById.get(id)?.name ?? id) : ""
@@ -367,6 +401,7 @@ export function AdminOrganizationsPage() {
         peopleById.get(deskAssignment(org, "adviser") ?? "")
       ),
     })
+    setEditIsHigherCouncil(Boolean(org.is_higher_council))
     setEditError("")
   }
 
@@ -401,9 +436,11 @@ export function AdminOrganizationsPage() {
       await createOrg.mutateAsync({
         name: trimmed,
         signatories: assignments,
+        is_higher_council: isHigherCouncil,
       })
       setName("")
       setDesks(emptyDesks())
+      setIsHigherCouncil(false)
       setFormError("")
       toastManager.add({
         title: "Organization added",
@@ -430,7 +467,7 @@ export function AdminOrganizationsPage() {
       setCsvError(
         errors[0] ??
           (csvRows.length === 0
-            ? "Choose a CSV with name, dean, and adviser columns."
+            ? "Choose a CSV with name, dean, adviser, and is_higher_council columns."
             : csvResolved.skippedDuplicates.length > 0
               ? "Every organization in this file is already registered."
               : "No valid organization rows to import.")
@@ -491,6 +528,7 @@ export function AdminOrganizationsPage() {
         organizationId: editing.organization_id,
         name: trimmed,
         signatories: assignments,
+        is_higher_council: editIsHigherCouncil,
       })
       setEditing(null)
       toastManager.add({
@@ -585,6 +623,12 @@ export function AdminOrganizationsPage() {
                   />
                 ))}
 
+                <HigherCouncilField
+                  checked={isHigherCouncil}
+                  id="organization-higher-council"
+                  onCheckedChange={setIsHigherCouncil}
+                />
+
                 {!sharedAccountsReady && !signatoriesQuery.isLoading ? (
                   <Alert variant="warning">
                     <AlertTitle>Shared accounts required</AlertTitle>
@@ -636,13 +680,13 @@ export function AdminOrganizationsPage() {
             <CardHeader>
               <CardTitle>Import CSV</CardTitle>
               <CardDescription>
-                Three columns: organization name, dean, adviser. Shared admin
-                and CDM are attached automatically.
+                Four columns: organization name, dean, adviser, is_higher_council.
+                Shared admin and CDM are attached automatically.
               </CardDescription>
             </CardHeader>
             <CardPanel className="flex flex-col gap-4">
               <CsvFileField
-                description="name, dean, adviser."
+                description="name, dean, adviser, is_higher_council."
                 error={csvError}
                 fileName={csvFileName}
                 id="organizations-csv"
@@ -773,6 +817,7 @@ export function AdminOrganizationsPage() {
                         <TableHead>Organization</TableHead>
                         <TableHead>Dean</TableHead>
                         <TableHead>Adviser</TableHead>
+                        <TableHead>Higher council</TableHead>
                         <TableHead className="w-28 text-right">
                           <span className="sr-only">Actions</span>
                         </TableHead>
@@ -783,7 +828,7 @@ export function AdminOrganizationsPage() {
                         <TableRow>
                           <TableCell
                             className="text-muted-foreground"
-                            colSpan={4}
+                            colSpan={5}
                           >
                             No organizations match “{search}”.
                           </TableCell>
@@ -819,6 +864,9 @@ export function AdminOrganizationsPage() {
                                 </TableCell>
                               )
                             })}
+                            <TableCell>
+                              {org.is_higher_council ? "Yes" : "—"}
+                            </TableCell>
                             <TableCell className="text-right">
                               <Button
                                 type="button"
@@ -904,6 +952,11 @@ export function AdminOrganizationsPage() {
                   value={editDesks[item.value]}
                 />
               ))}
+              <HigherCouncilField
+                checked={editIsHigherCouncil}
+                id="edit-organization-higher-council"
+                onCheckedChange={setEditIsHigherCouncil}
+              />
               {editError ? (
                 <Alert variant="error">
                   <CircleAlertIcon />

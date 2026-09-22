@@ -1,7 +1,12 @@
-import { FIELD_INPUT_CLASS } from "@/components/submission/constants"
 import type { SaafDraft } from "@/components/submission/types"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { TimePicker } from "@/components/ui/time-picker"
+import {
+  minEventDateKey,
+  parseDateKey,
+} from "@/lib/date-key"
 import {
   blockNonDecimalKeys,
   blockNonIntegerKeys,
@@ -34,20 +39,21 @@ export function ActivityDetailsSection({
   values: DetailsFields
   onChange: (key: any, value: any) => void
 }) {
-  const getMinDateOfEvent = () => {
-    const today = new Date().toISOString().split("T")[0]
-    const submissionDate = values.proponents?.[0]?.dateOfSubmission || today
-    const d = new Date(submissionDate)
-    if (isNaN(d.getTime())) return ""
-    d.setDate(d.getDate() + 11)
-    return d.toISOString().split("T")[0]
-  }
+  const minStartDate = minEventDateKey()
+  const minEndDate =
+    values.dateOfEvent && values.dateOfEvent > minStartDate
+      ? values.dateOfEvent
+      : minStartDate
 
   const handleStartDateChange = (startVal: string) => {
     onChange("dateOfEvent", startVal)
-    if (values.endDateOfEvent && values.endDateOfEvent < startVal) {
+    if (!values.endDateOfEvent || values.endDateOfEvent < startVal) {
       onChange("endDateOfEvent", startVal)
     }
+    const weekday = parseDateKey(startVal)?.toLocaleDateString("en-US", {
+      weekday: "long",
+    })
+    if (weekday) onChange("dayOfEvent", weekday)
   }
 
   const timeStart =
@@ -174,18 +180,17 @@ export function ActivityDetailsSection({
             <label className="block text-xs font-semibold text-neutral-800">
               Start Date of Event <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="date"
+            <DatePicker
               name="dateOfEvent"
-              min={getMinDateOfEvent()}
               value={values.dateOfEvent}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
+              minDate={minStartDate}
+              onChange={handleStartDateChange}
+              placeholder="Pick start date"
+              aria-label="Start date of event"
               required
             />
-            <span className="text-[10px] text-neutral-500 block">
-              &ge; 11 days after submission
+            <span className="block text-[10px] text-neutral-500">
+              At least 10 days from today
             </span>
           </div>
 
@@ -193,14 +198,13 @@ export function ActivityDetailsSection({
             <label className="block text-xs font-semibold text-neutral-800">
               End Date of Event <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="date"
+            <DatePicker
               name="endDateOfEvent"
-              min={values.dateOfEvent || getMinDateOfEvent()}
               value={values.endDateOfEvent || values.dateOfEvent || ""}
-              onChange={(e) => onChange("endDateOfEvent", e.target.value)}
-              style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
+              minDate={minEndDate}
+              onChange={(next) => onChange("endDateOfEvent", next)}
+              placeholder="Pick end date"
+              aria-label="End date of event"
               required
             />
           </div>
@@ -210,23 +214,21 @@ export function ActivityDetailsSection({
               Time of Event (Start to End) <span className="text-red-500">*</span>
             </label>
             <div className="flex items-center gap-2">
-              <Input
-                type="time"
+              <TimePicker
                 name="timeOfEventStart"
                 value={timeStart}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
+                onChange={handleStartTimeChange}
+                placeholder="Start"
+                aria-label="Event start time"
                 required
               />
-              <span className="text-xs text-neutral-500 font-medium">to</span>
-              <Input
-                type="time"
+              <span className="text-xs font-medium text-neutral-500">to</span>
+              <TimePicker
                 name="timeOfEventEnd"
                 value={timeEnd}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
+                onChange={handleEndTimeChange}
+                placeholder="End"
+                aria-label="Event end time"
                 required
               />
             </div>

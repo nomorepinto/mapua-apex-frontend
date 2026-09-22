@@ -25,6 +25,7 @@ import {
   sanitizeIntegerInput,
 } from "@/lib/numeric-input"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
+import { EVENT_DATE_TOO_SOON_MESSAGE, minEventDateKey } from "@/lib/date-key"
 import { useOrgStore } from "@/stores/org-store"
 
 export function useSaafForm() {
@@ -249,25 +250,12 @@ export function useSaafForm() {
         return false
       }
 
-      // 3. Date buffer validation (at least 11 days after submission)
-      const submissionDateStr =
-        draft.proponents?.[0]?.dateOfSubmission ||
-        new Date().toISOString().split("T")[0]
+      // 3. Date buffer validation (at least 10 days from today)
       const eventDateStr = draft.dateOfEvent
-
-      if (submissionDateStr && eventDateStr) {
-        const sDate = new Date(submissionDateStr)
-        const eDate = new Date(eventDateStr)
-        const diffTime = eDate.getTime() - sDate.getTime()
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays <= 10) {
-          setShowErrors(true)
-          alert(
-            "The date of event must be at least 11 days after the date of submission."
-          )
-          return false
-        }
+      if (eventDateStr && eventDateStr < minEventDateKey()) {
+        setShowErrors(true)
+        alert(EVENT_DATE_TOO_SOON_MESSAGE)
+        return false
       }
 
       // 4. Activity details minimum length validations

@@ -54,6 +54,7 @@ export function SubmissionTrackerModal({
     {
       activityType: detailQuery.data?.activity_classification?.activity_type,
       hasVenue: Boolean(detailQuery.data?.venue_reservation?.has_reservation),
+      isHigherCouncil: Boolean(orgQuery.data?.is_higher_council),
       orgSignatories: orgQuery.data?.signatories,
     }
   )

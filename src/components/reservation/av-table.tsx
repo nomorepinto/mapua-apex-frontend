@@ -8,6 +8,8 @@ import {
 import type { AVItem } from "@/components/reservation/types"
 import { layout } from "@/config"
 import { cn } from "@/lib/utils"
+import { DatePicker } from "@/components/ui/date-picker"
+import { TimePicker } from "@/components/ui/time-picker"
 
 export function AvTable({
   purpose = "",
@@ -91,48 +93,48 @@ export function AvTable({
                       )}
                     </td>
                     <td className="border-r border-neutral-300 p-2">
-                      <input
-                        type="date"
+                      <DatePicker
+                        size="sm"
                         value={item.dateNeeded}
-                        onChange={(e) =>
-                          onUpdate(item.id, "dateNeeded", e.target.value)
+                        onChange={(next) =>
+                          onUpdate(item.id, "dateNeeded", next)
                         }
-                        style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                        placeholder="Date"
+                        aria-label="Equipment start date"
                       />
                     </td>
                     <td className="border-r border-neutral-300 p-2">
-                      <input
-                        type="date"
-                        min={item.dateNeeded || undefined}
+                      <DatePicker
+                        size="sm"
+                        minDate={item.dateNeeded || undefined}
                         value={item.endDateNeeded || ""}
-                        onChange={(e) =>
-                          onUpdate(item.id, "endDateNeeded", e.target.value)
+                        onChange={(next) =>
+                          onUpdate(item.id, "endDateNeeded", next)
                         }
-                        style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                        placeholder="Date"
+                        aria-label="Equipment end date"
                       />
                     </td>
                     <td className="border-r border-neutral-300 p-2">
-                      <input
-                        type="time"
+                      <TimePicker
+                        size="sm"
                         value={item.timeNeeded}
-                        onChange={(e) =>
-                          onUpdate(item.id, "timeNeeded", e.target.value)
+                        onChange={(next) =>
+                          onUpdate(item.id, "timeNeeded", next)
                         }
-                        style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                        placeholder="Time"
+                        aria-label="Equipment start time"
                       />
                     </td>
                     <td className="border-r border-neutral-300 p-2">
-                      <input
-                        type="time"
+                      <TimePicker
+                        size="sm"
                         value={item.endTimeNeeded || ""}
-                        onChange={(e) =>
-                          onUpdate(item.id, "endTimeNeeded", e.target.value)
+                        onChange={(next) =>
+                          onUpdate(item.id, "endTimeNeeded", next)
                         }
-                        style={{ color: "#171717" }}
-                        className={`${TABLE_INPUT_CLASS} cursor-pointer px-1 text-xs`}
+                        placeholder="Time"
+                        aria-label="Equipment end time"
                       />
                     </td>
                     <td className="p-2">

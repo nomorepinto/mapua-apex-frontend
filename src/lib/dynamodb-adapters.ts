@@ -166,11 +166,13 @@ export interface ApiSignatory {
 export interface ApiOrganization {
   organization_id: string
   name: string
+  is_higher_council?: boolean
   signatories?: ApiOrganizationSignatory[]
 }
 
 export type CreateOrganizationPayload = {
   name: string
+  is_higher_council?: boolean
   signatories: ApiOrganizationSignatory[]
 }
 
@@ -460,6 +462,25 @@ export function formatDocumentId(id?: string | null, prefix = "SAAF"): string {
   return cleaned
 }
 
+function expectedSignatoryRoles(options?: {
+  activityType?: string
+  hasVenue?: boolean
+  isHigherCouncil?: boolean
+}): string[] {
+  const roles: string[] = []
+  if (!options?.isHigherCouncil) {
+    roles.push("Adviser")
+    if (options?.activityType === "co-curricular") {
+      roles.push("Dean")
+    }
+  }
+  roles.push("OSAAR")
+  if (options?.hasVenue) {
+    roles.push("CDM")
+  }
+  return roles
+}
+
 /**
  * Resolves a signatory ID / UUID / role string to a clean human-readable Role name
  */
@@ -468,7 +489,8 @@ export function formatSignatoryRole(
   orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>,
   fallbackIndex?: number,
   activityType?: string,
-  hasVenue?: boolean
+  hasVenue?: boolean,
+  isHigherCouncil?: boolean
 ): string {
   if (!signatoryIdOrRole || signatoryIdOrRole === "—") return "—"
 
@@ -505,14 +527,11 @@ export function formatSignatoryRole(
 
   // Fallback to submission's expected sequence
   if (fallbackIndex !== undefined) {
-    const expectedRoles = ["Adviser"]
-    if (activityType === "co-curricular") {
-      expectedRoles.push("Dean")
-    }
-    expectedRoles.push("OSAAR")
-    if (hasVenue) {
-      expectedRoles.push("CDM")
-    }
+    const expectedRoles = expectedSignatoryRoles({
+      activityType,
+      hasVenue,
+      isHigherCouncil,
+    })
     if (fallbackIndex >= 0 && fallbackIndex < expectedRoles.length) {
       return expectedRoles[fallbackIndex]
     }
@@ -669,6 +688,7 @@ export function apiNotificationsToStepper(
   options?: {
     activityType?: string
     hasVenue?: boolean
+    isHigherCouncil?: boolean
     orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
   }
 ): TrackerStepper {
@@ -676,15 +696,7 @@ export function apiNotificationsToStepper(
   const fullyApproved = sorted.some((item) => item.notif_type === "fully approved")
   const isAllApproved = fullyApproved || apiStatus === "approved"
 
-  // Construct standard expected roles
-  const expectedRoles = ["Adviser"]
-  if (options?.activityType === "co-curricular") {
-    expectedRoles.push("Dean")
-  }
-  expectedRoles.push("OSAAR")
-  if (options?.hasVenue) {
-    expectedRoles.push("CDM")
-  }
+  const expectedRoles = expectedSignatoryRoles(options)
 
   // Map each notification to a resolved role
   const resolvedNotifs: Array<{
@@ -701,7 +713,8 @@ export function apiNotificationsToStepper(
       options?.orgSignatories,
       i,
       options?.activityType,
-      options?.hasVenue
+      options?.hasVenue,
+      options?.isHigherCouncil
     )
     resolvedNotifs.push({
       role,
@@ -740,7 +753,8 @@ export function apiNotificationsToStepper(
         options?.orgSignatories,
         resolvedNotifs.length,
         options?.activityType,
-        options?.hasVenue
+        options?.hasVenue,
+        options?.isHigherCouncil
       )
     : undefined
 

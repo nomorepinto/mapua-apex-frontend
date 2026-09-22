@@ -1,4 +1,5 @@
 import { useNewTaskForm } from "@/hooks/use-new-task-form"
+import { DatePicker } from "@/components/ui/date-picker"
 import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 
@@ -62,12 +63,14 @@ export function NewTaskModal({ isOpen, onClose }: NewTaskModalProps) {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-neutral-600 uppercase tracking-wider mb-2">Due Date (Optional)</label>
-            <input 
-              type="date"
+            <label className="mb-2 block text-xs font-bold tracking-wider text-neutral-600 uppercase">
+              Due Date (Optional)
+            </label>
+            <DatePicker
               value={dueDate}
-              onChange={(e) => setDueDate(e.target.value)}
-              className="w-full bg-[#F8FAFC] border border-neutral-200 rounded-xl text-sm text-[#1E293B] px-4 py-2.5 focus:outline-none focus:border-[#D9291C] focus:ring-1 focus:ring-[#D9291C]"
+              onChange={setDueDate}
+              placeholder="Pick a due date"
+              aria-label="Task due date"
             />
           </div>
 

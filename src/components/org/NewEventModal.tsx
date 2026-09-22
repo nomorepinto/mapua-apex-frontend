@@ -1,5 +1,7 @@
 import { useNewEventForm } from "@/hooks/use-new-event-form"
+import { DatePicker } from "@/components/ui/date-picker"
 import { layout, modal } from "@/config"
+import { minEventDateKey } from "@/lib/date-key"
 import { cn } from "@/lib/utils"
 
 interface NewEventModalProps {
@@ -49,14 +51,18 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
           </div>
 
           <div className="bg-white rounded-xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="text-[17px] text-black">Date</span>
-              <input 
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="bg-neutral-100 rounded-md text-[17px] text-black px-3 py-1.5 focus:outline-none"
-              />
+              <div className="w-[11.5rem]">
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                  minDate={minEventDateKey()}
+                  placeholder="Pick a date"
+                  aria-label="Event date"
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
         </div>
