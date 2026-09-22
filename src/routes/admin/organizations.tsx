@@ -123,19 +123,22 @@ function HigherCouncilField({
   onCheckedChange: (checked: boolean) => void
 }) {
   return (
-    <div className="flex items-start gap-2">
-      <Checkbox
-        checked={checked}
-        id={id}
-        onCheckedChange={(value) => onCheckedChange(value === true)}
-      />
-      <div className="flex flex-col gap-1">
-        <FieldLabel htmlFor={id}>Higher council</FieldLabel>
-        <FieldDescription>
-          Skips dean on the approval path. Adviser still reviews first.
-        </FieldDescription>
+    <Field>
+      <div className="flex items-start gap-2">
+        <Checkbox
+          checked={checked}
+          id={id}
+          name="is_higher_council"
+          onCheckedChange={(value) => onCheckedChange(value === true)}
+        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel htmlFor={id}>Higher council</FieldLabel>
+          <FieldDescription>
+            Skips dean on the approval path. Adviser still reviews first.
+          </FieldDescription>
+        </div>
       </div>
-    </div>
+    </Field>
   )
 }
 
