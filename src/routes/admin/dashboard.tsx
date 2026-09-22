@@ -47,6 +47,7 @@ import {
   useCreateAnnouncementMutation,
   useDeleteAnnouncementMutation,
   useUpdateAnnouncementMutation,
+  useOrganizationsQuery,
   useSignatoriesQuery,
 } from "@/hooks/use-admin"
 import {
@@ -75,6 +76,7 @@ const TYPE_FILTERS = [
 const ANNOUNCEMENT_MAX = 5000
 
 export function AdminOsaPanel() {
+  const [organizationId, setOrganizationId] = useState("")
   const [status, setStatus] = useState<"" | "pending" | "approved" | "denied" | "returned">("")
   const [activityType, setActivityType] = useState("")
   const [selectedKeys, setSelectedKeys] = useState<{
@@ -91,9 +93,11 @@ export function AdminOsaPanel() {
   const [deleteError, setDeleteError] = useState("")
 
   const signatoriesQuery = useSignatoriesQuery()
+  const organizationsQuery = useOrganizationsQuery()
   const submissionsQuery = useAdminSubmissionsQuery({
     status: status || undefined,
     activity_type: activityType || undefined,
+    organization_id: organizationId || undefined,
   })
   const announcementsQuery = useAdminAnnouncementsQuery()
   const detailQuery = useAdminSubmissionDetailQuery(
@@ -104,6 +108,13 @@ export function AdminOsaPanel() {
   const updateAnnouncement = useUpdateAnnouncementMutation()
   const deleteAnnouncement = useDeleteAnnouncementMutation()
 
+  const organizations = useMemo(
+    () =>
+      [...(organizationsQuery.data || [])].sort((left, right) =>
+        left.name.localeCompare(right.name, undefined, { sensitivity: "base" })
+      ),
+    [organizationsQuery.data]
+  )
   const rows = useMemo(
     () =>
       (submissionsQuery.data || []).map((sub) =>
@@ -233,10 +244,25 @@ export function AdminOsaPanel() {
             <div>
               <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
               <p className="text-xs text-neutral-500">
-                Filter by status or activity type, then open a row for the full SAAF record.
+                Filter by organization, status, or activity type, then open a row for the full SAAF record.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                Organization
+                <select
+                  value={organizationId}
+                  onChange={(event) => setOrganizationId(event.target.value)}
+                  className="h-10 min-w-52 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                >
+                  <option value="">All organizations</option>
+                  {organizations.map((organization) => (
+                    <option key={organization.organization_id} value={organization.organization_id}>
+                      {organization.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
                 Status
                 <select
