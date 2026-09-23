@@ -33,7 +33,13 @@ export function AdminLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar"]}>
       <div className={layout.frame}>
-        <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} showSettings />
+        <AppSidebar
+          homeTo="/admin/dashboard"
+          items={ADMIN_NAV}
+          switchPanelLabel="Signatory Dashboard"
+          switchPanelTo="/signatories/dashboard"
+          showSettings
+        />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />
         </main>

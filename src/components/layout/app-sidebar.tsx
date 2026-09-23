@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react"
 import type { LucideIcon } from "lucide-react"
-import { LogOutIcon, MenuIcon, SettingsIcon, XIcon } from "lucide-react"
+import {
+  ArrowRightLeftIcon,
+  LogOutIcon,
+  MenuIcon,
+  SettingsIcon,
+  XIcon,
+} from "lucide-react"
 import { Link, NavLink } from "react-router"
 import { useAuth } from "react-oidc-context"
 
@@ -17,6 +23,11 @@ export type AppSidebarItem = {
   to: string
   icon: LucideIcon
   end?: boolean
+}
+
+export type AppSidebarPanelSwitch = {
+  label: string
+  to: string
 }
 
 function navClassName({ isActive }: { isActive: boolean }) {
@@ -65,12 +76,14 @@ function SidebarNav({
   onNavigate,
   onOpenSettings,
   onSignOut,
+  panelSwitch,
 }: {
   items: AppSidebarItem[]
   showSettings: boolean
   onNavigate?: () => void
   onOpenSettings: () => void
   onSignOut: () => void
+  panelSwitch?: AppSidebarPanelSwitch
 }) {
   return (
     <nav className="space-y-1.5 pt-2">
@@ -105,6 +118,17 @@ function SidebarNav({
           <SettingsIcon className="h-4.5 w-4.5 text-white/80" />
           <span>Settings</span>
         </button>
+      ) : null}
+
+      {panelSwitch ? (
+        <Link
+          to={panelSwitch.to}
+          onClick={onNavigate}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-neutral-200/20 hover:text-white"
+        >
+          <ArrowRightLeftIcon className="h-4.5 w-4.5 shrink-0 text-white/80" />
+          <span>{panelSwitch.label}</span>
+        </Link>
       ) : null}
 
       <button
@@ -144,6 +168,7 @@ function SidebarPanel({
   onOpenSettings,
   onSignOut,
   onClose,
+  panelSwitch,
 }: {
   homeTo: string
   items: AppSidebarItem[]
@@ -154,6 +179,7 @@ function SidebarPanel({
   onOpenSettings: () => void
   onSignOut: () => void
   onClose?: () => void
+  panelSwitch?: AppSidebarPanelSwitch
 }) {
   return (
     <div className="@container flex h-full min-h-0 flex-col justify-between overflow-y-auto bg-[#8B0000] p-4 text-white select-none">
@@ -179,6 +205,7 @@ function SidebarPanel({
           onNavigate={onNavigate}
           onOpenSettings={onOpenSettings}
           onSignOut={onSignOut}
+          panelSwitch={panelSwitch}
         />
       </div>
       <SidebarUser name={name} displayRole={displayRole} />
@@ -190,10 +217,14 @@ export function AppSidebar({
   homeTo,
   items,
   showSettings = false,
+  switchPanelTo,
+  switchPanelLabel,
 }: {
   homeTo: string
   items: AppSidebarItem[]
   showSettings?: boolean
+  switchPanelTo?: string
+  switchPanelLabel?: string
 }) {
   const auth = useAuth()
   const name = auth.user?.profile?.email || auth.user?.profile?.name || "Guest"
@@ -202,6 +233,17 @@ export function AppSidebar({
     userGroups.length > 0
       ? userGroups.map((g) => g.replace(/_/g, " ")).join(", ")
       : "No role assigned"
+
+  // OSAAR and admin staff can access both the admin and signatory panels but
+  // are unlikely to edit the URL by hand, so surface a one-click switch for them.
+  const isPanelSwitcher = userGroups.some((g) => {
+    const group = g.toLowerCase()
+    return group === "osaar" || group === "admin"
+  })
+  const panelSwitch =
+    isPanelSwitcher && switchPanelTo
+      ? { to: switchPanelTo, label: switchPanelLabel ?? "Switch Panel" }
+      : undefined
 
   const handleSignOut = useSignOut()
   const settings = useDisclosure()
@@ -218,6 +260,7 @@ export function AppSidebar({
     showSettings,
     name,
     displayRole,
+    panelSwitch,
     onOpenSettings: () => {
       setMobileOpen(false)
       settings.open()
