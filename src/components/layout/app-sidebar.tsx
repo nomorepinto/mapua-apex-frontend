@@ -4,7 +4,7 @@ import {
   ArrowRightLeftIcon,
   LogOutIcon,
   MenuIcon,
-  SettingsIcon,
+  UsersIcon,
   XIcon,
 } from "lucide-react"
 import { Link, NavLink } from "react-router"
@@ -132,15 +132,15 @@ function SidebarNav({
         </NavLink>
       ))}
 
-      {showSettings ? (
-        <button
-          type="button"
-          onClick={onOpenSettings}
-          className="flex min-h-11 w-full cursor-pointer items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-white/10 hover:text-white"
+      {panelSwitch ? (
+        <Link
+          to={panelSwitch.to}
+          onClick={onNavigate}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-neutral-200/20 hover:text-white"
         >
-          <SettingsIcon className="h-4.5 w-4.5 text-white/80" />
-          <span>Settings</span>
-        </button>
+          <ArrowRightLeftIcon className="h-4.5 w-4.5 shrink-0 text-white/80" />
+          <span>{panelSwitch.label}</span>
+        </Link>
       ) : null}
 
       <button
@@ -197,6 +197,8 @@ function SidebarPanel({
   onNavigate,
   onSignOut,
   onClose,
+  panelSwitch,
+  from = "side",
 }: {
   homeTo: string
   aboutTo: string
@@ -206,6 +208,8 @@ function SidebarPanel({
   onNavigate?: () => void
   onSignOut: () => void
   onClose?: () => void
+  panelSwitch?: AppSidebarPanelSwitch
+  from?: "side" | "top"
 }) {
   const isTop = from === "top"
 
@@ -268,11 +272,13 @@ function SidebarPanel({
 export function AppSidebar({
   homeTo,
   items,
-  showSettings = false,
+  switchPanelTo,
+  switchPanelLabel,
 }: {
   homeTo: string
   items: AppSidebarItem[]
-  showSettings?: boolean
+  switchPanelTo?: string
+  switchPanelLabel?: string
 }) {
   const auth = useAuth()
   const profile = auth.user?.profile
@@ -322,11 +328,8 @@ export function AppSidebar({
     items,
     name,
     displayRole,
-    onOpenSettings: () => {
-      setMobileOpen(false)
-      settings.open()
-    },
-    onSignOut: handleSignOut,
+    panelSwitch,
+    onSignOut: requestSignOut,
   }
 
   return (

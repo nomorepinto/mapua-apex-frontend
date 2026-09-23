@@ -33,7 +33,6 @@ export function AdminLayout() {
           items={ADMIN_NAV}
           switchPanelLabel="Signatory Dashboard"
           switchPanelTo="/signatories/dashboard"
-          showSettings
         />
         <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />
