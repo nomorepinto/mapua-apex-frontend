@@ -14,6 +14,7 @@ import type { Activity } from "@/components/ui/activity.types"
 export interface ApiSubmission {
   event_id: string
   submission_id: string
+  organization_id?: string | null
   submission_type: string
   sent_at: string
   status: "pending" | "approved" | "denied" | "returned"
@@ -166,11 +167,13 @@ export interface ApiSignatory {
 export interface ApiOrganization {
   organization_id: string
   name: string
+  is_higher_council?: boolean
   signatories?: ApiOrganizationSignatory[]
 }
 
 export type CreateOrganizationPayload = {
   name: string
+  is_higher_council?: boolean
   signatories: ApiOrganizationSignatory[]
 }
 
@@ -343,6 +346,7 @@ export type DashboardSubmissionStatus = "Under Review" | "Approved" | "Returned"
 export interface DashboardSubmissionRow {
   event_id: string
   submission_id: string
+  organization_name: string
   id: string
   activity_classification: string
   current_signatory: string
@@ -391,6 +395,18 @@ export interface DeadlineReminder {
   statusText: string
   dueDateText: string
   isUrgent: boolean
+}
+
+export interface ReviewNotice {
+  id: string
+  eventId: string
+  submissionId: string
+  sentAt: string
+  dateStr: string
+  title: string
+  notifType: "denied" | "returned"
+  comment: string
+  signatoryLabel: string
 }
 
 export function formatDisplayDate(value?: string | null): string {
@@ -448,6 +464,22 @@ export function formatDocumentId(id?: string | null, prefix = "SAAF"): string {
   return cleaned
 }
 
+function expectedSignatoryRoles(options?: {
+  activityType?: string
+  hasVenue?: boolean
+  isHigherCouncil?: boolean
+}): string[] {
+  const roles: string[] = ["Adviser"]
+  if (options?.activityType === "co-curricular" && !options?.isHigherCouncil) {
+    roles.push("Dean")
+  }
+  roles.push("OSAAR")
+  if (options?.hasVenue) {
+    roles.push("CDM")
+  }
+  return roles
+}
+
 /**
  * Resolves a signatory ID / UUID / role string to a clean human-readable Role name
  */
@@ -456,7 +488,8 @@ export function formatSignatoryRole(
   orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>,
   fallbackIndex?: number,
   activityType?: string,
-  hasVenue?: boolean
+  hasVenue?: boolean,
+  isHigherCouncil?: boolean
 ): string {
   if (!signatoryIdOrRole || signatoryIdOrRole === "—") return "—"
 
@@ -493,14 +526,11 @@ export function formatSignatoryRole(
 
   // Fallback to submission's expected sequence
   if (fallbackIndex !== undefined) {
-    const expectedRoles = ["Adviser"]
-    if (activityType === "co-curricular") {
-      expectedRoles.push("Dean")
-    }
-    expectedRoles.push("OSAAR")
-    if (hasVenue) {
-      expectedRoles.push("CDM")
-    }
+    const expectedRoles = expectedSignatoryRoles({
+      activityType,
+      hasVenue,
+      isHigherCouncil,
+    })
     if (fallbackIndex >= 0 && fallbackIndex < expectedRoles.length) {
       return expectedRoles[fallbackIndex]
     }
@@ -528,9 +558,22 @@ function formatProponentName(
     .trim()
 }
 
+export function organizationNameFor(
+  organizationId: string | null | undefined,
+  organizations: Array<{ organization_id: string; name: string }>
+): string {
+  const id = (organizationId || "").replace(/^ORGANIZATION#/i, "")
+  if (!id) return "—"
+  const match = organizations.find(
+    (organization) => organization.organization_id.replace(/^ORGANIZATION#/i, "") === id
+  )
+  return match?.name || "—"
+}
+
 export function apiSubmissionToDashboardRow(
   submission: ApiSubmission,
-  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>,
+  organizations?: Array<{ organization_id: string; name: string }>
 ): DashboardSubmissionRow {
   const meta = getSubmissionStatusMeta(submission.status)
   const firstProponent = submission.proponents?.[0]
@@ -554,6 +597,7 @@ export function apiSubmissionToDashboardRow(
   return {
     event_id: submission.event_id,
     submission_id: submission.submission_id,
+    organization_name: organizationNameFor(submission.organization_id, organizations || []),
     id: submission.submission_id,
     activity_classification: submission.activity_classification?.activity_type || "extra-curricular",
     current_signatory: currentSignatoryLabel,
@@ -657,6 +701,7 @@ export function apiNotificationsToStepper(
   options?: {
     activityType?: string
     hasVenue?: boolean
+    isHigherCouncil?: boolean
     orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
   }
 ): TrackerStepper {
@@ -664,15 +709,7 @@ export function apiNotificationsToStepper(
   const fullyApproved = sorted.some((item) => item.notif_type === "fully approved")
   const isAllApproved = fullyApproved || apiStatus === "approved"
 
-  // Construct standard expected roles
-  const expectedRoles = ["Adviser"]
-  if (options?.activityType === "co-curricular") {
-    expectedRoles.push("Dean")
-  }
-  expectedRoles.push("OSAAR")
-  if (options?.hasVenue) {
-    expectedRoles.push("CDM")
-  }
+  const expectedRoles = expectedSignatoryRoles(options)
 
   // Map each notification to a resolved role
   const resolvedNotifs: Array<{
@@ -689,7 +726,8 @@ export function apiNotificationsToStepper(
       options?.orgSignatories,
       i,
       options?.activityType,
-      options?.hasVenue
+      options?.hasVenue,
+      options?.isHigherCouncil
     )
     resolvedNotifs.push({
       role,
@@ -728,7 +766,8 @@ export function apiNotificationsToStepper(
         options?.orgSignatories,
         resolvedNotifs.length,
         options?.activityType,
-        options?.hasVenue
+        options?.hasVenue,
+        options?.isHigherCouncil
       )
     : undefined
 
@@ -827,6 +866,41 @@ export function apiDeadlinesToReminders(
       isUrgent,
     }
   })
+}
+
+export function apiNotificationsToReviewNotices(
+  submissions: ApiSubmission[],
+  notificationsBySubmission: Map<string, ApiNotification[]>,
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+): ReviewNotice[] {
+  const notices: ReviewNotice[] = []
+
+  for (const submission of submissions) {
+    const notifications = notificationsBySubmission.get(submission.submission_id) || []
+    const title =
+      submission.activity_details?.title_and_nature || submission.submission_id
+
+    for (const item of notifications) {
+      if (item.notif_type !== "denied" && item.notif_type !== "returned") continue
+      const comment = (item.comment || "").trim()
+      if (!comment) continue
+
+      notices.push({
+        id: `${submission.submission_id}:${item.sent_at}`,
+        eventId: submission.event_id,
+        submissionId: submission.submission_id,
+        sentAt: item.sent_at,
+        dateStr: formatDisplayDateTime(item.sent_at),
+        title,
+        notifType: item.notif_type,
+        comment,
+        signatoryLabel: formatSignatoryRole(item.signatory, orgSignatories),
+      })
+    }
+  }
+
+  notices.sort((left, right) => right.sentAt.localeCompare(left.sentAt))
+  return notices
 }
 
 export function apiSubmissionToDrafts(submission: ApiSubmission): {

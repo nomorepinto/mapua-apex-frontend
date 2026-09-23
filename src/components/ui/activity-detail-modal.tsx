@@ -9,9 +9,12 @@ import {
   DialogPanel,
   DialogFooter,
 } from "@/components/ui/dialog"
+import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { ReturnProposalModal } from "./return-proposal-modal"
 import type { Activity } from "./activity.types"
 import { useActivityDetail } from "@/hooks/use-activity-detail"
+import { brand, modal } from "@/config"
+import { cn } from "@/lib/utils"
 
 export interface ActivityDetailModalProps {
   activity: Activity | null
@@ -21,7 +24,7 @@ export interface ActivityDetailModalProps {
   onAction?: (
     action: "approve" | "return" | "reject" | "defer",
     activityId: string,
-    details?: { title: string; message: string }
+    details?: { comment: string }
   ) => void | Promise<void>
 }
 
@@ -35,7 +38,10 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   const {
     commentAction,
     setCommentAction,
+    confirmingApprove,
+    setConfirmingApprove,
     handleOpenChange,
+    requestApprove,
     handleApprove,
     handleDefer,
     handleCommentSubmit,
@@ -44,27 +50,29 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
   return (
     <>
       <Dialog open={activity !== null} onOpenChange={handleOpenChange}>
-        <DialogPopup className="flex max-h-[90dvh] w-full max-w-4xl flex-col">
-          <DialogHeader className="bg-[#2B2E35] text-white px-6 sm:px-8 py-6 shrink-0 rounded-t-2xl">
+        <DialogPopup className={cn(modal.dialogXl, "flex-col")}>
+          <DialogHeader className="shrink-0 rounded-t-2xl bg-[#8B0000] px-4 py-6 text-white sm:px-8">
             <div className="w-full pr-10">
-              <div className="flex items-center gap-2 mb-2.5 flex-wrap">
-                <span className="bg-red-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-sm uppercase tracking-wider">
-                  Reviewing Target
-                </span>
-                <span className="bg-emerald-600 text-white text-[11px] font-bold px-2.5 py-0.5 rounded-sm uppercase tracking-wider">
-                  Time Submitted
-                </span>
+              <div className="mb-2.5 flex flex-wrap items-center gap-2">
+                {activity?.org ? (
+                  <span className={brand.chipGold}>{activity.org}</span>
+                ) : null}
+                {activity?.submittedDate ? (
+                  <span className="rounded-sm bg-white/15 px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-white uppercase">
+                    Submitted {activity.submittedDate}
+                  </span>
+                ) : null}
               </div>
-              <DialogTitle className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+              <DialogTitle className="text-2xl sm:text-3xl font-extrabold tracking-tight leading-tight text-white">
                 {activity?.title} Proposal
               </DialogTitle>
-              <p className="mt-1.5 text-xs sm:text-sm font-medium text-[#F6C768]">
+              <p className="mt-1.5 text-xs font-medium text-[#FBC02D] sm:text-sm">
                 Submitted by: {activity?.org} • Representative: {activity?.representative}
               </p>
             </div>
           </DialogHeader>
 
-          <DialogPanel className="flex-1 overflow-y-auto px-6 sm:px-8 py-6 bg-white text-neutral-800">
+          <DialogPanel className="flex-1 overflow-y-auto bg-white px-4 py-6 text-neutral-800 sm:px-8">
             {activity && (
               <div className="space-y-6">
                 <div className="space-y-3">
@@ -146,7 +154,7 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
             )}
           </DialogPanel>
 
-          <DialogFooter className="border-t border-neutral-200 px-6 sm:px-8 py-4 bg-white shrink-0 rounded-b-2xl">
+          <DialogFooter className="shrink-0 rounded-b-2xl border-t border-neutral-200 bg-white px-4 py-4 sm:px-8">
             <div className="flex w-full flex-col items-stretch justify-end gap-3 sm:flex-row sm:flex-wrap sm:items-center">
               {actionError ? (
                 <p className="mr-auto text-xs font-semibold text-rose-600">{actionError}</p>
@@ -154,50 +162,61 @@ const ActivityDetailModal = memo(function ActivityDetailModal({
               <Button
                 type="button"
                 disabled={isActing}
-                onClick={handleApprove}
-                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50 disabled:opacity-50"
+                onClick={handleDefer}
+                variant="outline"
+                className="min-h-11 rounded-xl px-6 py-2.5 text-sm font-bold"
               >
-                {isActing ? "Working…" : "Approve Proposal"}
+                Close
               </Button>
-
               <Button
                 type="button"
                 disabled={isActing}
                 onClick={() => setCommentAction("return")}
-                className="min-h-11 cursor-pointer rounded-xl bg-neutral-900 px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-black disabled:opacity-50"
+                variant="outline"
+                className="min-h-11 rounded-xl px-6 py-2.5 text-sm font-bold"
               >
                 Return Proposal
               </Button>
-
               <Button
                 type="button"
                 disabled={isActing}
                 onClick={() => setCommentAction("reject")}
-                className="min-h-11 cursor-pointer rounded-xl bg-[#800000] px-6 py-2.5 text-sm font-bold text-white shadow-2xs hover:bg-[#660000] disabled:opacity-50"
+                variant="destructive"
+                className="min-h-11 rounded-xl px-6 py-2.5 text-sm font-bold"
               >
                 Reject Proposal
               </Button>
-
               <Button
                 type="button"
                 disabled={isActing}
-                onClick={handleDefer}
-                className="min-h-11 cursor-pointer rounded-xl border border-neutral-300 bg-white px-6 py-2.5 text-sm font-bold text-neutral-800 shadow-2xs hover:bg-neutral-50 disabled:opacity-50"
+                onClick={requestApprove}
+                className="min-h-11 rounded-xl bg-[#8B0000] px-6 py-2.5 text-sm font-bold text-white hover:bg-[#6B0000]"
               >
-                Close
+                {isActing ? "Working…" : "Approve Proposal"}
               </Button>
             </div>
           </DialogFooter>
         </DialogPopup>
-      </Dialog>
 
-      <ReturnProposalModal
-        activity={activity}
-        variant={commentAction ?? "return"}
-        open={commentAction !== null}
-        onClose={() => setCommentAction(null)}
-        onSubmit={handleCommentSubmit}
-      />
+        <ConfirmSubmitModal
+          open={confirmingApprove}
+          title={activity ? `Endorse ${activity.title}?` : "Endorse this proposal?"}
+          description="This will record your approval on the proposal."
+          isSubmitting={isActing}
+          onClose={() => setConfirmingApprove(false)}
+          onConfirm={handleApprove}
+        />
+
+        <ReturnProposalModal
+          activity={activity}
+          variant={commentAction ?? "return"}
+          open={commentAction !== null}
+          isSubmitting={isActing}
+          error={actionError}
+          onClose={() => setCommentAction(null)}
+          onSubmit={handleCommentSubmit}
+        />
+      </Dialog>
     </>
   )
 })

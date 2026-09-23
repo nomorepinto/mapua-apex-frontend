@@ -37,6 +37,7 @@ export const ADMIN_KEYS = {
 export function useAdminSubmissionsQuery(params?: {
   status?: "pending" | "approved" | "denied" | "returned"
   activity_type?: string
+  organization_id?: string
 }) {
   return useQuery({
     queryKey: ADMIN_KEYS.submissions(params),

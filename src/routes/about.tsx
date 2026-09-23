@@ -39,9 +39,9 @@ const TEAM_MEMBERS: TeamMember[] = [
   { name: "Nicole", coorole: "Organization's Welfare and Advocacy Co-Head 25-26", awsrole: "Chief Finance Officer: 26-27", photo: NicolePhoto },
   { name: "Karina", coorole: "External Relations Co-Head 25-26",awsrole: "Chief Auditing Officer: 26-27", photo: KarinaPhoto },
   { name: "Aviel", coorole: "External Relations Head 25-26", awsrole: "Chief External Relations Officer: 26-27", photo: AvielPhoto },
-  { name: "Benedict", coorole: "His Imperial Majesty, the Supreme Overlord 25-26", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
+  { name: "Benedict", coorole: "", awsrole: "Chief Community Relations Officer: 26-27", photo: BenedictPhoto },
   { name: "Joel", coorole: "", awsrole: "Technology Committee: 26-27", photo: JoelPhoto },
-  { name: "Luna", coorole: "", awsrole: "President of the World: 26-27", photo: LunaPhoto },
+  { name: "Luna", coorole: "", awsrole: "AWS-SBG Arcus: 26-27", photo: LunaPhoto },
 ]
 
 const TECH_STACK = [
@@ -117,16 +117,16 @@ export function About() {
       <div className={cn(layout.container, layout.stack)}>
         {/* Page Header */}
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+          <h1 className={layout.pageTitle}>
             About APEX
           </h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
+          <p className={layout.pageSubtitle}>
             Administrative Portal For Events Exchange — Mapúa University
           </p>
         </div>
 
         {/* System Description + Institutional Alignment */}
-        <div className={cn("grid grid-cols-1 md:grid-cols-2", layout.gap)}>
+        <div className={cn(layout.grid2, layout.gap)}>
           <div className={cn(layout.section, "space-y-3")}>
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-red-50 text-[#D9291C]">
@@ -136,7 +136,7 @@ export function About() {
                 <h2 className="text-base font-bold text-[#1E293B]">
                   System Description
                 </h2>
-                <p className="text-[11px] text-[#94A3B8]">What APEX does</p>
+              <p className="text-xs text-neutral-600">What APEX does</p>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-[#475569]">
@@ -158,7 +158,7 @@ export function About() {
                 <h2 className="text-base font-bold text-[#1E293B]">
                   Unified Institutional Alignment
                 </h2>
-                <p className="text-[11px] text-[#94A3B8]">Why it matters</p>
+              <p className="text-xs text-neutral-600">Why it matters</p>
               </div>
             </div>
             <p className="text-sm leading-relaxed text-[#475569]">
@@ -181,7 +181,7 @@ export function About() {
               <h2 className="text-base font-bold text-[#1E293B]">
                 Tech Stack
               </h2>
-              <p className="text-[11px] text-[#94A3B8]">Built with modern, production-grade tooling</p>
+              <p className="text-xs text-neutral-600">Built with modern, production-grade tooling</p>
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -209,7 +209,7 @@ export function About() {
               <h2 className="text-base font-bold text-[#1E293B]">
                 Development Team
               </h2>
-              <p className="text-[11px] text-[#94A3B8]">The people behind the portal</p>
+              <p className="text-xs text-neutral-600">The people behind the portal</p>
             </div>
           </div>
 
@@ -227,14 +227,14 @@ export function About() {
         </div>
 
         {/* Developer Cards Grid */}
-        <div className={cn("grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4", layout.gap)}>
+        <div className={cn(layout.grid4, layout.gap)}>
           {TEAM_MEMBERS.map((member) => (
             <DevCard key={member.name} member={member} />
           ))}
         </div>
 
         {/* Footer accent */}
-        <div className="flex items-center justify-center gap-2 py-4 text-[#94A3B8]">
+        <div className="flex items-center justify-center gap-2 py-4 text-neutral-600">
           <SparklesIcon className="h-3.5 w-3.5" />
           <p className="text-[11px] font-semibold tracking-wide">
             Crafted with passion at Mapúa University

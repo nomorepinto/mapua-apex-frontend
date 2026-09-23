@@ -4,6 +4,8 @@ import { useDisclosure } from "@/hooks/use-disclosure"
 import { getAssignedText, useMilestoneStats } from "@/hooks/use-milestone-stats"
 import { useOrgStore } from "@/stores/org-store"
 import type { Task } from "@/stores/org-store"
+import { modal } from "@/config"
+import { cn } from "@/lib/utils"
 import { NewTaskModal } from "./NewTaskModal"
 
 interface MilestoneModalProps {
@@ -39,7 +41,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
     switch(status) {
       case 'Completed': return <span className="text-[10px] font-bold text-[#059669] px-2 py-0.5 rounded-full bg-[#D1FAE5]">Completed</span>;
       case 'In Progress': return <span className="text-[10px] font-bold text-[#B45309] px-2 py-0.5 rounded-full bg-[#FEF3C7]">In Progress</span>;
-      default: return <span className="text-[10px] font-bold text-[#94A3B8] px-2 py-0.5 rounded-full bg-neutral-100">Pending</span>;
+      default: return <span className="text-[10px] font-bold text-neutral-600 px-2 py-0.5 rounded-full bg-neutral-100">Pending</span>;
     }
   }
 
@@ -60,16 +62,15 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
     }
     return (
       <div className="w-6 h-6 rounded-full border border-neutral-200 flex items-center justify-center bg-white shrink-0">
-        <span className="text-xs font-bold text-[#94A3B8]">{index + 1}</span>
+        <span className="text-xs font-bold text-neutral-600">{index + 1}</span>
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black/40 backdrop-blur-sm">
-      <div className="flex h-[85dvh] w-full max-w-6xl flex-col overflow-hidden rounded-2xl bg-white shadow-xl">
-
-        <div className="flex-1 overflow-y-auto p-4 sm:p-10">
+    <div className={modal.overlay}>
+      <div className={cn(modal.shell, modal.full)}>
+        <div className={cn(modal.body, "bg-white p-4 sm:p-10")}>
           {/* Header */}
           <div className="mb-8 flex flex-col gap-6 sm:mb-12 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
@@ -115,7 +116,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-12">
             {/* Task List */}
             <div className="lg:col-span-2">
-              <div className="mb-4 hidden border-b border-neutral-100 pb-2 text-xs font-bold tracking-wider text-[#94A3B8] uppercase sm:flex">
+              <div className="mb-4 hidden border-b border-neutral-100 pb-2 text-xs font-bold tracking-wider text-neutral-600 uppercase sm:flex">
                 <div className="flex-1">Task</div>
                 <div className="w-24">Status</div>
                 <div className="w-24">Assigned</div>
@@ -124,7 +125,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
 
               <div className="flex flex-col gap-2">
                 {milestoneTasks.length === 0 ? (
-                  <p className="py-8 text-sm text-[#94A3B8]">
+                  <p className="py-8 text-sm text-neutral-600">
                     No tasks yet. Add a task to start this term&apos;s milestone.
                   </p>
                 ) : null}
@@ -194,10 +195,10 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
 
                 {/* Unified Checklist & Proponents */}
                 <div>
-                  <h4 className="text-[10px] font-bold text-[#94A3B8] uppercase tracking-wider mb-4">Checklist & Proponents</h4>
+                  <h4 className="text-[10px] font-bold text-neutral-600 uppercase tracking-wider mb-4">Checklist & Proponents</h4>
                   <div className="flex flex-col gap-2">
                     {activeTask.checklist.length === 0 ? (
-                      <div className="text-xs text-[#94A3B8] italic mb-2">No checklist items yet.</div>
+                      <div className="text-xs text-neutral-600 italic mb-2">No checklist items yet.</div>
                     ) : (
                       activeTask.checklist.map((item, idx) => (
                         <div key={idx} className="flex items-start gap-3 group relative py-2 bg-white px-3 rounded-xl border border-neutral-100 shadow-sm">
@@ -258,7 +259,7 @@ export function MilestoneModal({ isOpen, onClose }: MilestoneModalProps) {
             ) : (
               <div className="bg-[#F8FAFC] rounded-2xl p-6 border border-neutral-100 flex flex-col items-center justify-center text-center h-[300px]">
                 <p className="text-sm font-semibold text-[#64748B]">Select a task to view details</p>
-                <p className="text-xs text-[#94A3B8] mt-2">Add a new task below to get started</p>
+                <p className="text-xs text-neutral-600 mt-2">Add a new task below to get started</p>
               </div>
             )}
           </div>

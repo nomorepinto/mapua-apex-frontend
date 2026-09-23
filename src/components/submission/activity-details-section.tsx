@@ -1,7 +1,24 @@
-import { FIELD_INPUT_CLASS } from "@/components/submission/constants"
+import { EventTimeFields } from "@/components/submission/event-time-fields"
+import {
+  alignEndPeriod,
+  clockFromDraft,
+  combineEventTime,
+  constrainClock,
+  earliestEndMinutes,
+  format24,
+  splitEventTime,
+  withHour,
+  withPeriod,
+  type ClockParts,
+} from "@/components/submission/event-time"
 import type { SaafDraft } from "@/components/submission/types"
+import { DatePicker } from "@/components/ui/date-picker"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import {
+  minEventDateKey,
+  parseDateKey,
+} from "@/lib/date-key"
 import {
   blockNonDecimalKeys,
   blockNonIntegerKeys,
@@ -24,6 +41,12 @@ type DetailsFields = Pick<
   endDateOfEvent?: string
   timeOfEventStart?: string
   timeOfEventEnd?: string
+  timeOfEventStartHour?: string
+  timeOfEventStartMinute?: string
+  timeOfEventStartPeriod?: string
+  timeOfEventEndHour?: string
+  timeOfEventEndMinute?: string
+  timeOfEventEndPeriod?: string
   proponents?: Array<{ dateOfSubmission?: string }>
 }
 
@@ -34,49 +57,72 @@ export function ActivityDetailsSection({
   values: DetailsFields
   onChange: (key: any, value: any) => void
 }) {
-  const getMinDateOfEvent = () => {
-    const today = new Date().toISOString().split("T")[0]
-    const submissionDate = values.proponents?.[0]?.dateOfSubmission || today
-    const d = new Date(submissionDate)
-    if (isNaN(d.getTime())) return ""
-    d.setDate(d.getDate() + 11)
-    return d.toISOString().split("T")[0]
-  }
+  const minStartDate = minEventDateKey()
+  const minEndDate =
+    values.dateOfEvent && values.dateOfEvent > minStartDate
+      ? values.dateOfEvent
+      : minStartDate
 
   const handleStartDateChange = (startVal: string) => {
     onChange("dateOfEvent", startVal)
-    if (values.endDateOfEvent && values.endDateOfEvent < startVal) {
+    if (!values.endDateOfEvent || values.endDateOfEvent < startVal) {
       onChange("endDateOfEvent", startVal)
     }
+    const weekday = parseDateKey(startVal)?.toLocaleDateString("en-US", {
+      weekday: "long",
+    })
+    if (weekday) onChange("dayOfEvent", weekday)
   }
 
-  const timeStart =
-    values.timeOfEventStart ||
-    (values.timeOfEvent?.includes(" - ")
-      ? values.timeOfEvent.split(" - ")[0]
-      : values.timeOfEvent || "")
+  const storedTimes = splitEventTime(values.timeOfEvent || "")
+  const startParts = clockFromDraft(
+    values.timeOfEventStartHour,
+    values.timeOfEventStartMinute,
+    values.timeOfEventStartPeriod,
+    values.timeOfEventStart || storedTimes.start
+  )
+  const endParts = clockFromDraft(
+    values.timeOfEventEndHour,
+    values.timeOfEventEndMinute,
+    values.timeOfEventEndPeriod,
+    values.timeOfEventEnd || storedTimes.end
+  )
 
-  const timeEnd =
-    values.timeOfEventEnd ||
-    (values.timeOfEvent?.includes(" - ")
-      ? values.timeOfEvent.split(" - ")[1]
-      : "")
-
-  const handleStartTimeChange = (startVal: string) => {
-    onChange("timeOfEventStart", startVal)
-    onChange("timeOfEvent", timeEnd ? `${startVal} - ${timeEnd}` : startVal)
+  const commitTimes = (start: ClockParts, end: ClockParts) => {
+    const start24 = format24(start)
+    const end24 = format24(end)
+    onChange("timeOfEventStartHour", start.hour)
+    onChange("timeOfEventStartMinute", start.minute)
+    onChange("timeOfEventStartPeriod", start.period)
+    onChange("timeOfEventEndHour", end.hour)
+    onChange("timeOfEventEndMinute", end.minute)
+    onChange("timeOfEventEndPeriod", end.period)
+    onChange("timeOfEventStart", start24)
+    onChange("timeOfEventEnd", end24)
+    onChange("timeOfEvent", combineEventTime(start24, end24))
   }
 
-  const handleEndTimeChange = (endVal: string) => {
-    onChange("timeOfEventEnd", endVal)
-    onChange("timeOfEvent", timeStart ? `${timeStart} - ${endVal}` : endVal)
+  const updateStart = (next: ClockParts) => {
+    const start = constrainClock(next, null)
+    const end = constrainClock(
+      alignEndPeriod(start, endParts),
+      earliestEndMinutes(start)
+    )
+    commitTimes(start, end)
+  }
+
+  const updateEnd = (next: ClockParts) => {
+    commitTimes(
+      startParts,
+      constrainClock(next, earliestEndMinutes(startParts))
+    )
   }
 
   return (
     <div className="space-y-6 pt-4">
       <div className="border-b border-neutral-200 pb-2">
-        <h2 className="text-lg font-bold tracking-wide text-neutral-900 uppercase">
-          DETAILS OF ACTIVITY
+        <h2 className="text-lg font-bold tracking-tight text-neutral-900">
+          Details of activity
         </h2>
       </div>
 
@@ -169,70 +215,59 @@ export function ActivityDetailsSection({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-12 items-start">
-          <div className="space-y-1.5 sm:col-span-3">
+        <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
               Start Date of Event <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="date"
+            <DatePicker
               name="dateOfEvent"
-              min={getMinDateOfEvent()}
               value={values.dateOfEvent}
-              onChange={(e) => handleStartDateChange(e.target.value)}
-              style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
+              minDate={minStartDate}
+              onChange={handleStartDateChange}
+              placeholder="Pick start date"
+              aria-label="Start date of event"
               required
             />
-            <span className="text-[10px] text-neutral-500 block">
-              &ge; 11 days after submission
+            <span className="block text-[10px] text-neutral-500">
+              At least 10 days from today
             </span>
           </div>
 
-          <div className="space-y-1.5 sm:col-span-3">
+          <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
               End Date of Event <span className="text-red-500">*</span>
             </label>
-            <Input
-              type="date"
+            <DatePicker
               name="endDateOfEvent"
-              min={values.dateOfEvent || getMinDateOfEvent()}
               value={values.endDateOfEvent || values.dateOfEvent || ""}
-              onChange={(e) => onChange("endDateOfEvent", e.target.value)}
-              style={{ color: "#171717" }}
-              className={`${FIELD_INPUT_CLASS} cursor-pointer px-3`}
+              minDate={minEndDate}
+              onChange={(next) => onChange("endDateOfEvent", next)}
+              placeholder="Pick end date"
+              aria-label="End date of event"
               required
             />
           </div>
 
-          <div className="space-y-1.5 sm:col-span-6">
-            <label className="block text-xs font-semibold text-neutral-800">
-              Time of Event (Start to End) <span className="text-red-500">*</span>
-            </label>
-            <div className="flex items-center gap-2">
-              <Input
-                type="time"
-                name="timeOfEventStart"
-                value={timeStart}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-                style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
-                required
-              />
-              <span className="text-xs text-neutral-500 font-medium">to</span>
-              <Input
-                type="time"
-                name="timeOfEventEnd"
-                value={timeEnd}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-                style={{ color: "#171717" }}
-                className={`${FIELD_INPUT_CLASS} cursor-pointer px-3 w-full`}
-                required
-              />
-            </div>
-            <input type="hidden" name="timeOfEvent" value={values.timeOfEvent} />
-          </div>
         </div>
+
+        <EventTimeFields
+          start={startParts}
+          end={endParts}
+          onStartHour={(hour) => updateStart(withHour(startParts, hour))}
+          onStartMinute={(minute) => updateStart({ ...startParts, minute })}
+          onStartPeriod={(period) => updateStart(withPeriod(startParts, period))}
+          onEndHour={(hour) => updateEnd(withHour(endParts, hour))}
+          onEndMinute={(minute) => updateEnd({ ...endParts, minute })}
+          onEndPeriod={(period) => updateEnd(withPeriod(endParts, period))}
+        />
+        <input type="hidden" name="timeOfEventStart" value={format24(startParts)} required />
+        <input type="hidden" name="timeOfEventEnd" value={format24(endParts)} required />
+        <input
+          type="hidden"
+          name="timeOfEvent"
+          value={combineEventTime(format24(startParts), format24(endParts))}
+        />
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="space-y-1.5">

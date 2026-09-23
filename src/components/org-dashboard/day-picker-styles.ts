@@ -12,7 +12,7 @@ export const DAY_PICKER_STYLES = {
   month_grid: "w-full min-w-0 border-collapse",
   weekdays: "flex w-full mb-2 justify-between gap-0.5",
   weekday:
-    "text-[#94A3B8] rounded-md flex-1 min-w-0 max-w-10 font-semibold text-[11px] uppercase text-center",
+    "text-neutral-600 rounded-md flex-1 min-w-0 max-w-10 font-semibold text-[11px] uppercase text-center",
   week: "flex w-full mt-1.5 justify-between gap-0.5",
   day: "flex-1 min-w-0 max-w-10 aspect-square p-0 flex items-center justify-center relative",
   day_button:

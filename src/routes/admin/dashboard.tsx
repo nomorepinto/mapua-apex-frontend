@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { toastManager } from "@/components/ui/toast"
-import { layout } from "@/config"
+import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 import {
   useAdminAnnouncementsQuery,
@@ -47,6 +47,7 @@ import {
   useCreateAnnouncementMutation,
   useDeleteAnnouncementMutation,
   useUpdateAnnouncementMutation,
+  useOrganizationsQuery,
   useSignatoriesQuery,
 } from "@/hooks/use-admin"
 import {
@@ -75,6 +76,7 @@ const TYPE_FILTERS = [
 const ANNOUNCEMENT_MAX = 5000
 
 export function AdminOsaPanel() {
+  const [organizationId, setOrganizationId] = useState("")
   const [status, setStatus] = useState<"" | "pending" | "approved" | "denied" | "returned">("")
   const [activityType, setActivityType] = useState("")
   const [selectedKeys, setSelectedKeys] = useState<{
@@ -91,9 +93,11 @@ export function AdminOsaPanel() {
   const [deleteError, setDeleteError] = useState("")
 
   const signatoriesQuery = useSignatoriesQuery()
+  const organizationsQuery = useOrganizationsQuery()
   const submissionsQuery = useAdminSubmissionsQuery({
     status: status || undefined,
     activity_type: activityType || undefined,
+    organization_id: organizationId || undefined,
   })
   const announcementsQuery = useAdminAnnouncementsQuery()
   const detailQuery = useAdminSubmissionDetailQuery(
@@ -104,17 +108,33 @@ export function AdminOsaPanel() {
   const updateAnnouncement = useUpdateAnnouncementMutation()
   const deleteAnnouncement = useDeleteAnnouncementMutation()
 
-  const rows = useMemo(
+  const organizations = useMemo(
     () =>
-      (submissionsQuery.data || []).map((sub) =>
-        apiSubmissionToDashboardRow(sub, signatoriesQuery.data)
+      [...(organizationsQuery.data || [])].sort((left, right) =>
+        left.name.localeCompare(right.name, undefined, { sensitivity: "base" })
       ),
-    [submissionsQuery.data, signatoriesQuery.data]
+    [organizationsQuery.data]
   )
+  const rows = useMemo(() => {
+    const selectedOrganization = organizationId.replace(/^ORGANIZATION#/i, "")
+
+    return (submissionsQuery.data || [])
+      .filter((submission) => {
+        if (!selectedOrganization) return true
+        const submissionOrganization = (submission.organization_id || "").replace(
+          /^ORGANIZATION#/i,
+          ""
+        )
+        return submissionOrganization === selectedOrganization
+      })
+      .map((submission) =>
+        apiSubmissionToDashboardRow(submission, signatoriesQuery.data, organizations)
+      )
+  }, [organizationId, organizations, signatoriesQuery.data, submissionsQuery.data])
   const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data)
+    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data, organizations)
     : null
   const stepper = apiNotificationsToStepper(
     detailQuery.data?.notifications || [],
@@ -220,10 +240,10 @@ export function AdminOsaPanel() {
     <div className={layout.page}>
       <div className={cn(layout.container, layout.stack)}>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-neutral-900 sm:text-3xl">
+          <h1 className={layout.pageTitle}>
             Admin Panel — Office of Student Affairs
           </h1>
-          <p className="mt-1 text-xs font-normal text-neutral-500 sm:text-sm">
+          <p className={layout.pageSubtitle}>
             Global submissions and announcements across every organization.
           </p>
         </div>
@@ -233,10 +253,25 @@ export function AdminOsaPanel() {
             <div>
               <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
               <p className="text-xs text-neutral-500">
-                Filter by status or activity type, then open a row for the full SAAF record.
+                Filter by organization, status, or activity type, then open a row for the full SAAF record.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
+              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+                Organization
+                <select
+                  value={organizationId}
+                  onChange={(event) => setOrganizationId(event.target.value)}
+                  className="h-10 min-w-52 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                >
+                  <option value="">All organizations</option>
+                  {organizations.map((organization) => (
+                    <option key={organization.organization_id} value={organization.organization_id}>
+                      {organization.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
                 Status
                 <select
@@ -272,11 +307,12 @@ export function AdminOsaPanel() {
             </div>
           </div>
 
-          <div className="min-h-0 flex-1 overflow-x-auto">
-            <Table className="min-w-[28rem]">
+          <div className={cn("min-h-0 flex-1", layout.tableWrap)}>
+            <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Event</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Organization</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Type</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
                   <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
@@ -285,19 +321,19 @@ export function AdminOsaPanel() {
               <TableBody>
                 {submissionsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
                       Loading submissions…
                     </TableCell>
                   </TableRow>
                 ) : submissionsQuery.isError ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-rose-600">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-rose-600">
                       Could not load submissions.
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
                       No submissions match these filters.
                     </TableCell>
                   </TableRow>
@@ -306,15 +342,29 @@ export function AdminOsaPanel() {
                     <TableRow
                       key={`${row.event_id}:${row.submission_id}`}
                       className="cursor-pointer hover:bg-neutral-50"
+                      role="button"
+                      tabIndex={0}
                       onClick={() =>
                         setSelectedKeys({
                           eventId: row.event_id,
                           submissionId: row.submission_id,
                         })
                       }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          setSelectedKeys({
+                            eventId: row.event_id,
+                            submissionId: row.submission_id,
+                          })
+                        }
+                      }}
                     >
                       <TableCell className="text-sm font-semibold">
                         {row.activity_details.title}
+                      </TableCell>
+                      <TableCell className="text-sm text-neutral-700">
+                        {row.organization_name}
                       </TableCell>
                       <TableCell className="text-xs capitalize text-neutral-500">
                         {row.activity_classification}
@@ -344,8 +394,8 @@ export function AdminOsaPanel() {
               New announcement
             </Button>
           </div>
-          <div className="overflow-x-auto">
-            <Table className="min-w-[32rem]">
+          <div className={layout.tableWrap}>
+            <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Posted</TableHead>
@@ -376,7 +426,15 @@ export function AdminOsaPanel() {
                     <TableRow
                       key={announcement.sent_at}
                       className="cursor-pointer hover:bg-neutral-50"
+                      role="button"
+                      tabIndex={0}
                       onClick={() => openEdit(announcement)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault()
+                          openEdit(announcement)
+                        }
+                      }}
                     >
                       <TableCell className="whitespace-nowrap text-sm text-neutral-500">
                         {formatDisplayDateTime(announcement.sent_at)}
@@ -399,7 +457,7 @@ export function AdminOsaPanel() {
           if (!open) setSelectedKeys(null)
         }}
       >
-        <DialogPopup className="flex max-h-[90dvh] w-full max-w-3xl flex-col">
+        <DialogPopup className={cn(modal.dialog, "max-w-3xl")}>
           <DialogHeader>
             <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
             <DialogDescription>
@@ -416,6 +474,9 @@ export function AdminOsaPanel() {
             ) : selectedRow ? (
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
+                  <p>
+                    <span className="font-bold">Organization:</span> {selectedRow.organization_name}
+                  </p>
                   <p>
                     <span className="font-bold">Venue:</span> {selectedRow.activity_details.venue}
                   </p>
@@ -470,7 +531,7 @@ export function AdminOsaPanel() {
           }
         }}
       >
-        <DialogPopup className="w-full max-w-lg">
+        <DialogPopup className={modal.dialogMd}>
           <Form className="contents" onSubmit={handleCreate}>
             <DialogHeader>
               <DialogTitle>New announcement</DialogTitle>
@@ -517,7 +578,7 @@ export function AdminOsaPanel() {
           if (!open) closeEdit()
         }}
       >
-        <DialogPopup className="w-full max-w-lg">
+        <DialogPopup className={modal.dialogMd}>
           <Form className="contents" onSubmit={handleEdit}>
             <DialogHeader>
               <DialogTitle>Edit announcement</DialogTitle>

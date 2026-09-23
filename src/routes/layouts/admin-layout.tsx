@@ -1,4 +1,4 @@
-import { Building2Icon, HomeIcon, StampIcon, UsersIcon } from "lucide-react"
+import { Building2Icon, HomeIcon, StampIcon } from "lucide-react"
 import { Outlet } from "react-router"
 
 import { AuthGuard } from "@/components/auth/AuthGuard"
@@ -21,11 +21,6 @@ const ADMIN_NAV = [
     label: "Signatories",
     to: "/admin/signatories",
     icon: StampIcon,
-  },
-  {
-    label: "About the Devs",
-    to: "/admin/about",
-    icon: UsersIcon,
   },
 ]
 

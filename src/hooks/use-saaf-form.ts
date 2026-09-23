@@ -7,6 +7,7 @@ import {
   createEmptyProponent,
   DEFAULT_SAAF_DRAFT,
 } from "@/components/submission/constants"
+import type { SaafStepIndex } from "@/components/submission/saaf-stepper"
 import type {
   BudgetItem,
   Proponent,
@@ -14,11 +15,17 @@ import type {
   SubmissionActionData,
 } from "@/components/submission/types"
 import {
+  getSaafStepIssue,
+  isStepHtmlValid,
+  STEP_INVALID_FOCUS_SELECTOR,
+} from "@/components/submission/validate-saaf-step"
+import {
   calculateRowTotal,
   sanitizeDecimalInput,
   sanitizeIntegerInput,
 } from "@/lib/numeric-input"
 import { saveProposalPdf } from "@/lib/save-proposal-pdf"
+import { EVENT_DATE_TOO_SOON_MESSAGE, minEventDateKey } from "@/lib/date-key"
 import { useOrgStore } from "@/stores/org-store"
 
 export function useSaafForm() {
@@ -34,6 +41,7 @@ export function useSaafForm() {
   const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [showConfirmClearModal, setShowConfirmClearModal] = useState(false)
   const [showErrors, setShowErrors] = useState(false)
+  const [stepError, setStepError] = useState<string | null>(null)
   const [successDismissed, setSuccessDismissed] = useState(false)
   const showSuccessModal = Boolean(fetcher.data?.success) && !successDismissed
   const submitError =
@@ -45,21 +53,32 @@ export function useSaafForm() {
 
   // Directly select draft from Zustand with fallback to default
   const saafDraft = useOrgStore((state) => state.saafDraft)
-  const draft: SaafDraft = saafDraft ?? DEFAULT_SAAF_DRAFT
+  const draft: SaafDraft = {
+    ...DEFAULT_SAAF_DRAFT,
+    ...(saafDraft ?? {}),
+    proponents: saafDraft?.proponents ?? DEFAULT_SAAF_DRAFT.proponents,
+    budgetItems: saafDraft?.budgetItems ?? DEFAULT_SAAF_DRAFT.budgetItems,
+    departmentValues:
+      saafDraft?.departmentValues ?? DEFAULT_SAAF_DRAFT.departmentValues,
+  }
 
   useScrollToTop()
 
   // Ensure submission date is always locked to today's date upon opening
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0]
-    const current = useOrgStore.getState().saafDraft ?? DEFAULT_SAAF_DRAFT
-    const needsDateUpdate = current.proponents.some(
+    const current = {
+      ...DEFAULT_SAAF_DRAFT,
+      ...(useOrgStore.getState().saafDraft ?? {}),
+    }
+    const proponents = current.proponents ?? DEFAULT_SAAF_DRAFT.proponents
+    const needsDateUpdate = proponents.some(
       (p) => p.dateOfSubmission !== today
     )
 
     if (needsDateUpdate) {
       useOrgStore.getState().patchSaafDraft({
-        proponents: current.proponents.map((p) => ({
+        proponents: proponents.map((p) => ({
           ...p,
           dateOfSubmission: today,
         })),
@@ -172,6 +191,43 @@ export function useSaafForm() {
     0
   )
 
+  const revealInvalidFields = useCallback((root: ParentNode) => {
+    setShowErrors(false)
+    requestAnimationFrame(() => {
+      setShowErrors(true)
+    })
+    window.setTimeout(() => {
+      const firstInvalid = root.querySelector<HTMLElement>(
+        STEP_INVALID_FOCUS_SELECTOR
+      )
+      if (firstInvalid) {
+        firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
+        firstInvalid.focus?.()
+      }
+    }, 50)
+  }, [])
+
+  const validateStep = useCallback(
+    (step: SaafStepIndex, form: HTMLFormElement | null): boolean => {
+      if (!form) return false
+
+      const panel = form.querySelector<HTMLElement>(`[data-saaf-step="${step}"]`)
+      const htmlValid = panel ? isStepHtmlValid(panel) : false
+      const issue = getSaafStepIssue(step, draft)
+
+      if (!htmlValid || issue) {
+        revealInvalidFields(panel ?? form)
+        setStepError(issue ?? "Fill in every required field on this step before continuing.")
+        return false
+      }
+
+      setStepError(null)
+      setShowErrors(false)
+      return true
+    },
+    [draft, revealInvalidFields]
+  )
+
   // Validates standard HTML5 constraints and specific custom form rules
   const validateForm = useCallback(
     (form: HTMLFormElement | null): boolean => {
@@ -190,41 +246,16 @@ export function useSaafForm() {
       )
 
       if (!isHtmlValid || !hasMission || !hasDepartments) {
-        setShowErrors(false)
-        requestAnimationFrame(() => {
-          setShowErrors(true)
-        })
-        setTimeout(() => {
-          const firstInvalid = form.querySelector<HTMLElement>(
-            ":invalid, .saaf-glow-invalid"
-          )
-          if (firstInvalid) {
-            firstInvalid.scrollIntoView({ behavior: "smooth", block: "center" })
-            firstInvalid.focus?.()
-          }
-        }, 50)
+        revealInvalidFields(form)
         return false
       }
 
-      // 3. Date buffer validation (at least 11 days after submission)
-      const submissionDateStr =
-        draft.proponents?.[0]?.dateOfSubmission ||
-        new Date().toISOString().split("T")[0]
+      // 3. Date buffer validation (at least 10 days from today)
       const eventDateStr = draft.dateOfEvent
-
-      if (submissionDateStr && eventDateStr) {
-        const sDate = new Date(submissionDateStr)
-        const eDate = new Date(eventDateStr)
-        const diffTime = eDate.getTime() - sDate.getTime()
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-        if (diffDays <= 10) {
-          setShowErrors(true)
-          alert(
-            "The date of event must be at least 11 days after the date of submission."
-          )
-          return false
-        }
+      if (eventDateStr && eventDateStr < minEventDateKey()) {
+        setShowErrors(true)
+        alert(EVENT_DATE_TOO_SOON_MESSAGE)
+        return false
       }
 
       // 4. Activity details minimum length validations
@@ -280,6 +311,7 @@ export function useSaafForm() {
       }
 
       setShowErrors(false)
+      setStepError(null)
       return true
     },
     [
@@ -296,6 +328,7 @@ export function useSaafForm() {
       draft.peoExplanation,
       draft.sdgExplanation,
       draft.totalOrgMembers,
+      revealInvalidFields,
     ]
   )
 
@@ -311,6 +344,7 @@ export function useSaafForm() {
       ],
     })
     setShowErrors(false)
+    setStepError(null)
     setShowConfirmClearModal(false)
   }, [])
 
@@ -362,6 +396,7 @@ export function useSaafForm() {
     showConfirmClearModal,
     showSuccessModal,
     showErrors,
+    stepError,
     submitError,
     grandTotal,
     reserveFacilities,
@@ -378,9 +413,11 @@ export function useSaafForm() {
     handleInitiateSubmit,
     handleConfirmProceed,
     handleSavePdf,
+    validateStep,
     setShowConfirmModal,
     setShowConfirmClearModal,
     setShowErrors,
+    setStepError,
     setSuccessDismissed,
   }
 }

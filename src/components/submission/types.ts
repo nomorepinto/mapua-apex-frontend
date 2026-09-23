@@ -41,6 +41,12 @@ export interface SaafDraft {
   timeOfEvent: string
   timeOfEventStart?: string
   timeOfEventEnd?: string
+  timeOfEventStartHour?: string
+  timeOfEventStartMinute?: string
+  timeOfEventStartPeriod?: string
+  timeOfEventEndHour?: string
+  timeOfEventEndMinute?: string
+  timeOfEventEndPeriod?: string
   mission1: boolean
   mission2: boolean
   mission3: boolean

@@ -190,9 +190,9 @@
   --muted-foreground: color-mix(in srgb, var(--color-neutral-500) 90%, var(--color-black));
   --popover: var(--color-white);
   --popover-foreground: var(--color-neutral-800);
-  --primary: var(--color-neutral-800);
+  --primary: #8B0000;
   --primary-foreground: var(--color-neutral-50);
-  --ring: var(--color-neutral-400);
+  --ring: color-mix(in srgb, #8B0000 55%, white);
   --secondary: --alpha(var(--color-black) / 4%);
   --secondary-foreground: var(--color-neutral-800);
   --chart-1: var(--color-orange-600);
@@ -264,9 +264,18 @@
   }
 
   html {
-    @apply font-sans font-mono;
+    @apply font-sans;
     color-scheme: only light;
     overflow-x: clip;
+  }
+
+  ::selection {
+    background: #8B0000;
+    color: #fff8e7;
+  }
+
+  :focus-visible {
+    outline-color: #8B0000;
   }
 
   body {

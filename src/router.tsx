@@ -6,7 +6,11 @@ import { SignatoriesLayout } from "@/routes/layouts/signatories-layout"
 import { StudentsLayout } from "@/routes/layouts/students-layout"
 
 function RouteFallback() {
-  return <div className={layout.fallback} />
+  return (
+    <div className={layout.fallback} role="status" aria-live="polite">
+      Loading page…
+    </div>
+  )
 }
 
 function PassThroughLayout() {

@@ -1,4 +1,4 @@
-import { HomeIcon, UsersIcon } from "lucide-react"
+import { HomeIcon } from "lucide-react"
 import { Outlet } from "react-router"
 
 import { AppSidebar } from "@/components/layout/app-sidebar"
@@ -11,11 +11,6 @@ const SIGNATORY_NAV = [
     to: "/signatories/dashboard",
     icon: HomeIcon,
     end: true,
-  },
-  {
-    label: "About the Devs",
-    to: "/signatories/about",
-    icon: UsersIcon,
   },
 ]
 

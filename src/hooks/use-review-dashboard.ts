@@ -87,7 +87,7 @@ export function useReviewDashboard() {
     async (
       action: "approve" | "return" | "reject" | "defer",
       _activityId: string,
-      details?: { title: string; message: string }
+      details?: { comment: string }
     ) => {
       if (!activeKeys) return
       if (action === "defer") {
@@ -100,10 +100,7 @@ export function useReviewDashboard() {
         if (action === "approve") {
           await approveMutation.mutateAsync(activeKeys)
         } else {
-          const comment = [details?.title, details?.message]
-            .map((part) => part?.trim())
-            .filter(Boolean)
-            .join(" — ")
+          const comment = details?.comment?.trim() ?? ""
           if (!comment) {
             setActionError(
               action === "reject"
@@ -123,6 +120,7 @@ export function useReviewDashboard() {
         setActionError(
           error instanceof Error ? error.message : "Could not update this submission."
         )
+        throw error
       }
     },
     [activeKeys, approveMutation, denyMutation, handleModalClose, returnMutation]

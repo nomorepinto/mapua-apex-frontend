@@ -36,7 +36,7 @@ export function Reservation() {
 
   return (
     <div className={cn("relative", layout.page)}>
-      <div className={cn(layout.container, "!max-w-6xl space-y-7")}>
+      <div className={cn(layout.container, layout.stack)}>
         <FormPageHeader
           title="Reservation of Facilities"
           subtitle="Academic Term: 2026 - 2027 • Unified Activity Proposal Application"

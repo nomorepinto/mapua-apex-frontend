@@ -3,14 +3,12 @@ import { Link } from "react-router"
 import {
   Megaphone,
   AlertTriangle,
-  FileText,
-  Folder,
-  Cloud,
   ArrowUpRight,
   ChevronDown,
   ChevronUp,
   CheckSquare,
   Bell,
+  RotateCcw,
 } from "lucide-react"
 
 import {
@@ -23,11 +21,13 @@ import {
 } from "@/components/ui/table"
 
 import { SubmissionTrackerModal } from "@/components/org/SubmissionTrackerModal"
+import { ReviewNoticeModal } from "@/components/org/ReviewNoticeModal"
 import { layout } from "@/config"
 import {
   useCurrentOrganizationQuery,
   useOrgAnnouncementsQuery,
   useOrgDeadlinesQuery,
+  useOrgReviewNoticesQuery,
   useOrgSubmissionsQuery,
 } from "@/hooks/use-submissions"
 import {
@@ -35,6 +35,7 @@ import {
   apiSubmissionToDashboardRow,
   formatDisplayDateTime,
   formatDocumentId,
+  type ReviewNotice,
 } from "@/lib/dynamodb-adapters"
 import { cn } from "@/lib/utils"
 
@@ -46,6 +47,7 @@ export function OrgDashboard() {
   } | null>(null)
   const [isRemindersExpanded, setIsRemindersExpanded] = useState(true)
   const [dismissedReminderIds, setDismissedReminderIds] = useState<string[]>([])
+  const [selectedNotice, setSelectedNotice] = useState<ReviewNotice | null>(null)
 
   const organizationQuery = useCurrentOrganizationQuery()
   const submissionsQuery = useOrgSubmissionsQuery()
@@ -65,6 +67,13 @@ export function OrgDashboard() {
     })
   }, [submissionsQuery.data, organizationQuery.data?.signatories])
   const announcements = announcementsQuery.data || []
+  const reviewNoticesQuery = useOrgReviewNoticesQuery(
+    submissionsQuery.data || [],
+    organizationQuery.data?.signatories
+  )
+  const reviewNotices = reviewNoticesQuery.notices
+  const deniedNotices = reviewNotices.filter((notice) => notice.notifType === "denied")
+  const returnedNotices = reviewNotices.filter((notice) => notice.notifType === "returned")
 
   const reminders = useMemo(() => {
     const items = apiDeadlinesToReminders(
@@ -104,89 +113,41 @@ export function OrgDashboard() {
 
   return (
     <div className={cn(layout.page, layout.stack)}>
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1E293B] tracking-tight">
+          <h1 className={layout.pageTitle}>
             {organizationQuery.data?.name || "Organization"} Dashboard
           </h1>
-          <p className="text-sm text-[#64748B] mt-0.5">
-            Overview of active submittals, official announcements, and reminders timeline
+          <p className={layout.pageSubtitle}>
+            Track proposals, then catch announcements and reminders
           </p>
         </div>
 
         <Link
           to="/students/submissions"
-          className="bg-[#1E293B] text-white px-5 py-2.5 rounded-xl text-sm font-semibold hover:bg-neutral-800 transition-all shadow-xs cursor-pointer inline-flex items-center justify-center gap-2 self-start sm:self-auto shrink-0"
+          className="inline-flex min-h-11 shrink-0 items-center justify-center gap-2 self-start rounded-xl bg-[#8B0000] px-5 py-2.5 text-sm font-semibold text-white shadow-xs transition-all hover:bg-[#6B0000] sm:self-auto"
         >
           <span>Create Project/Event</span>
           <ArrowUpRight className="w-4 h-4" />
         </Link>
       </div>
 
-      <div className={cn("grid grid-cols-1 items-start xl:grid-cols-3", layout.gap)}>
+      <div className={cn(layout.grid3, layout.gap)}>
         <div className={cn("xl:col-span-2", layout.stack)}>
-          <div className={layout.section}>
-            <div className="flex items-center justify-between mb-5">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-red-50 text-[#D9291C] flex items-center justify-center">
-                  <Megaphone className="w-4 h-4" />
-                </div>
-                <div>
-                  <h2 className="text-lg sm:text-xl font-bold text-[#1E293B]">
-                    Announcements & Bulletins
-                  </h2>
-                  <p className="text-xs text-[#94A3B8]">
-                    Important notices and policy updates from administration
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {announcementsQuery.isLoading ? (
-              <div className="rounded-xl bg-[#F8FAFC] p-8 text-center text-xs font-semibold text-[#94A3B8]">
-                Loading announcements…
-              </div>
-            ) : announcementsQuery.isError ? (
-              <div className="rounded-xl bg-red-50 p-8 text-center text-xs font-semibold text-[#D9291C]">
-                Could not load announcements.
-              </div>
-            ) : announcements.length === 0 ? (
-              <div className="rounded-xl bg-[#F8FAFC] p-8 text-center text-xs font-semibold text-[#94A3B8]">
-                No announcements at this time
-              </div>
-            ) : (
-              <div className="max-h-[22rem] space-y-3 overflow-y-auto pr-1 scrollbar-thin">
-                {announcements.map((announcement) => (
-                  <article
-                    key={announcement.sent_at}
-                    className="rounded-xl bg-[#F8FAFC] px-4 py-3.5"
-                  >
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#94A3B8]">
-                      {formatDisplayDateTime(announcement.sent_at)}
-                    </p>
-                    <p className="mt-1.5 whitespace-pre-wrap text-sm leading-relaxed text-[#1E293B]">
-                      {announcement.content}
-                    </p>
-                  </article>
-                ))}
-              </div>
-            )}
-          </div>
-
           <div className={cn(layout.section, "overflow-hidden")}>
             <div className="mb-5">
               <h2 className="text-lg sm:text-xl font-bold text-[#1E293B]">
                 Project Status & Submissions
               </h2>
-              <p className="text-xs text-[#94A3B8]">
+              <p className="text-xs text-neutral-600">
                 Track current signatory routing and approval statuses
               </p>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className={layout.tableWrap}>
               <Table className="w-full text-left">
                 <TableHeader>
-                  <TableRow className="text-[#94A3B8] text-xs font-bold uppercase tracking-wider border-b border-neutral-200">
+                  <TableRow className="text-neutral-600 text-xs font-bold uppercase tracking-wider border-b border-neutral-200">
                     <TableHead className="pb-3 pr-4 font-bold">DOCUMENT ID</TableHead>
                     <TableHead className="pb-3 pr-6 font-bold">EVENT TITLE</TableHead>
                     <TableHead className="pb-3 pr-4 font-bold">CLASSIFICATION</TableHead>
@@ -197,7 +158,7 @@ export function OrgDashboard() {
                 <TableBody className="divide-y divide-neutral-50">
                   {submissionsQuery.isLoading ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="py-12 text-center text-sm font-semibold text-[#94A3B8]">
+                      <TableCell colSpan={5} className="py-12 text-center text-sm font-semibold text-neutral-600">
                         Loading submissions…
                       </TableCell>
                     </TableRow>
@@ -212,12 +173,12 @@ export function OrgDashboard() {
                       <TableCell colSpan={5} className="py-12 text-center">
                         <div className="flex flex-col items-center justify-center gap-2">
                           <p className="text-sm font-bold text-[#1E293B]">No submissions yet</p>
-                          <p className="text-xs text-[#94A3B8] mb-2">
+                          <p className="text-xs text-neutral-600 mb-2">
                             Create your first activity proposal to start tracking approvals.
                           </p>
                           <Link
                             to="/students/submissions"
-                            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#D9291C] hover:bg-[#B81F14] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
+                            className="inline-flex items-center gap-1.5 rounded-xl bg-[#8B0000] px-4 py-2 text-xs font-bold text-white shadow-xs transition-all hover:bg-[#6B0000]"
                           >
                             <span>+ Create Project / Event</span>
                           </Link>
@@ -228,8 +189,16 @@ export function OrgDashboard() {
                     submissions.map((sub) => (
                       <TableRow
                         key={`${sub.event_id}:${sub.submission_id}`}
-                        className="hover:bg-neutral-50/80 transition-colors cursor-pointer group"
+                        className="group cursor-pointer transition-colors hover:bg-neutral-50/80"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => openTracker(sub.event_id, sub.submission_id)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault()
+                            openTracker(sub.event_id, sub.submission_id)
+                          }
+                        }}
                       >
                         <TableCell
                           className="py-3.5 pr-4 font-mono text-xs text-[#1E293B] font-bold whitespace-nowrap group-hover:text-[#D9291C]"
@@ -267,36 +236,48 @@ export function OrgDashboard() {
           </div>
 
           <div className={layout.section}>
-            <h2 className="text-base font-bold text-[#1E293B] mb-4">Resource Quick Links</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <button
-                type="button"
-                className="flex items-center gap-3 text-left cursor-pointer group hover:bg-neutral-50 p-2 rounded-xl transition-colors"
-              >
-                <FileText className="w-5 h-5 text-neutral-400 shrink-0 group-hover:text-[#3B82F6] transition-colors" />
-                <span className="text-xs sm:text-sm font-semibold text-[#64748B] group-hover:text-[#1E293B] transition-colors">
-                  Official Templates
-                </span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-3 text-left cursor-pointer group hover:bg-neutral-50 p-2 rounded-xl transition-colors"
-              >
-                <Folder className="w-5 h-5 text-neutral-400 shrink-0 group-hover:text-[#F59E0B] transition-colors" />
-                <span className="text-xs sm:text-sm font-semibold text-[#64748B] group-hover:text-[#1E293B] transition-colors">
-                  Governance and Documentation
-                </span>
-              </button>
-              <button
-                type="button"
-                className="flex items-center gap-3 text-left cursor-pointer group hover:bg-neutral-50 p-2 rounded-xl transition-colors"
-              >
-                <Cloud className="w-5 h-5 text-neutral-400 shrink-0 group-hover:text-[#10B981] transition-colors" />
-                <span className="text-xs sm:text-sm font-semibold text-[#64748B] group-hover:text-[#1E293B] transition-colors">
-                  Shared Drive
-                </span>
-              </button>
+            <div className="mb-4 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-red-50 text-[#8B0000]">
+                <Megaphone className="h-4 w-4" />
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-[#1E293B]">
+                  Announcements
+                </h2>
+                <p className="text-xs text-neutral-600">
+                  Notices from administration
+                </p>
+              </div>
             </div>
+            {announcementsQuery.isLoading ? (
+              <p className="rounded-xl bg-neutral-50 p-4 text-center text-sm font-medium text-neutral-600">
+                Loading announcements…
+              </p>
+            ) : announcementsQuery.isError ? (
+              <p className="rounded-xl bg-red-50 p-4 text-center text-sm font-medium text-rose-700">
+                Could not load announcements.
+              </p>
+            ) : announcements.length === 0 ? (
+              <p className="rounded-xl bg-neutral-50 p-4 text-center text-sm font-medium text-neutral-600">
+                No announcements at this time.
+              </p>
+            ) : (
+              <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
+                {announcements.map((announcement) => (
+                  <article
+                    key={announcement.sent_at}
+                    className="rounded-xl bg-neutral-50 px-3 py-3"
+                  >
+                    <p className="text-xs font-semibold text-neutral-600">
+                      {formatDisplayDateTime(announcement.sent_at)}
+                    </p>
+                    <p className="mt-1 whitespace-pre-wrap text-sm leading-relaxed text-[#1E293B]">
+                      {announcement.content}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
@@ -314,40 +295,116 @@ export function OrgDashboard() {
                   <h2 className="text-base font-bold text-[#1E293B] group-hover:text-[#D9291C] transition-colors">
                     Timeline Reminders
                   </h2>
-                  <p className="text-[11px] text-[#94A3B8]">Institutional action items timeline</p>
+                  <p className="text-[11px] text-neutral-600">Institutional action items timeline</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {reminders.length > 0 && (
+                {reminders.length + reviewNotices.length > 0 && (
                   <span className="bg-red-50 text-[#D9291C] text-[10px] font-extrabold px-2 py-0.5 rounded-lg border border-red-200/60">
-                    {reminders.length}
+                    {reminders.length + reviewNotices.length}
                   </span>
                 )}
                 {isRemindersExpanded ? (
-                  <ChevronUp className="w-5 h-5 text-[#94A3B8] group-hover:text-[#1E293B] transition-colors" />
+                  <ChevronUp className="w-5 h-5 text-neutral-600 group-hover:text-[#1E293B] transition-colors" />
                 ) : (
-                  <ChevronDown className="w-5 h-5 text-[#94A3B8] group-hover:text-[#1E293B] transition-colors" />
+                  <ChevronDown className="w-5 h-5 text-neutral-600 group-hover:text-[#1E293B] transition-colors" />
                 )}
               </div>
             </div>
 
             {isRemindersExpanded && (
               <div className="mt-4 pt-3 border-t border-neutral-200 max-h-[560px] overflow-y-auto pr-2 scrollbar-thin">
-                {deadlinesQuery.isLoading ? (
-                  <div className="p-8 text-center text-xs text-[#94A3B8]">Loading deadlines…</div>
-                ) : reminders.length === 0 ? (
-                  <div className="p-8 text-center text-xs text-[#94A3B8] bg-[#F8FAFC] rounded-xl border border-neutral-200 flex flex-col items-center justify-center gap-1.5">
+                {deadlinesQuery.isLoading || reviewNoticesQuery.isLoading ? (
+                  <div className="p-8 text-center text-sm text-neutral-500">Loading reminders…</div>
+                ) : reminders.length === 0 && reviewNotices.length === 0 ? (
+                  <div className={cn(layout.empty, "gap-1.5 border border-neutral-200")}>
                     <Bell className="w-6 h-6 text-neutral-300 mb-1" />
                     <p className="font-bold text-[#1E293B]">No reminders at this time</p>
-                    <p className="text-[11px] text-[#64748B]">
-                      Upcoming action items and deadline alerts will appear here.
+                    <p className="text-sm text-neutral-500">
+                      Upcoming deadlines and review comments will appear here.
                     </p>
                   </div>
                 ) : (
                   <>
-                    {importantReminders.length > 0 && (
+                    {deniedNotices.length > 0 && (
                       <div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-3 h-3 rounded-full border-2 border-red-500 bg-white flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                          </div>
+                          <h3 className="text-lg font-light text-[#D9291C] font-sans tracking-wide">
+                            Denied
+                          </h3>
+                        </div>
+                        <div className="border-l-2 border-red-300 ml-1.5 pl-4 space-y-4">
+                          {deniedNotices.map((notice) => (
+                            <button
+                              key={notice.id}
+                              type="button"
+                              onClick={() => setSelectedNotice(notice)}
+                              className="relative flex min-h-11 w-full items-start gap-3 rounded-xl p-1 text-left transition-colors hover:bg-red-50/60"
+                            >
+                              <div className="absolute -left-[27px] top-0.5 w-6 h-6 rounded-md bg-white border border-red-300 flex items-center justify-center text-red-600 shadow-2xs">
+                                <AlertTriangle className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1 pl-1">
+                                <span className="mb-0.5 block text-sm text-neutral-500">
+                                  {notice.dateStr}
+                                </span>
+                                <h4 className="text-sm font-bold uppercase tracking-tight text-[#1E293B]">
+                                  {notice.title}
+                                </h4>
+                                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-red-600">
+                                  {notice.comment}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {returnedNotices.length > 0 && (
+                      <div className={deniedNotices.length > 0 ? "pt-4" : undefined}>
+                        <div className="flex items-center gap-2 mb-4">
+                          <div className="w-3 h-3 rounded-full border-2 border-amber-500 bg-white flex items-center justify-center">
+                            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+                          </div>
+                          <h3 className="text-lg font-light text-amber-800 font-sans tracking-wide">
+                            Returned
+                          </h3>
+                        </div>
+                        <div className="border-l-2 border-amber-300 ml-1.5 pl-4 space-y-4">
+                          {returnedNotices.map((notice) => (
+                            <button
+                              key={notice.id}
+                              type="button"
+                              onClick={() => setSelectedNotice(notice)}
+                              className="relative flex min-h-11 w-full items-start gap-3 rounded-xl p-1 text-left transition-colors hover:bg-amber-50/60"
+                            >
+                              <div className="absolute -left-[27px] top-0.5 w-6 h-6 rounded-md bg-white border border-amber-300 flex items-center justify-center text-amber-700 shadow-2xs">
+                                <RotateCcw className="w-3.5 h-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1 pl-1">
+                                <span className="mb-0.5 block text-sm text-neutral-500">
+                                  {notice.dateStr}
+                                </span>
+                                <h4 className="text-sm font-bold uppercase tracking-tight text-[#1E293B]">
+                                  {notice.title}
+                                </h4>
+                                <p className="mt-1 line-clamp-2 text-sm font-semibold leading-snug text-amber-800">
+                                  {notice.comment}
+                                </p>
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {importantReminders.length > 0 && (
+                      <div className={reviewNotices.length > 0 ? "pt-4" : undefined}>
                         <div className="flex items-center gap-2 mb-4">
                           <div className="w-3 h-3 rounded-full border-2 border-red-500 bg-white flex items-center justify-center">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-500"></div>
@@ -386,7 +443,7 @@ export function OrgDashboard() {
                                 onClick={() =>
                                   setDismissedReminderIds((prev) => [...prev, item.id])
                                 }
-                                className="bg-neutral-200/80 hover:bg-neutral-300 text-[#475569] font-bold text-[11px] px-3 py-1 rounded transition-all cursor-pointer shrink-0 mt-1"
+                                className="mt-1 min-h-11 shrink-0 cursor-pointer rounded bg-neutral-200/80 px-3 py-1 text-[11px] font-bold text-[#475569] transition-all hover:bg-neutral-300"
                               >
                                 Dismiss
                               </button>
@@ -436,7 +493,7 @@ export function OrgDashboard() {
                                 onClick={() =>
                                   setDismissedReminderIds((prev) => [...prev, item.id])
                                 }
-                                className="bg-neutral-200/80 hover:bg-neutral-300 text-[#475569] font-bold text-[11px] px-3 py-1 rounded transition-all cursor-pointer shrink-0 mt-1"
+                                className="mt-1 min-h-11 shrink-0 cursor-pointer rounded bg-neutral-200/80 px-3 py-1 text-[11px] font-bold text-[#475569] transition-all hover:bg-neutral-300"
                               >
                                 Dismiss
                               </button>
@@ -461,6 +518,10 @@ export function OrgDashboard() {
         }}
         eventId={selectedKeys?.eventId}
         submissionId={selectedKeys?.submissionId}
+      />
+      <ReviewNoticeModal
+        notice={selectedNotice}
+        onClose={() => setSelectedNotice(null)}
       />
     </div>
   )

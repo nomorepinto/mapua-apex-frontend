@@ -1,11 +1,13 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useMemo } from "react"
+import { useMutation, useQuery, useQueryClient, useQueries } from "@tanstack/react-query"
 import { apiClient } from "@/lib/api-client"
-import type {
-  ApiSubmission,
-  ApiNotification,
-  ApiDeadline,
-  ApiOrganization,
-  ApiAnnouncement,
+import {
+  apiNotificationsToReviewNotices,
+  type ApiSubmission,
+  type ApiNotification,
+  type ApiDeadline,
+  type ApiOrganization,
+  type ApiAnnouncement,
 } from "@/lib/dynamodb-adapters"
 
 export const SUBMISSION_KEYS = {
@@ -65,6 +67,51 @@ export function useSubmissionNotificationsQuery(eventId?: string, submissionId?:
     },
     enabled: Boolean(eventId && submissionId),
   })
+}
+
+/**
+ * Denied and returned review comments for papers in the org's submission list.
+ */
+export function useOrgReviewNoticesQuery(
+  submissions: ApiSubmission[],
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+) {
+  const reviewPapers = useMemo(
+    () =>
+      submissions.filter(
+        (submission) => submission.status === "denied" || submission.status === "returned"
+      ),
+    [submissions]
+  )
+
+  const queries = useQueries({
+    queries: reviewPapers.map((submission) => ({
+      queryKey: SUBMISSION_KEYS.notifications(submission.event_id, submission.submission_id),
+      queryFn: async () => {
+        const res = await apiClient.get<{ data: ApiNotification[] }>(
+          `/students/events/${submission.event_id}/submissions/${submission.submission_id}/notifications`
+        )
+        return res.data || []
+      },
+    })),
+  })
+
+  const notices = useMemo(() => {
+    const notificationsBySubmission = new Map<string, ApiNotification[]>()
+    reviewPapers.forEach((submission, index) => {
+      notificationsBySubmission.set(submission.submission_id, queries[index]?.data || [])
+    })
+    return apiNotificationsToReviewNotices(
+      reviewPapers,
+      notificationsBySubmission,
+      orgSignatories
+    )
+  }, [orgSignatories, queries, reviewPapers])
+
+  return {
+    notices,
+    isLoading: queries.some((query) => query.isPending),
+  }
 }
 
 /**

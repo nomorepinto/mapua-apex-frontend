@@ -1,4 +1,8 @@
 import { useNewEventForm } from "@/hooks/use-new-event-form"
+import { DatePicker } from "@/components/ui/date-picker"
+import { layout, modal } from "@/config"
+import { minEventDateKey } from "@/lib/date-key"
+import { cn } from "@/lib/utils"
 
 interface NewEventModalProps {
   isOpen: boolean
@@ -13,28 +17,27 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center sm:p-6 bg-black/40 backdrop-blur-sm font-sans">
-      <div className="flex h-[90dvh] w-full flex-col overflow-hidden rounded-t-2xl bg-[#F2F2F7] shadow-xl sm:h-auto sm:max-w-md sm:rounded-2xl">
-        
-        <div className="flex items-center justify-between p-4 bg-white border-b border-neutral-200/60 sticky top-0 z-10">
-          <button 
+    <div className={cn(modal.overlay, "z-[60] font-sans")}>
+      <div className={cn(modal.shell, modal.sm, "h-[90dvh] bg-[#F2F2F7] sm:h-auto")}>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-neutral-200/60 bg-white p-4">
+          <button
             onClick={onClose}
             type="button"
-            className="text-[17px] text-[#D9291C] hover:opacity-70 transition-opacity"
+            className="min-h-11 px-1 text-[17px] text-[#D9291C] transition-opacity hover:opacity-70"
           >
             Cancel
           </button>
           <h2 className="text-[17px] font-semibold text-black">New Event</h2>
-          <button 
+          <button
             onClick={handleSubmit}
             disabled={!canSubmit}
-            className="text-[17px] font-semibold text-[#D9291C] hover:opacity-70 transition-opacity disabled:opacity-30 disabled:cursor-not-allowed"
+            className="min-h-11 px-1 text-[17px] font-semibold text-[#D9291C] transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-30"
           >
             Add
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-6">
+        <div className={cn("flex flex-1 flex-col overflow-y-auto p-4", layout.stack, "!gap-6")}>
           <div className="bg-white rounded-xl overflow-hidden">
             <input 
               type="text" 
@@ -48,14 +51,18 @@ export function NewEventModal({ isOpen, onClose, defaultDate }: NewEventModalPro
           </div>
 
           <div className="bg-white rounded-xl overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex items-center justify-between gap-3 px-4 py-3">
               <span className="text-[17px] text-black">Date</span>
-              <input 
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="bg-neutral-100 rounded-md text-[17px] text-black px-3 py-1.5 focus:outline-none"
-              />
+              <div className="w-[11.5rem]">
+                <DatePicker
+                  value={date}
+                  onChange={setDate}
+                  minDate={minEventDateKey()}
+                  placeholder="Pick a date"
+                  aria-label="Event date"
+                  size="sm"
+                />
+              </div>
             </div>
           </div>
         </div>
