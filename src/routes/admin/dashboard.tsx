@@ -115,17 +115,26 @@ export function AdminOsaPanel() {
       ),
     [organizationsQuery.data]
   )
-  const rows = useMemo(
-    () =>
-      (submissionsQuery.data || []).map((sub) =>
-        apiSubmissionToDashboardRow(sub, signatoriesQuery.data)
-      ),
-    [submissionsQuery.data, signatoriesQuery.data]
-  )
+  const rows = useMemo(() => {
+    const selectedOrganization = organizationId.replace(/^ORGANIZATION#/i, "")
+
+    return (submissionsQuery.data || [])
+      .filter((submission) => {
+        if (!selectedOrganization) return true
+        const submissionOrganization = (submission.organization_id || "").replace(
+          /^ORGANIZATION#/i,
+          ""
+        )
+        return submissionOrganization === selectedOrganization
+      })
+      .map((submission) =>
+        apiSubmissionToDashboardRow(submission, signatoriesQuery.data, organizations)
+      )
+  }, [organizationId, organizations, signatoriesQuery.data, submissionsQuery.data])
   const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data)
+    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data, organizations)
     : null
   const stepper = apiNotificationsToStepper(
     detailQuery.data?.notifications || [],
@@ -303,6 +312,7 @@ export function AdminOsaPanel() {
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
                   <TableHead className="text-xs font-bold uppercase">Event</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">Organization</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Type</TableHead>
                   <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
                   <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
@@ -311,19 +321,19 @@ export function AdminOsaPanel() {
               <TableBody>
                 {submissionsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
                       Loading submissions…
                     </TableCell>
                   </TableRow>
                 ) : submissionsQuery.isError ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-rose-600">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-rose-600">
                       Could not load submissions.
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={4} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
                       No submissions match these filters.
                     </TableCell>
                   </TableRow>
@@ -352,6 +362,9 @@ export function AdminOsaPanel() {
                     >
                       <TableCell className="text-sm font-semibold">
                         {row.activity_details.title}
+                      </TableCell>
+                      <TableCell className="text-sm text-neutral-700">
+                        {row.organization_name}
                       </TableCell>
                       <TableCell className="text-xs capitalize text-neutral-500">
                         {row.activity_classification}
@@ -461,6 +474,9 @@ export function AdminOsaPanel() {
             ) : selectedRow ? (
               <>
                 <div className="grid gap-3 sm:grid-cols-2">
+                  <p>
+                    <span className="font-bold">Organization:</span> {selectedRow.organization_name}
+                  </p>
                   <p>
                     <span className="font-bold">Venue:</span> {selectedRow.activity_details.venue}
                   </p>
