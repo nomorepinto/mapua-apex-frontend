@@ -1,11 +1,7 @@
 import { useMemo, useState, type FormEvent } from "react"
 import { CircleAlertIcon, PlusIcon } from "lucide-react"
 
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   AlertDialog,
   AlertDialogClose,
@@ -26,7 +22,12 @@ import {
   DialogPopup,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field"
 import { Form } from "@/components/ui/form"
 import {
   Table,
@@ -38,7 +39,7 @@ import {
 } from "@/components/ui/table"
 import { Textarea } from "@/components/ui/textarea"
 import { toastManager } from "@/components/ui/toast"
-import { layout, modal } from "@/config"
+import { brand, layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
 import {
   useAdminAnnouncementsQuery,
@@ -74,10 +75,16 @@ const TYPE_FILTERS = [
 ] as const
 
 const ANNOUNCEMENT_MAX = 5000
+const FILTER_LABEL_CLASS =
+  "flex w-full flex-col gap-1 text-xs font-bold text-neutral-500 sm:w-44"
+const FILTER_SELECT_CLASS =
+  "h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
 
 export function AdminOsaPanel() {
   const [organizationId, setOrganizationId] = useState("")
-  const [status, setStatus] = useState<"" | "pending" | "approved" | "denied" | "returned">("")
+  const [status, setStatus] = useState<
+    "" | "pending" | "approved" | "denied" | "returned"
+  >("")
   const [activityType, setActivityType] = useState("")
   const [selectedKeys, setSelectedKeys] = useState<{
     eventId: string
@@ -121,20 +128,32 @@ export function AdminOsaPanel() {
     return (submissionsQuery.data || [])
       .filter((submission) => {
         if (!selectedOrganization) return true
-        const submissionOrganization = (submission.organization_id || "").replace(
-          /^ORGANIZATION#/i,
-          ""
-        )
+        const submissionOrganization = (
+          submission.organization_id || ""
+        ).replace(/^ORGANIZATION#/i, "")
         return submissionOrganization === selectedOrganization
       })
       .map((submission) =>
-        apiSubmissionToDashboardRow(submission, signatoriesQuery.data, organizations)
+        apiSubmissionToDashboardRow(
+          submission,
+          signatoriesQuery.data,
+          organizations
+        )
       )
-  }, [organizationId, organizations, signatoriesQuery.data, submissionsQuery.data])
+  }, [
+    organizationId,
+    organizations,
+    signatoriesQuery.data,
+    submissionsQuery.data,
+  ])
   const announcements = announcementsQuery.data || []
 
   const selectedRow = detailQuery.data
-    ? apiSubmissionToDashboardRow(detailQuery.data, signatoriesQuery.data, organizations)
+    ? apiSubmissionToDashboardRow(
+        detailQuery.data,
+        signatoriesQuery.data,
+        organizations
+      )
     : null
   const stepper = apiNotificationsToStepper(
     detailQuery.data?.notifications || [],
@@ -188,7 +207,9 @@ export function AdminOsaPanel() {
       setCreateError("")
     } catch (error) {
       setCreateError(
-        error instanceof Error ? error.message : "Could not post this announcement."
+        error instanceof Error
+          ? error.message
+          : "Could not post this announcement."
       )
     }
   }
@@ -212,7 +233,9 @@ export function AdminOsaPanel() {
       closeEdit()
     } catch (error) {
       setEditError(
-        error instanceof Error ? error.message : "Could not save this announcement."
+        error instanceof Error
+          ? error.message
+          : "Could not save this announcement."
       )
     }
   }
@@ -231,7 +254,9 @@ export function AdminOsaPanel() {
     } catch (error) {
       setDeleteOpen(false)
       setDeleteError(
-        error instanceof Error ? error.message : "Could not delete this announcement."
+        error instanceof Error
+          ? error.message
+          : "Could not delete this announcement."
       )
     }
   }
@@ -249,57 +274,66 @@ export function AdminOsaPanel() {
         </div>
 
         <section className={layout.section}>
-          <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-              <h2 className="text-lg font-extrabold text-neutral-900">Submissions</h2>
+          <div className="mb-5 flex shrink-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 sm:max-w-sm">
+              <h2 className="text-lg font-extrabold text-neutral-900">
+                Submissions
+              </h2>
               <p className="text-xs text-neutral-500">
-                Filter by organization, status, or activity type, then open a row for the full SAAF record.
+                Filter by organization, status, or activity type, then open a
+                row for the full SAAF record.
               </p>
             </div>
-            <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
+            <div className="flex flex-col gap-3 sm:items-end">
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <label className={FILTER_LABEL_CLASS}>
+                  Status
+                  <select
+                    value={status}
+                    onChange={(event) =>
+                      setStatus(
+                        event.target.value as
+                          "" | "pending" | "approved" | "denied" | "returned"
+                      )
+                    }
+                    className={FILTER_SELECT_CLASS}
+                  >
+                    {STATUS_FILTERS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className={FILTER_LABEL_CLASS}>
+                  Activity type
+                  <select
+                    value={activityType}
+                    onChange={(event) => setActivityType(event.target.value)}
+                    className={FILTER_SELECT_CLASS}
+                  >
+                    {TYPE_FILTERS.map((option) => (
+                      <option key={option.label} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className={cn(FILTER_LABEL_CLASS, "sm:w-auto sm:self-stretch")}>
                 Organization
                 <select
                   value={organizationId}
                   onChange={(event) => setOrganizationId(event.target.value)}
-                  className="h-10 min-w-52 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+                  className={FILTER_SELECT_CLASS}
                 >
                   <option value="">All organizations</option>
                   {organizations.map((organization) => (
-                    <option key={organization.organization_id} value={organization.organization_id}>
+                    <option
+                      key={organization.organization_id}
+                      value={organization.organization_id}
+                    >
                       {organization.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                Status
-                <select
-                  value={status}
-                  onChange={(event) =>
-                    setStatus(
-                      event.target.value as "" | "pending" | "approved" | "denied" | "returned"
-                    )
-                  }
-                  className="h-10 min-w-40 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                >
-                  {STATUS_FILTERS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-col gap-1 text-xs font-bold text-neutral-500">
-                Activity type
-                <select
-                  value={activityType}
-                  onChange={(event) => setActivityType(event.target.value)}
-                  className="h-10 min-w-44 rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
-                >
-                  {TYPE_FILTERS.map((option) => (
-                    <option key={option.label} value={option.value}>
-                      {option.label}
                     </option>
                   ))}
                 </select>
@@ -311,29 +345,48 @@ export function AdminOsaPanel() {
             <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
-                  <TableHead className="text-xs font-bold uppercase">Event</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Organization</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Type</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Submitted</TableHead>
-                  <TableHead className="text-xs font-bold uppercase text-right">Status</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Event
+                  </TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Organization
+                  </TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Type
+                  </TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Submitted
+                  </TableHead>
+                  <TableHead className="text-right text-xs font-bold uppercase">
+                    Status
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {submissionsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell
+                      colSpan={5}
+                      className="py-12 text-center text-sm text-neutral-400"
+                    >
                       Loading submissions…
                     </TableCell>
                   </TableRow>
                 ) : submissionsQuery.isError ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-rose-600">
+                    <TableCell
+                      colSpan={5}
+                      className="py-12 text-center text-sm text-rose-600"
+                    >
                       Could not load submissions.
                     </TableCell>
                   </TableRow>
                 ) : rows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell
+                      colSpan={5}
+                      className="py-12 text-center text-sm text-neutral-400"
+                    >
                       No submissions match these filters.
                     </TableCell>
                   </TableRow>
@@ -366,13 +419,15 @@ export function AdminOsaPanel() {
                       <TableCell className="text-sm text-neutral-700">
                         {row.organization_name}
                       </TableCell>
-                      <TableCell className="text-xs capitalize text-neutral-500">
+                      <TableCell className="text-xs text-neutral-500 capitalize">
                         {row.activity_classification}
                       </TableCell>
                       <TableCell className="text-sm text-neutral-500">
                         {row.submitted_date}
                       </TableCell>
-                      <TableCell className="text-right text-xs font-bold">{row.status}</TableCell>
+                      <TableCell className="text-right text-xs font-bold">
+                        {row.status}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -384,7 +439,9 @@ export function AdminOsaPanel() {
         <section className={layout.section}>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <h2 className="text-lg font-extrabold text-neutral-900">Announcements</h2>
+              <h2 className="text-lg font-extrabold text-neutral-900">
+                Announcements
+              </h2>
               <p className="text-xs text-neutral-500">
                 Post a notice, or open a row to edit or delete it.
               </p>
@@ -398,26 +455,39 @@ export function AdminOsaPanel() {
             <Table className={layout.table}>
               <TableHeader>
                 <TableRow className="border-b border-neutral-200 text-neutral-500">
-                  <TableHead className="text-xs font-bold uppercase">Posted</TableHead>
-                  <TableHead className="text-xs font-bold uppercase">Notice</TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Posted
+                  </TableHead>
+                  <TableHead className="text-xs font-bold uppercase">
+                    Notice
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {announcementsQuery.isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell
+                      colSpan={2}
+                      className="py-12 text-center text-sm text-neutral-400"
+                    >
                       Loading announcements…
                     </TableCell>
                   </TableRow>
                 ) : announcementsQuery.isError ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="py-12 text-center text-sm text-rose-600">
+                    <TableCell
+                      colSpan={2}
+                      className="py-12 text-center text-sm text-rose-600"
+                    >
                       Could not load announcements.
                     </TableCell>
                   </TableRow>
                 ) : announcements.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={2} className="py-12 text-center text-sm text-neutral-400">
+                    <TableCell
+                      colSpan={2}
+                      className="py-12 text-center text-sm text-neutral-400"
+                    >
                       No announcements have been posted.
                     </TableCell>
                   </TableRow>
@@ -436,11 +506,13 @@ export function AdminOsaPanel() {
                         }
                       }}
                     >
-                      <TableCell className="whitespace-nowrap text-sm text-neutral-500">
+                      <TableCell className="text-sm whitespace-nowrap text-neutral-500">
                         {formatDisplayDateTime(announcement.sent_at)}
                       </TableCell>
                       <TableCell className="text-sm font-medium">
-                        <p className="line-clamp-2 whitespace-normal">{announcement.content}</p>
+                        <p className="line-clamp-2 whitespace-normal">
+                          {announcement.content}
+                        </p>
                       </TableCell>
                     </TableRow>
                   ))
@@ -457,67 +529,111 @@ export function AdminOsaPanel() {
           if (!open) setSelectedKeys(null)
         }}
       >
-        <DialogPopup className={cn(modal.dialog, "max-w-3xl")}>
-          <DialogHeader>
-            <DialogTitle>{selectedRow?.activity_details.title || "Submission detail"}</DialogTitle>
-            <DialogDescription>
+        <DialogPopup
+          className={cn(
+            modal.dialog,
+            "max-w-3xl overflow-x-hidden [&_button[aria-label=Close]]:text-white [&_button[aria-label=Close]]:hover:bg-white/15 [&_button[aria-label=Close]]:hover:text-white"
+          )}
+        >
+          <DialogHeader className="shrink-0 rounded-t-2xl bg-[#8B0000] px-6 py-5 pb-6! text-white in-[[data-slot=dialog-popup]:has([data-slot=dialog-panel])]:pb-6 max-sm:rounded-none">
+            <div className="flex min-w-0 flex-wrap items-center gap-2 pe-8">
+              {selectedRow ? (
+                <span
+                  className={cn(brand.chipGold, "max-w-full wrap-anywhere")}
+                >
+                  {selectedRow.organization_name || "Organization"}
+                </span>
+              ) : null}
+              {selectedRow ? (
+                <span className="rounded-sm bg-white/15 px-2.5 py-0.5 text-xs font-bold tracking-wide text-white uppercase">
+                  {selectedRow.status}
+                </span>
+              ) : null}
+            </div>
+            <DialogTitle className="pe-8 text-xl font-extrabold tracking-tight wrap-anywhere text-white sm:text-2xl">
+              {selectedRow?.activity_details.title || "Submission detail"}
+            </DialogTitle>
+            <DialogDescription className="wrap-anywhere text-[#FBC02D]">
               {selectedRow
-                ? `${formatDocumentId(selectedRow.submission_id)} • ${selectedRow.status} • ${selectedRow.current_signatory}`
+                ? `${formatDocumentId(selectedRow.submission_id)} · ${selectedRow.current_signatory}`
                 : "Loading the full SAAF record and notifications."}
             </DialogDescription>
           </DialogHeader>
-          <DialogPanel className="flex flex-col gap-5 text-sm">
+          <DialogPanel className="flex min-w-0 flex-col gap-5 overflow-x-hidden pt-6! text-sm in-[[data-slot=dialog-popup]:has([data-slot=dialog-header])]:pt-6">
             {detailQuery.isLoading ? (
-              <p className="text-neutral-500">Loading record…</p>
+              <p className="text-sm text-neutral-600">Loading record…</p>
             ) : detailQuery.isError ? (
-              <p className="font-semibold text-rose-600">Could not load this submission.</p>
+              <p className="text-sm font-semibold text-rose-600">
+                Could not load this submission.
+              </p>
             ) : selectedRow ? (
               <>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <p>
-                    <span className="font-bold">Organization:</span> {selectedRow.organization_name}
-                  </p>
-                  <p>
-                    <span className="font-bold">Venue:</span> {selectedRow.activity_details.venue}
-                  </p>
-                  <p>
-                    <span className="font-bold">Date:</span> {selectedRow.activity_details.date}
-                  </p>
-                  <p>
-                    <span className="font-bold">Budget:</span> {selectedRow.activity_details.budget}
-                  </p>
-                  <p>
-                    <span className="font-bold">Submitted:</span> {selectedRow.submitted_date}
-                  </p>
-                </div>
-                <p className="leading-relaxed text-neutral-700">
-                  {selectedRow.activity_details.description || "No description provided."}
-                </p>
-                <div>
-                  <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-neutral-500">
+                <dl className="grid min-w-0 gap-3 sm:grid-cols-2">
+                  {[
+                    ["Organization", selectedRow.organization_name || "—"],
+                    ["Venue", selectedRow.activity_details.venue || "—"],
+                    ["Date", selectedRow.activity_details.date || "—"],
+                    ["Budget", selectedRow.activity_details.budget || "—"],
+                    ["Submitted", selectedRow.submitted_date || "—"],
+                  ].map(([label, value]) => (
+                    <div
+                      key={label}
+                      className="min-w-0 rounded-xl border border-neutral-200 bg-[#F8FAFC] px-3.5 py-3"
+                    >
+                      <dt className="text-xs font-bold tracking-wide text-neutral-500 uppercase">
+                        {label}
+                      </dt>
+                      <dd className="mt-1 font-semibold wrap-anywhere text-neutral-900">
+                        {value}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+                <section className="min-w-0">
+                  <h3 className="mb-2 text-xs font-bold tracking-wide text-neutral-500 uppercase">
+                    Description
+                  </h3>
+                  <div className="max-h-48 min-w-0 overflow-x-hidden overflow-y-auto overscroll-y-contain rounded-xl border border-neutral-200 bg-[#F8FAFC] p-4">
+                    <p className="text-sm leading-relaxed wrap-anywhere whitespace-pre-wrap text-neutral-700">
+                      {selectedRow.activity_details.description ||
+                        "No description provided."}
+                    </p>
+                  </div>
+                </section>
+                <section className="min-w-0">
+                  <h3 className="mb-2 text-xs font-bold tracking-wide text-neutral-500 uppercase">
                     Notifications
                   </h3>
                   {stepper.assigneesList.length === 0 ? (
-                    <p className="text-neutral-400">No review notifications yet.</p>
+                    <p className="text-sm text-neutral-600">
+                      No review notifications yet.
+                    </p>
                   ) : (
-                    <ul className="flex flex-col gap-2">
+                    <ul className="flex min-w-0 flex-col gap-2">
                       {stepper.assigneesList.map((item, index) => (
-                        <li key={`${item.role}-${index}`}>
-                          <span className="font-semibold">{item.name}</span>
-                          <span className="text-neutral-500"> — {item.statusText}</span>
+                        <li
+                          key={`${item.role}-${index}`}
+                          className="min-w-0 rounded-xl border border-neutral-200 px-3.5 py-3"
+                        >
+                          <p className="font-semibold wrap-anywhere text-neutral-900">
+                            {item.name}
+                          </p>
+                          <p className="text-sm wrap-anywhere text-neutral-600">
+                            {item.statusText}
+                          </p>
                         </li>
                       ))}
                     </ul>
                   )}
-                </div>
+                </section>
               </>
             ) : null}
           </DialogPanel>
-          <div className="flex justify-end px-6 pb-5">
-            <DialogClose className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-bold text-white">
+          <DialogFooter>
+            <DialogClose render={<Button type="button" variant="outline" />}>
               Close
             </DialogClose>
-          </div>
+          </DialogFooter>
         </DialogPopup>
       </Dialog>
 
@@ -583,12 +699,16 @@ export function AdminOsaPanel() {
             <DialogHeader>
               <DialogTitle>Edit announcement</DialogTitle>
               <DialogDescription>
-                {editing ? `Posted ${formatDisplayDateTime(editing.sent_at)}` : "Update this notice."}
+                {editing
+                  ? `Posted ${formatDisplayDateTime(editing.sent_at)}`
+                  : "Update this notice."}
               </DialogDescription>
             </DialogHeader>
             <DialogPanel className="flex flex-col gap-4">
               <Field data-invalid={editError ? true : undefined}>
-                <FieldLabel htmlFor="edit-announcement-content">Content</FieldLabel>
+                <FieldLabel htmlFor="edit-announcement-content">
+                  Content
+                </FieldLabel>
                 <Textarea
                   aria-invalid={editError ? true : undefined}
                   id="edit-announcement-content"
@@ -647,7 +767,8 @@ export function AdminOsaPanel() {
           <AlertDialogHeader>
             <AlertDialogTitle>Delete this announcement?</AlertDialogTitle>
             <AlertDialogDescription>
-              This notice will be removed from the bulletin. This cannot be undone.
+              This notice will be removed from the bulletin. This cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
