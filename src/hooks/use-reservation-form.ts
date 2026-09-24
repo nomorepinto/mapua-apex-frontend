@@ -217,9 +217,23 @@ export function useReservationForm() {
   const validateForm = useCallback((form: HTMLFormElement | null): boolean => {
     if (!form) return false
 
+    const current = useOrgStore.getState().reservationDraft ?? DEFAULT_RESERVATION_DRAFT
+    const missing = [
+      [current.purpose, "Purpose"],
+      [current.functionRoomPurpose, "Function room"],
+      [current.avPurpose, "Audiovisual equipment"],
+    ]
+      .filter(([value]) => !value?.trim())
+      .map(([, label]) => label)
+
     const isHtmlValid = form.checkValidity()
 
-    if (!isHtmlValid) {
+    if (!isHtmlValid || missing.length > 0) {
+      setSubmitError(
+        missing.length > 0
+          ? `Fill in: ${missing.join(", ")}.`
+          : "Fill in every required field before submitting."
+      )
       setShowErrors(false)
       requestAnimationFrame(() => {
         setShowErrors(true)
@@ -236,6 +250,7 @@ export function useReservationForm() {
       return false
     }
 
+    setSubmitError(null)
     setShowErrors(false)
     return true
   }, [])

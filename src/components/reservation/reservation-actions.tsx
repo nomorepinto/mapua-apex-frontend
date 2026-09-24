@@ -2,11 +2,13 @@ import { DownloadIcon, RotateCcw } from "lucide-react"
 
 export function ReservationActions({
   isSubmitting = false,
+  inactive = false,
   onSavePdf,
   onGoBack,
   onClear,
 }: {
   isSubmitting?: boolean
+  inactive?: boolean
   onSavePdf: () => void
   onGoBack: () => void
   onClear?: () => void
@@ -47,7 +49,8 @@ export function ReservationActions({
         <button
           type="submit"
           disabled={isSubmitting}
-          className="flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg bg-[#0B6623] px-8 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#084D1A] sm:h-10 sm:w-auto disabled:opacity-50"
+          aria-disabled={inactive || isSubmitting}
+          className={`flex min-h-11 w-full cursor-pointer items-center justify-center rounded-lg bg-[#0B6623] px-8 py-2.5 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-[#084D1A] disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-auto ${inactive ? "cursor-not-allowed opacity-40" : ""}`}
         >
           {isSubmitting ? "Submitting..." : "Submit"}
         </button>

@@ -235,18 +235,13 @@ export function useSaafForm() {
 
       // Check standard constraints
       const isHtmlValid = form.checkValidity()
+      const issues = ([0, 1, 2, 3] as const)
+        .map((step) => getSaafStepIssue(step, draft))
+        .filter((issue): issue is string => Boolean(issue))
 
-      // 1. Mandatory mission statement check
-      const hasMission =
-        Boolean(draft.mission1) || Boolean(draft.mission2) || Boolean(draft.mission3)
-
-      // 2. Mandatory department check for all proponents
-      const hasDepartments = draft.proponents.every(
-        (p) => Boolean(draft.departmentValues[p.id] || p.department)
-      )
-
-      if (!isHtmlValid || !hasMission || !hasDepartments) {
+      if (!isHtmlValid || issues.length > 0) {
         revealInvalidFields(form)
+        setStepError(issues.join(" ") || "Fill in every required field before submitting.")
         return false
       }
 

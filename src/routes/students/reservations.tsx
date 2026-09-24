@@ -99,6 +99,11 @@ export function Reservation() {
 
           <ReservationActions
             isSubmitting={form.isSubmitting}
+            inactive={
+              !draft.purpose.trim() ||
+              !draft.functionRoomPurpose.trim() ||
+              !draft.avPurpose.trim()
+            }
             onSavePdf={form.handleSavePdf}
             onGoBack={form.handleGoBack}
             onClear={() => form.setShowConfirmClearModal(true)}

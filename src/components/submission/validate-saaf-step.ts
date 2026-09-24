@@ -17,9 +17,6 @@ import {
 const EMAIL_PATTERN =
   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
-const GENERIC_STEP_ERROR =
-  "Fill in every required field on this step before continuing."
-
 function isBlank(value: string | undefined): boolean {
   return !value || !value.trim()
 }
@@ -63,28 +60,35 @@ function isValidAbsoluteUrl(value: string): boolean {
   }
 }
 
-function proponentIssue(proponent: Proponent, department: string): string | null {
-  if (
-    isBlank(proponent.firstName) ||
-    isBlank(proponent.lastName) ||
-    isBlank(proponent.studentNumber) ||
-    isBlank(proponent.programAndYear) ||
-    isBlank(proponent.positionOfApplicant) ||
-    isBlank(proponent.orgOrCourseSection) ||
-    isBlank(proponent.contactNumber) ||
-    isBlank(proponent.emailAddress) ||
-    isBlank(proponent.facebookLink) ||
-    isBlank(department)
-  ) {
-    return GENERIC_STEP_ERROR
-  }
+function missingFieldsMessage(fields: string[]): string | null {
+  if (fields.length === 0) return null
+  return `Fill in: ${fields.join(", ")}.`
+}
+
+function proponentIssue(proponent: Proponent, department: string, index: number): string | null {
+  const prefix = `Proponent ${index + 1}`
+  const missing: string[] = []
+
+  if (isBlank(proponent.firstName)) missing.push(`${prefix} first name`)
+  if (isBlank(proponent.lastName)) missing.push(`${prefix} last name`)
+  if (isBlank(proponent.studentNumber)) missing.push(`${prefix} student number`)
+  if (isBlank(proponent.programAndYear)) missing.push(`${prefix} program and year`)
+  if (isBlank(proponent.positionOfApplicant)) missing.push(`${prefix} position`)
+  if (isBlank(proponent.orgOrCourseSection)) missing.push(`${prefix} organization or course section`)
+  if (isBlank(proponent.contactNumber)) missing.push(`${prefix} contact number`)
+  if (isBlank(proponent.emailAddress)) missing.push(`${prefix} email address`)
+  if (isBlank(proponent.facebookLink)) missing.push(`${prefix} Facebook link`)
+  if (isBlank(department)) missing.push(`${prefix} department`)
+
+  const missingMessage = missingFieldsMessage(missing)
+  if (missingMessage) return missingMessage
 
   if (!EMAIL_PATTERN.test(proponent.emailAddress.trim())) {
-    return "Enter a valid email address for every proponent."
+    return `Enter a valid email address for ${prefix}.`
   }
 
   if (!isValidAbsoluteUrl(proponent.facebookLink.trim())) {
-    return "Enter a valid Facebook URL for every proponent."
+    return `Enter a valid Facebook URL for ${prefix}.`
   }
 
   return null
@@ -95,12 +99,11 @@ export function getSaafStepIssue(
   draft: SaafDraft
 ): string | null {
   if (step === 0) {
-    if (!draft.activityType) {
-      return "Select an activity type."
-    }
-    if (isBlank(draft.totalOrgMembers)) {
-      return GENERIC_STEP_ERROR
-    }
+    const missing: string[] = []
+    if (!draft.activityType) missing.push("Activity type")
+    if (isBlank(draft.totalOrgMembers)) missing.push("Total number of class/org members")
+    const missingMessage = missingFieldsMessage(missing)
+    if (missingMessage) return missingMessage
     if (draft.totalOrgMembers.length > 5) {
       return "Total number of class/org members cannot exceed 5 digits."
     }
@@ -108,34 +111,43 @@ export function getSaafStepIssue(
   }
 
   if (step === 1) {
-    for (const proponent of draft.proponents) {
+    for (const [index, proponent] of draft.proponents.entries()) {
       const department =
         draft.departmentValues[proponent.id] || proponent.department
-      const issue = proponentIssue(proponent, department)
+      const issue = proponentIssue(proponent, department, index)
       if (issue) return issue
     }
     return null
   }
 
   if (step === 2) {
-    if (isBlank(draft.activityTitle)) return GENERIC_STEP_ERROR
-
-    if ((draft.activityDescription || "").trim().length < 100) {
-      return "Activity Description must be at least 100 characters."
-    }
-    if ((draft.activityObjectives || "").trim().length < 50) {
-      return "Activity Objectives must be at least 50 characters."
-    }
-    if ((draft.activityVenue || "").trim().length < 5) {
-      return "Activity Venue must be at least 5 characters."
-    }
-
-    const startDate = draft.dateOfEvent
-    const endDate = draft.endDateOfEvent || draft.dateOfEvent
-    if (isBlank(startDate) || isBlank(endDate)) return GENERIC_STEP_ERROR
+    const missing: string[] = []
+    if (isBlank(draft.activityTitle)) missing.push("Activity title")
+    if (isBlank(draft.activityDescription)) missing.push("Activity description")
+    if (isBlank(draft.activityObjectives)) missing.push("Activity objectives")
+    if (isBlank(draft.activityVenue)) missing.push("Activity venue")
+    if (isBlank(draft.dateOfEvent)) missing.push("Start date")
+    if (isBlank(draft.endDateOfEvent || draft.dateOfEvent)) missing.push("End date")
 
     const { start, end } = eventTimes(draft)
-    if (!start || !end) return GENERIC_STEP_ERROR
+    if (!start) missing.push("Start time")
+    if (!end) missing.push("End time")
+    if (isBlank(draft.expectedParticipants)) missing.push("Expected participants")
+    if (isBlank(draft.individualContribution)) missing.push("Individual contribution")
+    if (isBlank(draft.proposedBudget)) missing.push("Proposed budget")
+
+    const missingMessage = missingFieldsMessage(missing)
+    if (missingMessage) return missingMessage
+
+    if ((draft.activityDescription || "").trim().length < 100) {
+      return "Activity description must be at least 100 characters."
+    }
+    if ((draft.activityObjectives || "").trim().length < 50) {
+      return "Activity objectives must be at least 50 characters."
+    }
+    if ((draft.activityVenue || "").trim().length < 5) {
+      return "Activity venue must be at least 5 characters."
+    }
     if (!isInsideEventWindow(start) || !isInsideEventWindow(end)) {
       return "Event time must be between 7:00 AM and 9:00 PM."
     }
@@ -160,14 +172,8 @@ export function getSaafStepIssue(
       return "End time cannot be earlier than the start time."
     }
 
-    if (
-      isBlank(draft.expectedParticipants) ||
-      isBlank(draft.individualContribution) ||
-      isBlank(draft.proposedBudget)
-    ) {
-      return GENERIC_STEP_ERROR
-    }
-
+    const startDate = draft.dateOfEvent
+    const endDate = draft.endDateOfEvent || draft.dateOfEvent
     const minStart = minEventDateKey()
     if (startDate < minStart) {
       return EVENT_DATE_TOO_SOON_MESSAGE
@@ -199,6 +205,14 @@ export function getSaafStepIssue(
   }
 
   return null
+}
+
+export function isSaafStepComplete(step: SaafStepIndex, draft: SaafDraft): boolean {
+  return getSaafStepIssue(step, draft) === null
+}
+
+export function isSaafDraftComplete(draft: SaafDraft): boolean {
+  return ([0, 1, 2, 3] as const).every((step) => isSaafStepComplete(step, draft))
 }
 
 export function isStepHtmlValid(panel: HTMLElement): boolean {

@@ -22,6 +22,7 @@ import {
 } from "@/components/submission/saaf-stepper"
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { brand, layout } from "@/config"
+import { isSaafDraftComplete, isSaafStepComplete } from "@/components/submission/validate-saaf-step"
 import { useSaafForm } from "@/hooks/use-saaf-form"
 import { cn } from "@/lib/utils"
 
@@ -51,6 +52,9 @@ export function Submission() {
     setStep(next)
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
+
+  const currentStepComplete = isSaafStepComplete(step, draft)
+  const formComplete = isSaafDraftComplete(draft)
 
   const goBack = () => {
     if (step === 0) return
@@ -143,7 +147,7 @@ export function Submission() {
 
           {step === 3 ? <SubmissionErrorAlert message={form.submitError} /> : null}
 
-          {step < 3 && form.stepError ? (
+          {form.stepError ? (
             <Alert variant="error">
               <CircleAlertIcon />
               <AlertTitle>This step is incomplete</AlertTitle>
@@ -161,7 +165,15 @@ export function Submission() {
               >
                 Back
               </button>
-              <button type="button" onClick={goNext} className={brand.action}>
+              <button
+                type="button"
+                onClick={goNext}
+                aria-disabled={!currentStepComplete}
+                className={cn(
+                  brand.action,
+                  !currentStepComplete && "cursor-not-allowed opacity-40"
+                )}
+              >
                 Continue
               </button>
             </div>
@@ -176,6 +188,7 @@ export function Submission() {
               </button>
               <SubmissionActions
                 isSubmitting={form.isSubmitting}
+                inactive={!formComplete}
                 showNextPage={form.reserveFacilities === "yes"}
                 onNextPage={() => form.handleGoToReservation(formRef.current)}
                 onSavePdf={form.handleSavePdf}

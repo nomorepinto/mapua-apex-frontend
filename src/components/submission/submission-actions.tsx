@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export function SubmissionActions({
   isSubmitting,
+  inactive = false,
   showNextPage,
   onNextPage,
   onSavePdf,
@@ -12,6 +13,7 @@ export function SubmissionActions({
   onClear,
 }: {
   isSubmitting: boolean
+  inactive?: boolean
   showNextPage: boolean
   onNextPage: () => void
   onSavePdf: () => void
@@ -48,7 +50,9 @@ export function SubmissionActions({
           <Button
             type="button"
             onClick={onNextPage}
-            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#6B0000] sm:h-10 sm:w-auto"
+            disabled={isSubmitting}
+            aria-disabled={inactive || isSubmitting}
+            className={`h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-[#6B0000] disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-auto ${inactive ? "cursor-not-allowed opacity-40" : ""}`}
           >
             Next page
           </Button>
@@ -57,7 +61,8 @@ export function SubmissionActions({
             type="button"
             onClick={onSubmit}
             disabled={isSubmitting}
-            className="h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6B0000] sm:h-10 sm:w-auto"
+            aria-disabled={inactive || isSubmitting}
+            className={`h-11 w-full min-w-36 cursor-pointer rounded-lg bg-[#8B0000] px-10 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-[#6B0000] disabled:cursor-not-allowed disabled:opacity-40 sm:h-10 sm:w-auto ${inactive ? "cursor-not-allowed opacity-40" : ""}`}
           >
             {isSubmitting ? "Submitting..." : "Submit"}
           </Button>
