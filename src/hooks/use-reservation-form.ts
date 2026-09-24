@@ -229,11 +229,7 @@ export function useReservationForm() {
     const isHtmlValid = form.checkValidity()
 
     if (!isHtmlValid || missing.length > 0) {
-      setSubmitError(
-        missing.length > 0
-          ? `Fill in: ${missing.join(", ")}.`
-          : "Fill in every required field before submitting."
-      )
+      setSubmitError(null)
       setShowErrors(false)
       requestAnimationFrame(() => {
         setShowErrors(true)

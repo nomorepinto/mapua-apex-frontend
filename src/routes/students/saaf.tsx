@@ -1,16 +1,11 @@
 import { useRef, useState } from "react"
-import { CircleAlertIcon } from "lucide-react"
 
 import { ConfirmClearModal } from "@/components/forms/confirm-clear-modal"
+import { FieldWarnings } from "@/components/forms/field-warning"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
 import { ActivityClassificationSection } from "@/components/submission/activity-classification-section"
 import { ActivityDetailsSection } from "@/components/submission/activity-details-section"
 import { BudgetProposalSection } from "@/components/submission/budget-proposal-section"
@@ -22,7 +17,7 @@ import {
 } from "@/components/submission/saaf-stepper"
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { brand, layout } from "@/config"
-import { isSaafDraftComplete, isSaafStepComplete } from "@/components/submission/validate-saaf-step"
+import { isSaafDraftComplete, isSaafStepComplete, saafFieldWarnings } from "@/components/submission/validate-saaf-step"
 import { saafHasUserInput } from "@/components/submission/constants"
 import { useSaafForm } from "@/hooks/use-saaf-form"
 import { cn } from "@/lib/utils"
@@ -72,6 +67,7 @@ export function Submission() {
           noValidate
           className={cn(layout.stack, form.showErrors && "saaf-show-errors")}
         >
+          <FieldWarnings warnings={form.showErrors ? saafFieldWarnings(draft) : {}}>
           <FormPageHeader
             title="Student Activity Application Form"
             subtitle={
@@ -149,14 +145,6 @@ export function Submission() {
 
           {step === 3 ? <SubmissionErrorAlert message={form.submitError} /> : null}
 
-          {form.stepError ? (
-            <Alert variant="error">
-              <CircleAlertIcon />
-              <AlertTitle>This step is incomplete</AlertTitle>
-              <AlertDescription>{form.stepError}</AlertDescription>
-            </Alert>
-          ) : null}
-
           {step < 3 ? (
             <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
@@ -218,6 +206,7 @@ export function Submission() {
               />
             </div>
           )}
+          </FieldWarnings>
         </form.fetcher.Form>
       </div>
 

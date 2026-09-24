@@ -1,5 +1,7 @@
 import { PlusIcon, Trash2Icon } from "lucide-react"
 
+import { FieldWarning } from "@/components/forms/field-warning"
+
 import {
   PRESET_ROOMS,
   PURPOSE_INPUT_CLASS,
@@ -49,6 +51,7 @@ export function RoomTable({
           className={PURPOSE_INPUT_CLASS}
           required
         />
+        <FieldWarning name="functionRoomPurpose" />
       </div>
 
       <div className={layout.sectionFlush}>

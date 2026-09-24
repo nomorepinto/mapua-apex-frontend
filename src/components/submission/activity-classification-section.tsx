@@ -1,3 +1,4 @@
+import { FieldWarning } from "@/components/forms/field-warning"
 import { Input } from "@/components/ui/input"
 import { blockNonIntegerKeys, sanitizeIntegerInput } from "@/lib/numeric-input"
 
@@ -43,6 +44,7 @@ export function ActivityClassificationSection({
             <span>Extra-curricular Activity</span>
           </label>
         </div>
+        <FieldWarning name="activityType" />
       </div>
 
       <div className="space-y-2 md:col-span-4">
@@ -68,6 +70,7 @@ export function ActivityClassificationSection({
           className="no-spinner h-10 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400 focus:ring-2 focus:ring-red-800/20"
           required
         />
+        <FieldWarning name="totalOrgMembers" />
       </div>
     </div>
   )

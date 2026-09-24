@@ -1,3 +1,4 @@
+import { FieldWarning } from "@/components/forms/field-warning"
 import { EventTimeFields } from "@/components/submission/event-time-fields"
 import {
   clockFromDraft,
@@ -136,6 +137,7 @@ export function ActivityDetailsSection({
             className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="activityTitle" />
         </div>
 
         <div className="space-y-1.5">
@@ -158,6 +160,7 @@ export function ActivityDetailsSection({
             className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="activityDescription" />
         </div>
 
         <div className="space-y-1.5">
@@ -180,6 +183,7 @@ export function ActivityDetailsSection({
             className="min-h-24 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="activityObjectives" />
         </div>
 
         <div className="space-y-1.5">
@@ -202,6 +206,7 @@ export function ActivityDetailsSection({
             className="h-10 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="activityVenue" />
         </div>
 
         <div className="grid grid-cols-1 items-start gap-4 sm:grid-cols-2">
@@ -221,6 +226,7 @@ export function ActivityDetailsSection({
             <span className="block text-[10px] text-neutral-500">
               At least 10 days from today
             </span>
+            <FieldWarning name="dateOfEvent" />
           </div>
 
           <div className="space-y-1.5">
@@ -236,6 +242,7 @@ export function ActivityDetailsSection({
               aria-label="End date of event"
               required
             />
+            <FieldWarning name="endDateOfEvent" />
           </div>
 
         </div>
@@ -250,6 +257,7 @@ export function ActivityDetailsSection({
           onEndMinute={(minute) => updateEnd({ ...endParts, minute })}
           onEndPeriod={(period) => updateEnd(withPeriod(endParts, period))}
         />
+        <FieldWarning name="timeOfEvent" />
         <input type="hidden" name="timeOfEventStart" value={format24(startParts)} required />
         <input type="hidden" name="timeOfEventEnd" value={format24(endParts)} required />
         <input
@@ -280,6 +288,7 @@ export function ActivityDetailsSection({
               className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
+            <FieldWarning name="expectedParticipants" />
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
@@ -304,6 +313,7 @@ export function ActivityDetailsSection({
               className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
+            <FieldWarning name="individualContribution" />
           </div>
           <div className="space-y-1.5">
             <label className="block text-xs font-semibold text-neutral-800">
@@ -325,6 +335,7 @@ export function ActivityDetailsSection({
               className="no-spinner h-9.5 rounded-lg border-neutral-300 bg-white text-center !text-neutral-900 placeholder:text-neutral-400"
               required
             />
+            <FieldWarning name="proposedBudget" />
           </div>
         </div>
       </div>

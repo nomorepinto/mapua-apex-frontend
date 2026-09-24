@@ -60,151 +60,153 @@ function isValidAbsoluteUrl(value: string): boolean {
   }
 }
 
-function missingFieldsMessage(fields: string[]): string | null {
-  if (fields.length === 0) return null
-  return `Fill in: ${fields.join(", ")}.`
+const REQUIRED = "This field is required."
+
+function proponentWarnings(
+  proponent: Proponent,
+  department: string,
+  warnings: Record<string, string>
+): void {
+  const key = (field: string) => `proponent.${proponent.id}.${field}`
+  if (isBlank(proponent.firstName)) warnings[key("firstName")] = REQUIRED
+  if (isBlank(proponent.lastName)) warnings[key("lastName")] = REQUIRED
+  if (isBlank(proponent.studentNumber)) warnings[key("studentNumber")] = REQUIRED
+  if (isBlank(proponent.programAndYear)) warnings[key("programAndYear")] = REQUIRED
+  if (isBlank(proponent.positionOfApplicant)) warnings[key("positionOfApplicant")] = REQUIRED
+  if (isBlank(proponent.orgOrCourseSection)) warnings[key("orgOrCourseSection")] = REQUIRED
+  if (isBlank(proponent.contactNumber)) warnings[key("contactNumber")] = REQUIRED
+  if (isBlank(department)) warnings[key("department")] = REQUIRED
+
+  if (isBlank(proponent.emailAddress)) {
+    warnings[key("emailAddress")] = REQUIRED
+  } else if (!EMAIL_PATTERN.test(proponent.emailAddress.trim())) {
+    warnings[key("emailAddress")] = "Enter a valid email address."
+  }
+
+  if (isBlank(proponent.facebookLink)) {
+    warnings[key("facebookLink")] = REQUIRED
+  } else if (!isValidAbsoluteUrl(proponent.facebookLink.trim())) {
+    warnings[key("facebookLink")] = "Enter a valid Facebook URL."
+  }
 }
 
-function proponentIssue(proponent: Proponent, department: string, index: number): string | null {
-  const prefix = `Proponent ${index + 1}`
-  const missing: string[] = []
+export function saafFieldWarnings(draft: SaafDraft): Record<string, string> {
+  const warnings: Record<string, string> = {}
 
-  if (isBlank(proponent.firstName)) missing.push(`${prefix} first name`)
-  if (isBlank(proponent.lastName)) missing.push(`${prefix} last name`)
-  if (isBlank(proponent.studentNumber)) missing.push(`${prefix} student number`)
-  if (isBlank(proponent.programAndYear)) missing.push(`${prefix} program and year`)
-  if (isBlank(proponent.positionOfApplicant)) missing.push(`${prefix} position`)
-  if (isBlank(proponent.orgOrCourseSection)) missing.push(`${prefix} organization or course section`)
-  if (isBlank(proponent.contactNumber)) missing.push(`${prefix} contact number`)
-  if (isBlank(proponent.emailAddress)) missing.push(`${prefix} email address`)
-  if (isBlank(proponent.facebookLink)) missing.push(`${prefix} Facebook link`)
-  if (isBlank(department)) missing.push(`${prefix} department`)
-
-  const missingMessage = missingFieldsMessage(missing)
-  if (missingMessage) return missingMessage
-
-  if (!EMAIL_PATTERN.test(proponent.emailAddress.trim())) {
-    return `Enter a valid email address for ${prefix}.`
+  if (!draft.activityType) warnings.activityType = "Select an activity type."
+  if (isBlank(draft.totalOrgMembers)) {
+    warnings.totalOrgMembers = REQUIRED
+  } else if (draft.totalOrgMembers.length > 5) {
+    warnings.totalOrgMembers = "Cannot exceed 5 digits."
   }
 
-  if (!isValidAbsoluteUrl(proponent.facebookLink.trim())) {
-    return `Enter a valid Facebook URL for ${prefix}.`
+  for (const proponent of draft.proponents) {
+    proponentWarnings(
+      proponent,
+      draft.departmentValues[proponent.id] || proponent.department,
+      warnings
+    )
   }
 
-  return null
+  if (isBlank(draft.activityTitle)) warnings.activityTitle = REQUIRED
+  if (isBlank(draft.activityDescription)) {
+    warnings.activityDescription = REQUIRED
+  } else if (draft.activityDescription.trim().length < 100) {
+    warnings.activityDescription = "Must be at least 100 characters."
+  }
+  if (isBlank(draft.activityObjectives)) {
+    warnings.activityObjectives = REQUIRED
+  } else if (draft.activityObjectives.trim().length < 50) {
+    warnings.activityObjectives = "Must be at least 50 characters."
+  }
+  if (isBlank(draft.activityVenue)) {
+    warnings.activityVenue = REQUIRED
+  } else if (draft.activityVenue.trim().length < 5) {
+    warnings.activityVenue = "Must be at least 5 characters."
+  }
+
+  const startDate = draft.dateOfEvent
+  const endDate = draft.endDateOfEvent || draft.dateOfEvent
+  if (isBlank(startDate)) warnings.dateOfEvent = REQUIRED
+  if (isBlank(endDate)) warnings.endDateOfEvent = REQUIRED
+  if (!isBlank(startDate) && startDate < minEventDateKey()) {
+    warnings.dateOfEvent = EVENT_DATE_TOO_SOON_MESSAGE
+  }
+  if (!isBlank(startDate) && !isBlank(endDate) && endDate < startDate) {
+    warnings.endDateOfEvent = "End date cannot be earlier than the start date."
+  }
+
+  const { start, end } = eventTimes(draft)
+  if (!start || !end) {
+    warnings.timeOfEvent = REQUIRED
+  } else if (!isInsideEventWindow(start) || !isInsideEventWindow(end)) {
+    warnings.timeOfEvent = "Event time must be between 7:00 AM and 9:00 PM."
+  } else {
+    const startMinutes = clockMinutes(clockFromDraft(undefined, undefined, undefined, start))
+    const endMinutes = clockMinutes(clockFromDraft(undefined, undefined, undefined, end))
+    if (startMinutes !== null && endMinutes !== null && startMinutes === endMinutes) {
+      warnings.timeOfEvent = SAME_EVENT_TIME_MESSAGE
+    } else if (startMinutes !== null && endMinutes !== null && endMinutes < startMinutes) {
+      warnings.timeOfEvent = "End time cannot be earlier than the start time."
+    }
+  }
+
+  if (isBlank(draft.expectedParticipants)) warnings.expectedParticipants = REQUIRED
+  if (isBlank(draft.individualContribution)) warnings.individualContribution = REQUIRED
+  if (isBlank(draft.proposedBudget)) warnings.proposedBudget = REQUIRED
+
+  if (!(draft.mission1 || draft.mission2 || draft.mission3)) {
+    warnings.mission = "Select at least one mission statement."
+  }
+  if ((draft.coreValuesExplanation || "").trim().length < 30) {
+    warnings.coreValuesExplanation = isBlank(draft.coreValuesExplanation)
+      ? REQUIRED
+      : "Must be at least 30 characters."
+  }
+  if (
+    (draft.peoExplanation || "").trim().length > 0 &&
+    (draft.peoExplanation || "").trim().length < 30
+  ) {
+    warnings.peoExplanation = "Must be at least 30 characters if provided."
+  }
+  if ((draft.sdgExplanation || "").trim().length < 30) {
+    warnings.sdgExplanation = isBlank(draft.sdgExplanation)
+      ? REQUIRED
+      : "Must be at least 30 characters."
+  }
+
+  return warnings
+}
+
+const STEP_PREFIXES: Record<SaafStepIndex, string[]> = {
+  0: ["activityType", "totalOrgMembers"],
+  1: ["proponent."],
+  2: [
+    "activityTitle",
+    "activityDescription",
+    "activityObjectives",
+    "activityVenue",
+    "dateOfEvent",
+    "endDateOfEvent",
+    "timeOfEvent",
+    "expectedParticipants",
+    "individualContribution",
+    "proposedBudget",
+  ],
+  3: ["mission", "coreValuesExplanation", "peoExplanation", "sdgExplanation"],
 }
 
 export function getSaafStepIssue(
   step: SaafStepIndex,
   draft: SaafDraft
 ): string | null {
-  if (step === 0) {
-    const missing: string[] = []
-    if (!draft.activityType) missing.push("Activity type")
-    if (isBlank(draft.totalOrgMembers)) missing.push("Total number of class/org members")
-    const missingMessage = missingFieldsMessage(missing)
-    if (missingMessage) return missingMessage
-    if (draft.totalOrgMembers.length > 5) {
-      return "Total number of class/org members cannot exceed 5 digits."
-    }
-    return null
-  }
+  const warnings = saafFieldWarnings(draft)
+  const prefixes = STEP_PREFIXES[step]
+  const messages = Object.entries(warnings)
+    .filter(([key]) => prefixes.some((prefix) => key === prefix || key.startsWith(prefix)))
+    .map(([, message]) => message)
 
-  if (step === 1) {
-    for (const [index, proponent] of draft.proponents.entries()) {
-      const department =
-        draft.departmentValues[proponent.id] || proponent.department
-      const issue = proponentIssue(proponent, department, index)
-      if (issue) return issue
-    }
-    return null
-  }
-
-  if (step === 2) {
-    const missing: string[] = []
-    if (isBlank(draft.activityTitle)) missing.push("Activity title")
-    if (isBlank(draft.activityDescription)) missing.push("Activity description")
-    if (isBlank(draft.activityObjectives)) missing.push("Activity objectives")
-    if (isBlank(draft.activityVenue)) missing.push("Activity venue")
-    if (isBlank(draft.dateOfEvent)) missing.push("Start date")
-    if (isBlank(draft.endDateOfEvent || draft.dateOfEvent)) missing.push("End date")
-
-    const { start, end } = eventTimes(draft)
-    if (!start) missing.push("Start time")
-    if (!end) missing.push("End time")
-    if (isBlank(draft.expectedParticipants)) missing.push("Expected participants")
-    if (isBlank(draft.individualContribution)) missing.push("Individual contribution")
-    if (isBlank(draft.proposedBudget)) missing.push("Proposed budget")
-
-    const missingMessage = missingFieldsMessage(missing)
-    if (missingMessage) return missingMessage
-
-    if ((draft.activityDescription || "").trim().length < 100) {
-      return "Activity description must be at least 100 characters."
-    }
-    if ((draft.activityObjectives || "").trim().length < 50) {
-      return "Activity objectives must be at least 50 characters."
-    }
-    if ((draft.activityVenue || "").trim().length < 5) {
-      return "Activity venue must be at least 5 characters."
-    }
-    if (!isInsideEventWindow(start) || !isInsideEventWindow(end)) {
-      return "Event time must be between 7:00 AM and 9:00 PM."
-    }
-    const startMinutes = clockMinutes(
-      clockFromDraft(undefined, undefined, undefined, start)
-    )
-    const endMinutes = clockMinutes(
-      clockFromDraft(undefined, undefined, undefined, end)
-    )
-    if (
-      startMinutes !== null &&
-      endMinutes !== null &&
-      startMinutes === endMinutes
-    ) {
-      return SAME_EVENT_TIME_MESSAGE
-    }
-    if (
-      startMinutes !== null &&
-      endMinutes !== null &&
-      endMinutes < startMinutes
-    ) {
-      return "End time cannot be earlier than the start time."
-    }
-
-    const startDate = draft.dateOfEvent
-    const endDate = draft.endDateOfEvent || draft.dateOfEvent
-    const minStart = minEventDateKey()
-    if (startDate < minStart) {
-      return EVENT_DATE_TOO_SOON_MESSAGE
-    }
-
-    if (endDate < startDate) {
-      return "End date cannot be earlier than the start date."
-    }
-
-    return null
-  }
-
-  const hasMission =
-    Boolean(draft.mission1) || Boolean(draft.mission2) || Boolean(draft.mission3)
-  if (!hasMission) {
-    return "Select at least one mission statement."
-  }
-  if ((draft.coreValuesExplanation || "").trim().length < 30) {
-    return "Core Values Explanation must be at least 30 characters."
-  }
-  if (
-    (draft.peoExplanation || "").trim().length > 0 &&
-    (draft.peoExplanation || "").trim().length < 30
-  ) {
-    return "Program Educational Objectives must be at least 30 characters if provided."
-  }
-  if ((draft.sdgExplanation || "").trim().length < 30) {
-    return "UN Sustainability Goals explanation must be at least 30 characters."
-  }
-
-  return null
+  return messages[0] ?? null
 }
 
 export function isSaafStepComplete(step: SaafStepIndex, draft: SaafDraft): boolean {

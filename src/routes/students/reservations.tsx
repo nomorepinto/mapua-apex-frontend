@@ -7,6 +7,7 @@ import { FacilityTable } from "@/components/reservation/facility-table"
 import { ReservationActions } from "@/components/reservation/reservation-actions"
 import { RoomTable } from "@/components/reservation/room-table"
 import { ConfirmClearModal } from "@/components/forms/confirm-clear-modal"
+import { FieldWarnings } from "@/components/forms/field-warning"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
@@ -58,6 +59,21 @@ export function Reservation() {
           onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
           className={cn("space-y-8", form.showErrors && "saaf-show-errors")}
         >
+          <FieldWarnings
+            warnings={
+              form.showErrors
+                ? {
+                    ...(draft.purpose.trim() ? {} : { purpose: "This field is required." }),
+                    ...(draft.functionRoomPurpose.trim()
+                      ? {}
+                      : { functionRoomPurpose: "This field is required." }),
+                    ...(draft.avPurpose.trim()
+                      ? {}
+                      : { avPurpose: "This field is required." }),
+                  }
+                : {}
+            }
+          >
           <EquipmentSection
             equipment={draft.equipment}
             otherEquipmentText={draft.otherEquipmentText}
@@ -95,6 +111,8 @@ export function Reservation() {
             onRemove={form.handleRemoveAvItem}
             onAdd={form.handleAddAvItem}
           />
+
+          </FieldWarnings>
 
           <SubmissionErrorAlert message={form.submitError} />
 
