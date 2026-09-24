@@ -14,7 +14,10 @@ import type { Activity } from "@/components/ui/activity.types"
 export interface ApiSubmission {
   event_id: string
   submission_id: string
+  /** Organization key on the submission item, `ORGANIZATION#<uuid>`. */
+  GSI1PK?: string | null
   organization_id?: string | null
+  organization_name?: string | null
   submission_type: string
   sent_at: string
   status: "pending" | "approved" | "denied" | "returned"
@@ -558,6 +561,14 @@ function formatProponentName(
     .trim()
 }
 
+export function submissionOrganizationId(submission: {
+  GSI1PK?: string | null
+  organization_id?: string | null
+}): string {
+  const raw = submission.GSI1PK || submission.organization_id || ""
+  return raw.replace(/^ORGANIZATION#/i, "")
+}
+
 export function organizationNameFor(
   organizationId: string | null | undefined,
   organizations: Array<{ organization_id: string; name: string }>
@@ -567,7 +578,7 @@ export function organizationNameFor(
   const match = organizations.find(
     (organization) => organization.organization_id.replace(/^ORGANIZATION#/i, "") === id
   )
-  return match?.name || "—"
+  return match?.name || id
 }
 
 export function apiSubmissionToDashboardRow(
@@ -597,7 +608,12 @@ export function apiSubmissionToDashboardRow(
   return {
     event_id: submission.event_id,
     submission_id: submission.submission_id,
-    organization_name: organizationNameFor(submission.organization_id, organizations || []),
+    organization_name:
+      submission.organization_name ||
+      organizationNameFor(
+        submissionOrganizationId(submission),
+        organizations || []
+      ),
     id: submission.submission_id,
     activity_classification: submission.activity_classification?.activity_type || "extra-curricular",
     current_signatory: currentSignatoryLabel,

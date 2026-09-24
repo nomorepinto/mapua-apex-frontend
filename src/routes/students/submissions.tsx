@@ -15,11 +15,23 @@ import {
 } from "@/components/ui/dialog"
 import { Field, FieldError, FieldLabel } from "@/components/ui/field"
 import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { DEFAULT_SAAF_DRAFT } from "@/components/submission/constants"
 import { HowItWorks } from "@/components/submission/how-it-works"
 import { useOrgStore } from "@/stores/org-store"
 import { layout, modal } from "@/config"
 import { cn } from "@/lib/utils"
+
+const FACILITY_ITEMS: { label: string; value: "yes" | "no" }[] = [
+  { label: "Yes, reserve school facilities", value: "yes" },
+  { label: "No, do not reserve facilities", value: "no" },
+]
 
 export function SubmissionsStart() {
   const navigate = useNavigate()
@@ -94,27 +106,42 @@ export function SubmissionsStart() {
               />
             </Field>
 
-            <Field>
+            <Field className="w-full">
               <FieldLabel htmlFor="reserveFacilities">
                 Are you going to reserve school facilities?
               </FieldLabel>
-              <select
-                id="reserveFacilities"
+              <Select
+                items={FACILITY_ITEMS}
+                itemToStringValue={(item) => item.value}
                 name="reserveFacilities"
                 required
-                value={reserveFacilities}
-                onChange={(e) => {
-                  setReserveFacilities(e.target.value as "yes" | "no" | "")
+                value={
+                  FACILITY_ITEMS.find((item) => item.value === reserveFacilities) ??
+                  null
+                }
+                onValueChange={(item) => {
+                  setReserveFacilities(item?.value ?? "")
                   setError(null)
                 }}
-                className="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm text-foreground shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/24"
               >
-                <option value="" disabled>
-                  Select an option
-                </option>
-                <option value="yes">Yes, reserve school facilities</option>
-                <option value="no">No, do not reserve facilities</option>
-              </select>
+                <SelectTrigger
+                  id="reserveFacilities"
+                  className="w-full border-neutral-200 bg-white text-neutral-900"
+                >
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectPopup className="bg-white text-neutral-900">
+                  {FACILITY_ITEMS.map((item) => (
+                    <SelectItem
+                      key={item.value}
+                      value={item}
+                      className="text-neutral-900 data-highlighted:bg-neutral-100 data-highlighted:text-neutral-900"
+                    >
+                      {item.label}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
             </Field>
 
             {error ? <FieldError>{error}</FieldError> : null}

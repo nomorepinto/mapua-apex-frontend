@@ -1,10 +1,7 @@
 import { EventTimeFields } from "@/components/submission/event-time-fields"
 import {
-  alignEndPeriod,
   clockFromDraft,
   combineEventTime,
-  constrainClock,
-  earliestEndMinutes,
   format24,
   splitEventTime,
   withHour,
@@ -103,19 +100,11 @@ export function ActivityDetailsSection({
   }
 
   const updateStart = (next: ClockParts) => {
-    const start = constrainClock(next, null)
-    const end = constrainClock(
-      alignEndPeriod(start, endParts),
-      earliestEndMinutes(start)
-    )
-    commitTimes(start, end)
+    commitTimes(next, endParts)
   }
 
   const updateEnd = (next: ClockParts) => {
-    commitTimes(
-      startParts,
-      constrainClock(next, earliestEndMinutes(startParts))
-    )
+    commitTimes(startParts, next)
   }
 
   return (

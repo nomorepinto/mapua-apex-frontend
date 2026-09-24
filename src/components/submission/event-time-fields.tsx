@@ -3,12 +3,10 @@ import {
   SELECT_ITEM_CLASS,
 } from "@/components/submission/constants"
 import {
-  earliestEndMinutes,
+  clockMinutes,
   hourChoices,
-  isHourBlocked,
-  isMinuteBlocked,
-  isPeriodBlocked,
   minuteChoices,
+  SAME_EVENT_TIME_MESSAGE,
   type ClockParts,
   type Period,
 } from "@/components/submission/event-time"
@@ -70,19 +68,17 @@ function ClockSelect({
 function TimeParts({
   group,
   parts,
-  earliest,
   onHour,
   onMinute,
   onPeriod,
 }: {
   group: string
   parts: ClockParts
-  earliest: number | null
   onHour: (hour: string) => void
   onMinute: (minute: string) => void
   onPeriod: (period: Period) => void
 }) {
-  const hours = hourChoices(parts.period, parts.hour)
+  const hours = hourChoices(parts.hour)
   const minutes = minuteChoices(parts.minute)
 
   return (
@@ -99,8 +95,7 @@ function TimeParts({
           options={hours.map((hour) => ({
             value: hour,
             label: hour,
-            disabled:
-              hour !== parts.hour && isHourBlocked(hour, parts.period, earliest),
+            disabled: false,
           }))}
         />
         <ClockSelect
@@ -111,9 +106,7 @@ function TimeParts({
           options={minutes.map((minute) => ({
             value: minute,
             label: minute,
-            disabled:
-              minute !== parts.minute &&
-              isMinuteBlocked(minute, parts.hour, parts.period, earliest),
+            disabled: false,
           }))}
         />
         <ClockSelect
@@ -126,8 +119,7 @@ function TimeParts({
           options={(["AM", "PM"] as const).map((period) => ({
             value: period,
             label: period,
-            disabled:
-              period !== parts.period && isPeriodBlocked(period, earliest),
+            disabled: false,
           }))}
         />
       </div>
@@ -154,6 +146,11 @@ export function EventTimeFields({
   onStartPeriod: (period: Period) => void
   onEndPeriod: (period: Period) => void
 }) {
+  const startMinutes = clockMinutes(start)
+  const endMinutes = clockMinutes(end)
+  const sameTime =
+    startMinutes !== null && endMinutes !== null && startMinutes === endMinutes
+
   return (
     <div className="space-y-1.5">
       <label className="block text-xs font-semibold text-neutral-800">
@@ -163,7 +160,6 @@ export function EventTimeFields({
         <TimeParts
           group="Start"
           parts={start}
-          earliest={null}
           onHour={onStartHour}
           onMinute={onStartMinute}
           onPeriod={onStartPeriod}
@@ -174,7 +170,6 @@ export function EventTimeFields({
         <TimeParts
           group="End"
           parts={end}
-          earliest={earliestEndMinutes(start)}
           onHour={onEndHour}
           onMinute={onEndMinute}
           onPeriod={onEndPeriod}
@@ -183,6 +178,11 @@ export function EventTimeFields({
       <span className="block text-[10px] text-neutral-500">
         Between 7:00 AM and 9:00 PM. End time cannot be earlier than the start.
       </span>
+      {sameTime ? (
+        <span className="block text-[10px] font-medium text-red-600">
+          {SAME_EVENT_TIME_MESSAGE}
+        </span>
+      ) : null}
     </div>
   )
 }

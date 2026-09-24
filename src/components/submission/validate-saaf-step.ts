@@ -4,6 +4,7 @@ import {
   EVENT_WINDOW_END,
   EVENT_WINDOW_START,
   format24,
+  SAME_EVENT_TIME_MESSAGE,
   splitEventTime,
 } from "@/components/submission/event-time"
 import type { SaafStepIndex } from "@/components/submission/saaf-stepper"
@@ -144,6 +145,13 @@ export function getSaafStepIssue(
     const endMinutes = clockMinutes(
       clockFromDraft(undefined, undefined, undefined, end)
     )
+    if (
+      startMinutes !== null &&
+      endMinutes !== null &&
+      startMinutes === endMinutes
+    ) {
+      return SAME_EVENT_TIME_MESSAGE
+    }
     if (
       startMinutes !== null &&
       endMinutes !== null &&

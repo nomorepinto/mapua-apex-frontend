@@ -30,6 +30,13 @@ import {
 } from "@/components/ui/field"
 import { Form } from "@/components/ui/form"
 import {
+  Select,
+  SelectItem,
+  SelectPopup,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import {
   Table,
   TableBody,
   TableCell,
@@ -54,6 +61,7 @@ import {
 import {
   apiNotificationsToStepper,
   apiSubmissionToDashboardRow,
+  submissionOrganizationId,
   formatDisplayDateTime,
   formatDocumentId,
   type ApiAnnouncement,
@@ -78,7 +86,47 @@ const ANNOUNCEMENT_MAX = 5000
 const FILTER_LABEL_CLASS =
   "flex w-full flex-col gap-1 text-xs font-bold text-neutral-500 sm:w-44"
 const FILTER_SELECT_CLASS =
-  "h-10 w-full rounded-xl border border-neutral-200 bg-white px-3 text-sm font-semibold text-neutral-900"
+  "h-10 min-w-0 rounded-xl border-neutral-200 bg-white text-sm font-semibold text-neutral-900"
+
+type FilterOption = { value: string; label: string }
+
+function FilterSelect({
+  id,
+  items,
+  onValueChange,
+  value,
+}: {
+  id: string
+  items: readonly FilterOption[]
+  onValueChange: (value: string) => void
+  value: string
+}) {
+  const selected = items.find((item) => item.value === value) ?? null
+
+  return (
+    <Select
+      itemToStringValue={(item) => item.value}
+      items={items}
+      onValueChange={(item) => onValueChange(item?.value ?? "")}
+      value={selected}
+    >
+      <SelectTrigger id={id} className={FILTER_SELECT_CLASS}>
+        <SelectValue />
+      </SelectTrigger>
+      <SelectPopup className="bg-white text-neutral-900">
+        {items.map((item) => (
+          <SelectItem
+            key={item.value || "all"}
+            value={item}
+            className="text-neutral-900 data-highlighted:bg-neutral-100 data-highlighted:text-neutral-900"
+          >
+            {item.label}
+          </SelectItem>
+        ))}
+      </SelectPopup>
+    </Select>
+  )
+}
 
 export function AdminOsaPanel() {
   const [organizationId, setOrganizationId] = useState("")
@@ -128,10 +176,7 @@ export function AdminOsaPanel() {
     return (submissionsQuery.data || [])
       .filter((submission) => {
         if (!selectedOrganization) return true
-        const submissionOrganization = (
-          submission.organization_id || ""
-        ).replace(/^ORGANIZATION#/i, "")
-        return submissionOrganization === selectedOrganization
+        return submissionOrganizationId(submission) === selectedOrganization
       })
       .map((submission) =>
         apiSubmissionToDashboardRow(
@@ -286,58 +331,51 @@ export function AdminOsaPanel() {
             </div>
             <div className="flex flex-col gap-3 sm:items-end">
               <div className="flex flex-col gap-3 sm:flex-row">
-                <label className={FILTER_LABEL_CLASS}>
-                  Status
-                  <select
+                <div className={FILTER_LABEL_CLASS}>
+                  <label htmlFor="status-filter">Status</label>
+                  <FilterSelect
+                    id="status-filter"
+                    items={STATUS_FILTERS}
                     value={status}
-                    onChange={(event) =>
+                    onValueChange={(next) =>
                       setStatus(
-                        event.target.value as
-                          "" | "pending" | "approved" | "denied" | "returned"
+                        next as
+                          | ""
+                          | "pending"
+                          | "approved"
+                          | "denied"
+                          | "returned"
                       )
                     }
-                    className={FILTER_SELECT_CLASS}
-                  >
-                    {STATUS_FILTERS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label className={FILTER_LABEL_CLASS}>
-                  Activity type
-                  <select
+                  />
+                </div>
+                <div className={FILTER_LABEL_CLASS}>
+                  <label htmlFor="activity-type-filter">Activity type</label>
+                  <FilterSelect
+                    id="activity-type-filter"
+                    items={TYPE_FILTERS}
                     value={activityType}
-                    onChange={(event) => setActivityType(event.target.value)}
-                    className={FILTER_SELECT_CLASS}
-                  >
-                    {TYPE_FILTERS.map((option) => (
-                      <option key={option.label} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    onValueChange={setActivityType}
+                  />
+                </div>
               </div>
-              <label className={cn(FILTER_LABEL_CLASS, "sm:w-auto sm:self-stretch")}>
-                Organization
-                <select
+              <div
+                className={cn(FILTER_LABEL_CLASS, "sm:w-auto sm:self-stretch")}
+              >
+                <label htmlFor="organization-filter">Organization</label>
+                <FilterSelect
+                  id="organization-filter"
+                  items={[
+                    { value: "", label: "All organizations" },
+                    ...organizations.map((organization) => ({
+                      value: organization.organization_id,
+                      label: organization.name,
+                    })),
+                  ]}
                   value={organizationId}
-                  onChange={(event) => setOrganizationId(event.target.value)}
-                  className={FILTER_SELECT_CLASS}
-                >
-                  <option value="">All organizations</option>
-                  {organizations.map((organization) => (
-                    <option
-                      key={organization.organization_id}
-                      value={organization.organization_id}
-                    >
-                      {organization.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  onValueChange={setOrganizationId}
+                />
+              </div>
             </div>
           </div>
 
