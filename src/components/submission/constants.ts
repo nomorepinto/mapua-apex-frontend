@@ -84,6 +84,75 @@ export const DEFAULT_BUDGET_ITEMS: BudgetItem[] = [
   { id: "1", item: "", unit: "1", quantity: "1", pricePerUnit: "0" },
 ]
 
+function filled(value: string | undefined): boolean {
+  return Boolean(value && value.trim())
+}
+
+export function saafHasUserInput(draft: SaafDraft): boolean {
+  if (draft.activityType !== DEFAULT_SAAF_DRAFT.activityType) return true
+  if (
+    [
+      draft.totalOrgMembers,
+      draft.expectedParticipants,
+      draft.individualContribution,
+      draft.proposedBudget,
+      draft.dayOfEvent,
+      draft.activityTitle,
+      draft.activityDescription,
+      draft.activityObjectives,
+      draft.activityVenue,
+      draft.dateOfEvent,
+      draft.endDateOfEvent,
+      draft.timeOfEvent,
+      draft.timeOfEventStart,
+      draft.timeOfEventEnd,
+      draft.timeOfEventStartHour,
+      draft.timeOfEventStartMinute,
+      draft.timeOfEventStartPeriod,
+      draft.timeOfEventEndHour,
+      draft.timeOfEventEndMinute,
+      draft.timeOfEventEndPeriod,
+      draft.coreValuesExplanation,
+      draft.peoExplanation,
+      draft.sdgExplanation,
+    ].some(filled)
+  ) {
+    return true
+  }
+  if (draft.mission1 || draft.mission2 || draft.mission3) return true
+  if (Object.values(draft.departmentValues).some(filled)) return true
+  if (draft.proponents.length !== 1) return true
+  const proponent = draft.proponents[0]
+  if (
+    proponent &&
+    [
+      proponent.position,
+      proponent.firstName,
+      proponent.middleName,
+      proponent.lastName,
+      proponent.suffix,
+      proponent.studentNumber,
+      proponent.programAndYear,
+      proponent.department,
+      proponent.positionOfApplicant,
+      proponent.orgOrCourseSection,
+      proponent.contactNumber,
+      proponent.emailAddress,
+      proponent.facebookLink,
+    ].some(filled)
+  ) {
+    return true
+  }
+  if (draft.budgetItems.length !== DEFAULT_BUDGET_ITEMS.length) return true
+  return draft.budgetItems.some(
+    (item, index) =>
+      filled(item.item) ||
+      item.unit !== DEFAULT_BUDGET_ITEMS[index]?.unit ||
+      item.quantity !== DEFAULT_BUDGET_ITEMS[index]?.quantity ||
+      item.pricePerUnit !== DEFAULT_BUDGET_ITEMS[index]?.pricePerUnit
+  )
+}
+
 export const DEFAULT_SAAF_DRAFT: SaafDraft = {
   activityType: "co-curricular",
   totalOrgMembers: "",

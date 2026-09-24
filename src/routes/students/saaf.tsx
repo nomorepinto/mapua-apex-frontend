@@ -23,6 +23,7 @@ import {
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { brand, layout } from "@/config"
 import { isSaafDraftComplete, isSaafStepComplete } from "@/components/submission/validate-saaf-step"
+import { saafHasUserInput } from "@/components/submission/constants"
 import { useSaafForm } from "@/hooks/use-saaf-form"
 import { cn } from "@/lib/utils"
 
@@ -55,6 +56,7 @@ export function Submission() {
 
   const currentStepComplete = isSaafStepComplete(step, draft)
   const formComplete = isSaafDraftComplete(draft)
+  const canClear = saafHasUserInput(draft)
 
   const goBack = () => {
     if (step === 0) return
@@ -157,14 +159,24 @@ export function Submission() {
 
           {step < 3 ? (
             <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
-              <button
-                type="button"
-                onClick={goBack}
-                disabled={step === 0}
-                className={cn(brand.actionGhost, "disabled:opacity-40")}
-              >
-                Back
-              </button>
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  disabled={step === 0}
+                  className={cn(brand.actionGhost, "disabled:opacity-40")}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setShowConfirmClearModal(true)}
+                  disabled={!canClear}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-300/80 bg-white px-5 text-sm font-semibold text-red-600 shadow-xs transition-colors hover:border-red-400 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  Clear
+                </button>
+              </div>
               <button
                 type="button"
                 onClick={goNext}
@@ -179,13 +191,23 @@ export function Submission() {
             </div>
           ) : (
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className={brand.actionGhost}
-              >
-                Back
-              </button>
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className={brand.actionGhost}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setShowConfirmClearModal(true)}
+                  disabled={!canClear}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-300/80 bg-white px-5 text-sm font-semibold text-red-600 shadow-xs transition-colors hover:border-red-400 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  Clear
+                </button>
+              </div>
               <SubmissionActions
                 isSubmitting={form.isSubmitting}
                 inactive={!formComplete}
@@ -193,7 +215,6 @@ export function Submission() {
                 onNextPage={() => form.handleGoToReservation(formRef.current)}
                 onSavePdf={form.handleSavePdf}
                 onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-                onClear={() => form.setShowConfirmClearModal(true)}
               />
             </div>
           )}

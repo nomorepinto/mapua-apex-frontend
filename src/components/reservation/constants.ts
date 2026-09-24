@@ -100,6 +100,40 @@ export const DEFAULT_AV_ITEMS: AVItem[] = [
   { id: "12", dateNeeded: "", endDateNeeded: "", timeNeeded: "", endTimeNeeded: "", equipmentNeeded: "Microphone", remarks: "" },
 ]
 
+function filled(value: string | undefined): boolean {
+  return Boolean(value && value.trim())
+}
+
+export function reservationHasUserInput(draft: ReservationDraft): boolean {
+  if (Object.values(draft.equipment).some(Boolean)) return true
+  if (filled(draft.otherEquipmentText) || filled(draft.purpose)) return true
+  if (filled(draft.functionRoomPurpose) || filled(draft.avPurpose)) return true
+  if (draft.facilityItems.length !== DEFAULT_FACILITY_ITEMS.length) return true
+  if (
+    draft.facilityItems.some((item) =>
+      [item.item, item.dateOfUse, item.endDateOfUse, item.timeOfUse, item.endTimeOfUse, item.location].some(filled)
+    )
+  ) {
+    return true
+  }
+  if (draft.roomItems.length !== DEFAULT_ROOM_ITEMS.length) return true
+  if (
+    draft.roomItems.some(
+      (item, index) =>
+        item.roomNeeded !== DEFAULT_ROOM_ITEMS[index]?.roomNeeded ||
+        [item.dateNeeded, item.endDateNeeded, item.timeNeeded, item.endTimeNeeded, item.remarks].some(filled)
+    )
+  ) {
+    return true
+  }
+  if (draft.avItems.length !== DEFAULT_AV_ITEMS.length) return true
+  return draft.avItems.some(
+    (item, index) =>
+      item.equipmentNeeded !== DEFAULT_AV_ITEMS[index]?.equipmentNeeded ||
+      [item.dateNeeded, item.endDateNeeded, item.timeNeeded, item.endTimeNeeded, item.remarks].some(filled)
+  )
+}
+
 export const DEFAULT_RESERVATION_DRAFT: ReservationDraft = {
   equipment: DEFAULT_EQUIPMENT,
   otherEquipmentText: "",

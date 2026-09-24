@@ -11,6 +11,7 @@ import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
+import { reservationHasUserInput } from "@/components/reservation/constants"
 import { useReservationForm } from "@/hooks/use-reservation-form"
 import { useOrgStore } from "@/stores/org-store"
 import { layout } from "@/config"
@@ -106,6 +107,7 @@ export function Reservation() {
             }
             onSavePdf={form.handleSavePdf}
             onGoBack={form.handleGoBack}
+            clearDisabled={!reservationHasUserInput(draft)}
             onClear={() => form.setShowConfirmClearModal(true)}
           />
         </form>

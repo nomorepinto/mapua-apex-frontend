@@ -178,7 +178,7 @@ function SidebarUser({
         <Link
           to={aboutTo}
           onClick={onNavigate}
-          className="mt-3 flex min-h-11 items-center gap-2 rounded-lg px-1 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+          className="mt-3 flex min-h-11 items-center gap-2 rounded-lg px-1 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white border-3 border-red-900"
         >
           <UsersIcon className="size-4 shrink-0" />
           About APEX
