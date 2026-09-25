@@ -14,6 +14,10 @@ import type { Activity } from "@/components/ui/activity.types"
 export interface ApiSubmission {
   event_id: string
   submission_id: string
+  /** Organization key on the submission item, `ORGANIZATION#<uuid>`. */
+  GSI1PK?: string | null
+  organization_id?: string | null
+  organization_name?: string | null
   submission_type: string
   sent_at: string
   status: "pending" | "approved" | "denied" | "returned"
@@ -345,6 +349,7 @@ export type DashboardSubmissionStatus = "Under Review" | "Approved" | "Returned"
 export interface DashboardSubmissionRow {
   event_id: string
   submission_id: string
+  organization_name: string
   id: string
   activity_classification: string
   current_signatory: string
@@ -556,9 +561,30 @@ function formatProponentName(
     .trim()
 }
 
+export function submissionOrganizationId(submission: {
+  GSI1PK?: string | null
+  organization_id?: string | null
+}): string {
+  const raw = submission.GSI1PK || submission.organization_id || ""
+  return raw.replace(/^ORGANIZATION#/i, "")
+}
+
+export function organizationNameFor(
+  organizationId: string | null | undefined,
+  organizations: Array<{ organization_id: string; name: string }>
+): string {
+  const id = (organizationId || "").replace(/^ORGANIZATION#/i, "")
+  if (!id) return "—"
+  const match = organizations.find(
+    (organization) => organization.organization_id.replace(/^ORGANIZATION#/i, "") === id
+  )
+  return match?.name || id
+}
+
 export function apiSubmissionToDashboardRow(
   submission: ApiSubmission,
-  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>
+  orgSignatories?: Array<{ role?: string; signatory_id?: string; name?: string }>,
+  organizations?: Array<{ organization_id: string; name: string }>
 ): DashboardSubmissionRow {
   const meta = getSubmissionStatusMeta(submission.status)
   const firstProponent = submission.proponents?.[0]
@@ -582,6 +608,12 @@ export function apiSubmissionToDashboardRow(
   return {
     event_id: submission.event_id,
     submission_id: submission.submission_id,
+    organization_name:
+      submission.organization_name ||
+      organizationNameFor(
+        submissionOrganizationId(submission),
+        organizations || []
+      ),
     id: submission.submission_id,
     activity_classification: submission.activity_classification?.activity_type || "extra-curricular",
     current_signatory: currentSignatoryLabel,

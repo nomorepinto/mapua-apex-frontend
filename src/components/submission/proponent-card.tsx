@@ -1,6 +1,7 @@
 import { memo } from "react"
 import { Trash2Icon } from "lucide-react"
 
+import { FieldWarning } from "@/components/forms/field-warning"
 import {
   DEPARTMENTS,
   FIELD_INPUT_CLASS,
@@ -80,6 +81,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.firstName`} />
         </div>
         <div className="space-y-1.5 md:col-span-3">
           <label className="block text-xs font-medium text-neutral-700">
@@ -111,6 +113,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.lastName`} />
         </div>
         <div className="space-y-1.5 md:col-span-1">
           <label className="block text-xs font-medium text-neutral-700">
@@ -152,6 +155,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.studentNumber`} />
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-neutral-700">
@@ -169,6 +173,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.programAndYear`} />
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-neutral-700">
@@ -228,6 +233,7 @@ export const ProponentCard = memo(function ProponentCard({
             value={departmentValue}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.department`} />
         </div>
 
         <div className="space-y-1.5">
@@ -246,6 +252,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.positionOfApplicant`} />
         </div>
 
         <div className="space-y-1.5">
@@ -264,6 +271,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.orgOrCourseSection`} />
         </div>
       </div>
 
@@ -291,6 +299,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.contactNumber`} />
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-neutral-700">
@@ -310,6 +319,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.emailAddress`} />
         </div>
         <div className="space-y-1.5">
           <label className="block text-xs font-medium text-neutral-700">
@@ -327,6 +337,7 @@ export const ProponentCard = memo(function ProponentCard({
             className={FIELD_INPUT_CLASS}
             required
           />
+          <FieldWarning name={`proponent.${proponent.id}.facebookLink`} />
         </div>
       </div>
     </div>

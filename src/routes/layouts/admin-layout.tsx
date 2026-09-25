@@ -28,8 +28,13 @@ export function AdminLayout() {
   return (
     <AuthGuard allowedGroups={["admin", "osaar"]}>
       <div className={layout.frame}>
-        <AppSidebar homeTo="/admin/dashboard" items={ADMIN_NAV} />
-        <main className={layout.main}>
+        <AppSidebar
+          homeTo="/admin/dashboard"
+          items={ADMIN_NAV}
+          switchPanelLabel="Signatory Dashboard"
+          switchPanelTo="/signatories/dashboard"
+        />
+        <main className="min-h-0 min-w-0 flex-1 overflow-x-clip overflow-y-auto">
           <Outlet />
         </main>
       </div>

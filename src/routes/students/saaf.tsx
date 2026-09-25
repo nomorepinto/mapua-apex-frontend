@@ -1,16 +1,11 @@
 import { useRef, useState } from "react"
-import { CircleAlertIcon } from "lucide-react"
 
 import { ConfirmClearModal } from "@/components/forms/confirm-clear-modal"
+import { FieldWarnings } from "@/components/forms/field-warning"
 import { ConfirmSubmitModal } from "@/components/forms/confirm-submit-modal"
 import { FormPageHeader } from "@/components/forms/form-page-header"
 import { SubmissionErrorAlert } from "@/components/forms/submission-error-alert"
 import { SuccessModal } from "@/components/forms/success-modal"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
 import { ActivityClassificationSection } from "@/components/submission/activity-classification-section"
 import { ActivityDetailsSection } from "@/components/submission/activity-details-section"
 import { BudgetProposalSection } from "@/components/submission/budget-proposal-section"
@@ -22,6 +17,8 @@ import {
 } from "@/components/submission/saaf-stepper"
 import { SubmissionActions } from "@/components/submission/submission-actions"
 import { brand, layout } from "@/config"
+import { isSaafDraftComplete, isSaafStepComplete, saafFieldWarnings } from "@/components/submission/validate-saaf-step"
+import { saafHasUserInput } from "@/components/submission/constants"
 import { useSaafForm } from "@/hooks/use-saaf-form"
 import { cn } from "@/lib/utils"
 
@@ -52,6 +49,10 @@ export function Submission() {
     window.scrollTo({ top: 0, behavior: "smooth" })
   }
 
+  const currentStepComplete = isSaafStepComplete(step, draft)
+  const formComplete = isSaafDraftComplete(draft)
+  const canClear = saafHasUserInput(draft)
+
   const goBack = () => {
     if (step === 0) return
     goToStep((step - 1) as SaafStepIndex)
@@ -66,6 +67,7 @@ export function Submission() {
           noValidate
           className={cn(layout.stack, form.showErrors && "saaf-show-errors")}
         >
+          <FieldWarnings warnings={form.showErrors ? saafFieldWarnings(draft) : {}}>
           <FormPageHeader
             title="Student Activity Application Form"
             subtitle={
@@ -143,47 +145,68 @@ export function Submission() {
 
           {step === 3 ? <SubmissionErrorAlert message={form.submitError} /> : null}
 
-          {step < 3 && form.stepError ? (
-            <Alert variant="error">
-              <CircleAlertIcon />
-              <AlertTitle>This step is incomplete</AlertTitle>
-              <AlertDescription>{form.stepError}</AlertDescription>
-            </Alert>
-          ) : null}
-
           {step < 3 ? (
             <div className="flex flex-col-reverse gap-3 border-t border-neutral-200 pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  disabled={step === 0}
+                  className={cn(brand.actionGhost, "disabled:opacity-40")}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setShowConfirmClearModal(true)}
+                  disabled={!canClear}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-300/80 bg-white px-5 text-sm font-semibold text-red-600 shadow-xs transition-colors hover:border-red-400 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  Clear
+                </button>
+              </div>
               <button
                 type="button"
-                onClick={goBack}
-                disabled={step === 0}
-                className={cn(brand.actionGhost, "disabled:opacity-40")}
+                onClick={goNext}
+                aria-disabled={!currentStepComplete}
+                className={cn(
+                  brand.action,
+                  !currentStepComplete && "cursor-not-allowed opacity-40"
+                )}
               >
-                Back
-              </button>
-              <button type="button" onClick={goNext} className={brand.action}>
                 Continue
               </button>
             </div>
           ) : (
             <div className="space-y-3">
-              <button
-                type="button"
-                onClick={goBack}
-                className={brand.actionGhost}
-              >
-                Back
-              </button>
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center">
+                <button
+                  type="button"
+                  onClick={goBack}
+                  className={brand.actionGhost}
+                >
+                  Back
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setShowConfirmClearModal(true)}
+                  disabled={!canClear}
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-300/80 bg-white px-5 text-sm font-semibold text-red-600 shadow-xs transition-colors hover:border-red-400 hover:bg-red-50 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  Clear
+                </button>
+              </div>
               <SubmissionActions
                 isSubmitting={form.isSubmitting}
+                inactive={!formComplete}
                 showNextPage={form.reserveFacilities === "yes"}
                 onNextPage={() => form.handleGoToReservation(formRef.current)}
                 onSavePdf={form.handleSavePdf}
                 onSubmit={(e) => form.handleInitiateSubmit(e, formRef.current)}
-                onClear={() => form.setShowConfirmClearModal(true)}
               />
             </div>
           )}
+          </FieldWarnings>
         </form.fetcher.Form>
       </div>
 

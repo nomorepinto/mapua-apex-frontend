@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react"
 import type { LucideIcon } from "lucide-react"
-import { LogOutIcon, MenuIcon, UsersIcon, XIcon } from "lucide-react"
+import {
+  ArrowRightLeftIcon,
+  LogOutIcon,
+  MenuIcon,
+  UsersIcon,
+  XIcon,
+} from "lucide-react"
 import { Link, NavLink } from "react-router"
 import { useAuth } from "react-oidc-context"
 
@@ -26,6 +32,11 @@ export type AppSidebarItem = {
   to: string
   icon: LucideIcon
   end?: boolean
+}
+
+export type AppSidebarPanelSwitch = {
+  label: string
+  to: string
 }
 
 function navClassName({ isActive }: { isActive: boolean }) {
@@ -90,10 +101,12 @@ function SidebarNav({
   items,
   onNavigate,
   onSignOut,
+  panelSwitch,
 }: {
   items: AppSidebarItem[]
   onNavigate?: () => void
   onSignOut: () => void
+  panelSwitch?: AppSidebarPanelSwitch
 }) {
   return (
     <nav className="space-y-1.5 pt-2">
@@ -118,6 +131,17 @@ function SidebarNav({
           )}
         </NavLink>
       ))}
+
+      {panelSwitch ? (
+        <Link
+          to={panelSwitch.to}
+          onClick={onNavigate}
+          className="flex min-h-11 w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium text-white/90 transition-all hover:bg-neutral-200/20 hover:text-white"
+        >
+          <ArrowRightLeftIcon className="h-4.5 w-4.5 shrink-0 text-white/80" />
+          <span>{panelSwitch.label}</span>
+        </Link>
+      ) : null}
 
       <button
         type="button"
@@ -154,7 +178,7 @@ function SidebarUser({
         <Link
           to={aboutTo}
           onClick={onNavigate}
-          className="mt-3 flex min-h-11 items-center gap-2 rounded-lg px-1 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white"
+          className="mt-3 flex min-h-11 items-center gap-2 rounded-lg px-1 text-xs font-semibold text-white/90 transition-colors hover:bg-white/10 hover:text-white border-3 border-red-900"
         >
           <UsersIcon className="size-4 shrink-0" />
           About APEX
@@ -173,6 +197,7 @@ function SidebarPanel({
   onNavigate,
   onSignOut,
   onClose,
+  panelSwitch,
   from = "side",
 }: {
   homeTo: string
@@ -183,6 +208,7 @@ function SidebarPanel({
   onNavigate?: () => void
   onSignOut: () => void
   onClose?: () => void
+  panelSwitch?: AppSidebarPanelSwitch
   from?: "side" | "top"
 }) {
   const isTop = from === "top"
@@ -228,6 +254,7 @@ function SidebarPanel({
           items={items}
           onNavigate={onNavigate}
           onSignOut={onSignOut}
+          panelSwitch={panelSwitch}
         />
       </div>
       <div className={isTop ? "mt-4" : undefined}>
@@ -245,9 +272,13 @@ function SidebarPanel({
 export function AppSidebar({
   homeTo,
   items,
+  switchPanelTo,
+  switchPanelLabel,
 }: {
   homeTo: string
   items: AppSidebarItem[]
+  switchPanelTo?: string
+  switchPanelLabel?: string
 }) {
   const auth = useAuth()
   const profile = auth.user?.profile
@@ -264,6 +295,17 @@ export function AppSidebar({
     userGroups.length > 0
       ? userGroups.map((g) => g.replace(/_/g, " ")).join(", ")
       : "No role assigned"
+
+  // OSAAR and admin staff can access both the admin and signatory panels but
+  // are unlikely to edit the URL by hand, so surface a one-click switch for them.
+  const isPanelSwitcher = userGroups.some((g) => {
+    const group = g.toLowerCase()
+    return group === "osaar" || group === "admin"
+  })
+  const panelSwitch =
+    isPanelSwitcher && switchPanelTo
+      ? { to: switchPanelTo, label: switchPanelLabel ?? "Switch Panel" }
+      : undefined
 
   const handleSignOut = useSignOut()
   const [mobileOpen, setMobileOpen] = useState(false)
@@ -286,6 +328,7 @@ export function AppSidebar({
     items,
     name,
     displayRole,
+    panelSwitch,
     onSignOut: requestSignOut,
   }
 

@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react"
-import { Building2Icon, CircleAlertIcon, DownloadIcon, PencilIcon, PlusIcon } from "lucide-react"
+import {
+  Building2Icon,
+  CircleAlertIcon,
+  DownloadIcon,
+  PencilIcon,
+  PlusIcon,
+} from "lucide-react"
 import { Link } from "react-router"
 
 import { CsvFileField } from "@/components/admin-osa/csv-file-field"
@@ -15,11 +21,7 @@ import {
   type SignatoryOption,
 } from "@/components/admin-osa/signatory-roles"
 import { FormPageHeader } from "@/components/forms/form-page-header"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -397,9 +399,7 @@ export function AdminOrganizationsPage() {
     setEditing(org)
     setEditName(org.name)
     setEditDesks({
-      dean: optionFromPerson(
-        peopleById.get(deskAssignment(org, "dean") ?? "")
-      ),
+      dean: optionFromPerson(peopleById.get(deskAssignment(org, "dean") ?? "")),
       adviser: optionFromPerson(
         peopleById.get(deskAssignment(org, "adviser") ?? "")
       ),
@@ -572,7 +572,12 @@ export function AdminOrganizationsPage() {
           </Alert>
         ) : null}
 
-        <div className={cn("grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]", layout.gap)}>
+        <div
+          className={cn(
+            "grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]",
+            layout.gap
+          )}
+        >
           <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add organization</CardTitle>
@@ -683,8 +688,9 @@ export function AdminOrganizationsPage() {
             <CardHeader>
               <CardTitle>Import CSV</CardTitle>
               <CardDescription>
-                Four columns: organization name, dean, adviser, is_higher_council.
-                Shared admin and CDM are attached automatically.
+                Four columns: organization name, dean, adviser,
+                is_higher_council. Shared admin and CDM are attached
+                automatically.
               </CardDescription>
             </CardHeader>
             <CardPanel className="flex flex-col gap-4">
@@ -814,78 +820,82 @@ export function AdminOrganizationsPage() {
                     Shared desks: Admin {sharedAdmin?.name ?? "—"} · CDM{" "}
                     {sharedCdm?.name ?? "—"} · OSAAR {sharedOsaar?.name ?? "—"}
                   </div>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Organization</TableHead>
-                        <TableHead>Dean</TableHead>
-                        <TableHead>Adviser</TableHead>
-                        <TableHead>Higher council</TableHead>
-                        <TableHead className="w-28 text-right">
-                          <span className="sr-only">Actions</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {filtered.length === 0 ? (
+                  <div className="px-4 pb-4 sm:px-6 sm:pb-6 md:px-7 md:pb-7">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell
-                            className="text-muted-foreground"
-                            colSpan={5}
-                          >
-                            No organizations match “{search}”.
-                          </TableCell>
+                          <TableHead>Organization</TableHead>
+                          <TableHead>Dean</TableHead>
+                          <TableHead>Adviser</TableHead>
+                          <TableHead>Higher council</TableHead>
+                          <TableHead className="w-28 text-right">
+                            <span className="sr-only">Actions</span>
+                          </TableHead>
                         </TableRow>
-                      ) : (
-                        filtered.map((org) => (
-                          <TableRow
-                            className="cursor-pointer"
-                            key={org.organization_id}
-                            onContextMenu={(event) => {
-                              event.preventDefault()
-                              openEdit(org)
-                            }}
-                          >
-                            <TableCell className="whitespace-normal">
-                              <div className="font-medium">{org.name}</div>
-                            </TableCell>
-                            {ORGANIZATION_ASSIGNABLE_DESK_ITEMS.map((item) => {
-                              const signatoryId = deskAssignment(
-                                org,
-                                item.value
-                              )
-                              return (
-                                <TableCell key={item.value}>
-                                  <DeskName
-                                    person={
-                                      signatoryId
-                                        ? peopleById.get(signatoryId)
-                                        : undefined
-                                    }
-                                    signatoryId={signatoryId}
-                                  />
-                                </TableCell>
-                              )
-                            })}
-                            <TableCell>
-                              {org.is_higher_council ? "Yes" : "—"}
-                            </TableCell>
-                            <TableCell className="text-right">
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="outline"
-                                onClick={() => openEdit(org)}
-                              >
-                                <PencilIcon />
-                                Edit
-                              </Button>
+                      </TableHeader>
+                      <TableBody>
+                        {filtered.length === 0 ? (
+                          <TableRow>
+                            <TableCell
+                              className="text-muted-foreground"
+                              colSpan={5}
+                            >
+                              No organizations match “{search}”.
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : (
+                          filtered.map((org) => (
+                            <TableRow
+                              className="cursor-pointer"
+                              key={org.organization_id}
+                              onContextMenu={(event) => {
+                                event.preventDefault()
+                                openEdit(org)
+                              }}
+                            >
+                              <TableCell className="whitespace-normal">
+                                <div className="font-medium">{org.name}</div>
+                              </TableCell>
+                              {ORGANIZATION_ASSIGNABLE_DESK_ITEMS.map(
+                                (item) => {
+                                  const signatoryId = deskAssignment(
+                                    org,
+                                    item.value
+                                  )
+                                  return (
+                                    <TableCell key={item.value}>
+                                      <DeskName
+                                        person={
+                                          signatoryId
+                                            ? peopleById.get(signatoryId)
+                                            : undefined
+                                        }
+                                        signatoryId={signatoryId}
+                                      />
+                                    </TableCell>
+                                  )
+                                }
+                              )}
+                              <TableCell>
+                                {org.is_higher_council ? "Yes" : "—"}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => openEdit(org)}
+                                >
+                                  <PencilIcon />
+                                  Edit
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </>
               )}
             </CardPanel>

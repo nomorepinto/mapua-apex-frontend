@@ -43,7 +43,7 @@ export function Dashboard() {
           <div className={layout.tableWrap}>
             <Table className={layout.table}>
               <TableHeader>
-                <TableRow className="border-b border-neutral-200 text-neutral-500 text-xs font-bold uppercase tracking-wider hover:bg-transparent">
+                <TableRow className="border-b border-neutral-200 text-xs font-bold tracking-wider text-neutral-500 uppercase hover:bg-transparent!">
                   <TableHead className="py-4 px-6 font-bold text-neutral-500">
                     ORGANIZATION
                   </TableHead>

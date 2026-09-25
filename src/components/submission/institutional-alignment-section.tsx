@@ -1,3 +1,4 @@
+import { FieldWarning } from "@/components/forms/field-warning"
 import { MISSION_STATEMENTS } from "@/components/submission/constants"
 import type { SaafDraft } from "@/components/submission/types"
 import { Textarea } from "@/components/ui/textarea"
@@ -41,11 +42,6 @@ export function InstitutionalAlignmentSection({
             Check the mission statement(s) satisfied by the nature of your activity:{" "}
             <span className="text-red-500">*</span>
           </p>
-          {!atLeastOneSelected ? (
-            <span className="text-xs font-semibold text-red-500">
-              Select at least 1
-            </span>
-          ) : null}
         </div>
 
         <div
@@ -78,6 +74,7 @@ export function InstitutionalAlignmentSection({
             )
           })}
         </div>
+        <FieldWarning name="mission" />
 
         <div className="space-y-1.5 pt-3">
           <div className="flex items-center justify-between">
@@ -107,6 +104,7 @@ export function InstitutionalAlignmentSection({
             className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="coreValuesExplanation" />
         </div>
 
         <div className="space-y-1.5 pt-2">
@@ -134,6 +132,7 @@ export function InstitutionalAlignmentSection({
             style={{ color: "#171717" }}
             className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
           />
+          <FieldWarning name="peoExplanation" />
         </div>
 
         <div className="space-y-1.5 pt-2">
@@ -161,6 +160,7 @@ export function InstitutionalAlignmentSection({
             className="mt-1 rounded-lg border-neutral-300 bg-white text-sm !text-neutral-900 placeholder:text-neutral-400"
             required
           />
+          <FieldWarning name="sdgExplanation" />
         </div>
       </div>
     </div>

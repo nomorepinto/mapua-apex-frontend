@@ -1,5 +1,7 @@
 import { PlusIcon, Trash2Icon } from "lucide-react"
 
+import { FieldWarning } from "@/components/forms/field-warning"
+
 import {
   FIXED_AV_EQUIPMENT,
   PURPOSE_INPUT_CLASS,
@@ -44,6 +46,7 @@ export function AvTable({
           className={PURPOSE_INPUT_CLASS}
           required
         />
+        <FieldWarning name="avPurpose" />
       </div>
 
       <div className={layout.sectionFlush}>

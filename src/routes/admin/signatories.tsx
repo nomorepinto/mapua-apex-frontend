@@ -1,5 +1,11 @@
 import { useMemo, useState } from "react"
-import { CircleAlertIcon, DownloadIcon, PencilIcon, PlusIcon, StampIcon } from "lucide-react"
+import {
+  CircleAlertIcon,
+  DownloadIcon,
+  PencilIcon,
+  PlusIcon,
+  StampIcon,
+} from "lucide-react"
 
 import { CsvFileField } from "@/components/admin-osa/csv-file-field"
 import {
@@ -10,11 +16,7 @@ import {
   type SignatoryRoleValue,
 } from "@/components/admin-osa/signatory-roles"
 import { FormPageHeader } from "@/components/forms/form-page-header"
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "@/components/ui/alert"
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
@@ -45,11 +47,7 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty"
-import {
-  Field,
-  FieldDescription,
-  FieldLabel,
-} from "@/components/ui/field"
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field"
 import { Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import {
@@ -181,8 +179,9 @@ export function AdminSignatoriesPage() {
   const [editing, setEditing] = useState<ApiSignatory | null>(null)
   const [editName, setEditName] = useState("")
   const [editRole, setEditRole] = useState<SignatoryRoleValue | null>(null)
-  const [editDepartment, setEditDepartment] =
-    useState<DepartmentOption | null>(null)
+  const [editDepartment, setEditDepartment] = useState<DepartmentOption | null>(
+    null
+  )
   const [editError, setEditError] = useState("")
 
   const signatories = signatoriesQuery.data ?? EMPTY_SIGNATORIES
@@ -423,7 +422,12 @@ export function AdminSignatoriesPage() {
           </Alert>
         ) : null}
 
-        <div className={cn("grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]", layout.gap)}>
+        <div
+          className={cn(
+            "grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)]",
+            layout.gap
+          )}
+        >
           <Card className={layout.card}>
             <CardHeader>
               <CardTitle>Add signatory</CardTitle>
@@ -619,74 +623,79 @@ export function AdminSignatoriesPage() {
                     </EmptyMedia>
                     <EmptyTitle>No signatories yet</EmptyTitle>
                     <EmptyDescription>
-                      Add a name and role on the left. Organizations need
-                      shared admin, CDM, and OSAAR accounts before they can be
+                      Add a name and role on the left. Organizations need shared
+                      admin, CDM, and OSAAR accounts before they can be
                       registered.
                     </EmptyDescription>
                   </EmptyHeader>
                 </Empty>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Department</TableHead>
-                      <TableHead className="w-28 text-right">
-                        <span className="sr-only">Actions</span>
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filtered.length === 0 ? (
+                <div className="px-4 pb-4 sm:px-6 sm:pb-6 md:px-7 md:pb-7">
+                  <Table>
+                    <TableHeader>
                       <TableRow>
-                        <TableCell className="text-muted-foreground" colSpan={4}>
-                          No signatories match “{search}”.
-                        </TableCell>
+                        <TableHead>Name</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Department</TableHead>
+                        <TableHead className="w-28 text-right">
+                          <span className="sr-only">Actions</span>
+                        </TableHead>
                       </TableRow>
-                    ) : (
-                      filtered.map((person) => (
-                        <TableRow
-                          className="cursor-pointer"
-                          key={person.signatory_id}
-                          onContextMenu={(event) => {
-                            event.preventDefault()
-                            openEdit(person)
-                          }}
-                        >
-                          <TableCell className="font-medium whitespace-normal">
-                            {person.name}
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">
-                              {signatoryRoleLabel(person.role)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell>
-                            {person.role === "dean" && person.department ? (
-                              <Badge variant="outline">
-                                {person.department.toUpperCase()}
-                              </Badge>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              type="button"
-                              size="sm"
-                              variant="outline"
-                              onClick={() => openEdit(person)}
-                            >
-                              <PencilIcon />
-                              Edit
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {filtered.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            className="text-muted-foreground"
+                            colSpan={4}
+                          >
+                            No signatories match “{search}”.
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+                      ) : (
+                        filtered.map((person) => (
+                          <TableRow
+                            className="cursor-pointer"
+                            key={person.signatory_id}
+                            onContextMenu={(event) => {
+                              event.preventDefault()
+                              openEdit(person)
+                            }}
+                          >
+                            <TableCell className="font-medium whitespace-normal">
+                              {person.name}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline">
+                                {signatoryRoleLabel(person.role)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {person.role === "dean" && person.department ? (
+                                <Badge variant="outline">
+                                  {person.department.toUpperCase()}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                onClick={() => openEdit(person)}
+                              >
+                                <PencilIcon />
+                                Edit
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
               )}
             </CardPanel>
           </Card>
