@@ -21,6 +21,7 @@ import {
 import { Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { modal } from "@/config"
+import { classroomExampleNames } from "@/lib/campus-classroom-format"
 
 export function EditCampusDialog() {
   const { state, actions } = useCampusesPage()
@@ -63,6 +64,52 @@ export function EditCampusDialog() {
                 value={state.editName}
               />
             </Field>
+            <div className="flex flex-col gap-4 rounded-lg border border-dashed p-3">
+              <p className="text-sm font-medium">Classroom name format</p>
+              <FieldDescription>
+                Optional. Leave blank for no classroom naming rule. When set, CDM
+                can flag a room as a classroom only if its name matches this
+                format.
+              </FieldDescription>
+              <Field>
+                <FieldLabel htmlFor="edit-campus-prefixes">Allowed prefixes</FieldLabel>
+                <Input
+                  autoComplete="off"
+                  id="edit-campus-prefixes"
+                  onChange={(event) =>
+                    actions.changeEditPrefixes(event.currentTarget.value)
+                  }
+                  placeholder="MPO, N, W, S, E, NW, SW, SE, NE"
+                  type="text"
+                  value={state.editPrefixesText}
+                />
+                <FieldDescription>
+                  Comma-separated letters (1-10 each), up to 30 tokens.
+                </FieldDescription>
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="edit-campus-digits">Digit count</FieldLabel>
+                <Input
+                  className="w-24"
+                  id="edit-campus-digits"
+                  inputMode="numeric"
+                  onChange={(event) =>
+                    actions.changeEditDigits(event.currentTarget.value)
+                  }
+                  placeholder="3"
+                  type="text"
+                  value={state.editDigitsText}
+                />
+              </Field>
+              {classroomExampleNames(state.editPrefixesText, state.editDigitsText) ? (
+                <FieldDescription>
+                  Classroom names look like{" "}
+                  <span className="font-mono">
+                    {classroomExampleNames(state.editPrefixesText, state.editDigitsText)}
+                  </span>
+                </FieldDescription>
+              ) : null}
+            </div>
             {state.editError ? (
               <Alert variant="error">
                 <CircleAlertIcon />

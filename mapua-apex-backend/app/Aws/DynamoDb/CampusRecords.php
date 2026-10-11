@@ -48,21 +48,21 @@ final class CampusRecords
     /**
      * @return array<string, mixed>
      */
-    public function create(string $name): array
+    public function create(string $name, ?array $classroomPrefixes = null, ?int $classroomDigits = null): array
     {
-        return $this->write((string) Str::uuid(), $name);
+        return $this->write((string) Str::uuid(), $name, $classroomPrefixes, $classroomDigits);
     }
 
     /**
      * @return array<string, mixed>
      */
-    public function update(string $campusId, string $name): array
+    public function update(string $campusId, string $name, ?array $classroomPrefixes = null, ?int $classroomDigits = null): array
     {
         if ($this->get($campusId) === null) {
             abort(404);
         }
 
-        return $this->write($campusId, $name);
+        return $this->write($campusId, $name, $classroomPrefixes, $classroomDigits);
     }
 
     /**
@@ -98,9 +98,13 @@ final class CampusRecords
     }
 
     /**
+     * Persist one campus. The classroom naming format is optional: the prefix
+     * list and digit count are stored together only when both are supplied, so a
+     * campus without a rule keeps no format attributes.
+     *
      * @return array<string, mixed>
      */
-    private function write(string $id, string $name): array
+    private function write(string $id, string $name, ?array $classroomPrefixes = null, ?int $classroomDigits = null): array
     {
         $key = DynamoKeys::campus($id);
         $item = [
@@ -108,6 +112,13 @@ final class CampusRecords
             'SK' => $key,
             'name' => $name,
         ];
+
+        $prefixes = CampusClassroomNaming::normalizePrefixes($classroomPrefixes ?? []);
+
+        if ($prefixes !== [] && $classroomDigits !== null) {
+            $item['classroom_name_prefixes'] = $prefixes;
+            $item['classroom_name_digits'] = $classroomDigits;
+        }
 
         $this->items->put($item);
 

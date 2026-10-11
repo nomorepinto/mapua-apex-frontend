@@ -127,6 +127,81 @@ class ReservableControllerTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['min_participants']);
     }
 
+    public function test_creates_a_classroom_room_matching_the_campus_format(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001', 'Makati', ['prefixes' => ['MPO', 'NW', 'N'], 'digits' => 3]);
+
+        $response = $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'MPO123',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'is_classroom' => true,
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.is_classroom', true);
+
+        $stored = $db->find('CAMPUS#c001', 'RESERVABLE#'.$response->json('data.reservable_id'));
+        $this->assertTrue($stored['is_classroom'] ?? false);
+    }
+
+    public function test_returns_422_when_a_classroom_name_misses_the_format(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001', 'Makati', ['prefixes' => ['MPO', 'NW', 'N'], 'digits' => 3]);
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'AV Room',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'is_classroom' => true,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['name']);
+    }
+
+    public function test_returns_422_when_a_classroom_is_flagged_but_the_campus_has_no_format(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001', 'Intramuros');
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'Room 1',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'is_classroom' => true,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['is_classroom']);
+    }
+
+    public function test_non_classroom_room_names_are_not_format_checked(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001', 'Makati', ['prefixes' => ['MPO'], 'digits' => 3]);
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'AV Room',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'is_classroom' => false,
+        ])->assertCreated()->assertJsonPath('data.is_classroom', false);
+    }
+
+    public function test_is_classroom_is_dropped_for_equipment(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001', 'Makati', ['prefixes' => ['MPO'], 'digits' => 3]);
+
+        $response = $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'Projector MPO123',
+            'type' => 'equipment',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'is_classroom' => true,
+        ]);
+
+        $response->assertCreated()->assertJsonPath('data.is_classroom', false);
+
+        $stored = $db->find('CAMPUS#c001', 'RESERVABLE#'.$response->json('data.reservable_id'));
+        $this->assertArrayNotHasKey('is_classroom', $stored);
+    }
+
     public function test_updates_a_reservable(): void
     {
         $db = InMemoryDynamoDb::bind($this);

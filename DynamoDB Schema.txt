@@ -216,6 +216,8 @@ CAMPUS
 PK: CAMPUS#uuid
 SK: CAMPUS#uuid   (same as PK)
 name: string
+classroom_name_prefixes: [string]   (L of S; optional classroom naming rule)
+classroom_name_digits: number        (N; optional; pairs with the prefix list)
 
 A reservable campus (e.g. "Intramuros Campus", "Makati Campus"), seeded by
 osaar on the /campus page. The SAAF reservation step and the
@@ -224,6 +226,16 @@ scans PK begins_with CAMPUS# AND PK = SK. DELETE /admins/campuses/{id} is
 guarded: 409 if any RESERVABLE still lives under PK = CAMPUS#id (delete those
 first); otherwise it removes the item. Rename in place (PUT) to keep the same
 uuid so RESERVABLE children and stored booking campus_id snapshots stay valid.
+
+classroom_name_prefixes/classroom_name_digits are the campus's optional
+classroom naming rule (e.g. Makati prefixes [MPO, N, W, S, E, NW, SW, SE, NE] +
+3 digits -> MPO123, NW045). They are stored together ONLY when both are
+supplied; a campus without a rule keeps neither attribute. Prefix tokens are
+normalized uppercase and deduped (1-10 letters, up to 30); digits is 1-4. CDM
+can flag a RESERVABLE room as a classroom only when its owning campus defines a
+rule, and the room name must be <one prefix><exactly N digits> (case-
+insensitive). Rule lives in App\Aws\DynamoDb\CampusClassroomNaming (backend) and
+lib/campus-classroom-format.ts (frontend) so form and API never drift.
 
 RESERVABLE (a bookable room or equipment item under a campus)
 PK: CAMPUS#uuid
@@ -240,6 +252,7 @@ schedule: {
 }
 min_participants: number   (room-only; N attribute, optional = no lower limit)
 max_participants: number   (room-only; N attribute, optional = no upper limit)
+is_classroom: bool         (room-only; true when the name must match the campus classroom format)
 
 The recurring weekly availability template. Days run monday..saturday (Sunday
 is never reservable and is not stored); each present day is exactly 12
@@ -259,6 +272,14 @@ as unlimited). On a SAAF submit the activity's expected_participants is checked
 against each picked room's bounds in BookingRecords::assertAvailable; an
 out-of-range headcount aborts with 422 before any BOOKING is written. The human
 "capacity_label" in the API response is derived, not stored.
+
+is_classroom marks a room as a classroom. It is persisted ONLY when type is
+"room" and the flag is true (equipment and non-classroom rooms omit it, read
+back as false). When set, create/update enforces that the owning campus defines
+a classroom naming rule and that this room's name matches
+<one prefix><exactly N digits> from that rule (422 otherwise) -- see the CAMPUS
+classroom_name_prefixes/classroom_name_digits note above. Enforced at reservable
+create/update only; the SAAF reservation step and CSV import do not set it.
 
 BOOKING (a concrete hold on a reservable's slots for specific dates)
 PK: RESERVABLE#uuid

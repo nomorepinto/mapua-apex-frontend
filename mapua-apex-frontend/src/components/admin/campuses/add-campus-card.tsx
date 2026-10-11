@@ -13,11 +13,12 @@ import {
   CardPanel,
   CardTitle,
 } from "@/components/ui/card"
-import { Field, FieldError, FieldLabel } from "@/components/ui/field"
+import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field"
 import { Form } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
 import { layout } from "@/config"
+import { classroomExampleNames } from "@/lib/campus-classroom-format"
 import { downloadCsvTemplate } from "@/lib/parse-csv"
 
 export function AddCampusCard() {
@@ -59,6 +60,52 @@ function AddCampusForm() {
             />
             {state.formError ? <FieldError>{state.formError}</FieldError> : null}
           </Field>
+          <div className="flex flex-col gap-4 rounded-lg border border-dashed p-3">
+            <p className="text-sm font-medium">Classroom name format</p>
+            <FieldDescription>
+              Optional. Leave blank for no classroom naming rule. When set, CDM
+              can flag a room as a classroom only if its name matches this
+              format.
+            </FieldDescription>
+            <Field>
+              <FieldLabel htmlFor="campus-prefixes">Allowed prefixes</FieldLabel>
+              <Input
+                autoComplete="off"
+                id="campus-prefixes"
+                onChange={(event) =>
+                  actions.changePrefixes(event.currentTarget.value)
+                }
+                placeholder="MPO, N, W, S, E, NW, SW, SE, NE"
+                type="text"
+                value={state.prefixesText}
+              />
+              <FieldDescription>
+                Comma-separated letters (1-10 each), up to 30 tokens.
+              </FieldDescription>
+            </Field>
+            <Field>
+              <FieldLabel htmlFor="campus-digits">Digit count</FieldLabel>
+              <Input
+                className="w-24"
+                id="campus-digits"
+                inputMode="numeric"
+                onChange={(event) =>
+                  actions.changeDigits(event.currentTarget.value)
+                }
+                placeholder="3"
+                type="text"
+                value={state.digitsText}
+              />
+            </Field>
+            {classroomExampleNames(state.prefixesText, state.digitsText) ? (
+              <FieldDescription>
+                Classroom names look like{" "}
+                <span className="font-mono">
+                  {classroomExampleNames(state.prefixesText, state.digitsText)}
+                </span>
+              </FieldDescription>
+            ) : null}
+          </div>
         </CardPanel>
         <CardFooter className="justify-end">
           <Button

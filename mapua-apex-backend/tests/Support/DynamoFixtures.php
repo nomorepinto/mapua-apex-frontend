@@ -36,13 +36,27 @@ final class DynamoFixtures
         ]);
     }
 
-    public static function campus(InMemoryDynamoDb $db, string $id = 'c001', string $name = 'Intramuros'): void
-    {
-        $db->seed([
+    /**
+     * @param  array{prefixes: list<string>, digits: int}|null  $classroomFormat  campus classroom naming rule
+     */
+    public static function campus(
+        InMemoryDynamoDb $db,
+        string $id = 'c001',
+        string $name = 'Intramuros',
+        ?array $classroomFormat = null,
+    ): void {
+        $item = [
             'PK' => 'CAMPUS#'.$id,
             'SK' => 'CAMPUS#'.$id,
             'name' => $name,
-        ]);
+        ];
+
+        if ($classroomFormat !== null) {
+            $item['classroom_name_prefixes'] = $classroomFormat['prefixes'];
+            $item['classroom_name_digits'] = $classroomFormat['digits'];
+        }
+
+        $db->seed($item);
     }
 
     /**

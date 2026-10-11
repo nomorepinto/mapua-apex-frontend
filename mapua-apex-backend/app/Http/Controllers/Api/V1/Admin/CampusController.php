@@ -21,7 +21,11 @@ class CampusController extends Controller
     public function store(StoreCampusRequest $request, CampusRecords $campuses): JsonResponse
     {
         $validated = $request->validated();
-        $item = $campuses->create($validated['name']);
+        $item = $campuses->create(
+            $validated['name'],
+            $this->prefixes($validated['classroom_name_prefixes'] ?? null),
+            $this->digits($validated['classroom_name_digits'] ?? null),
+        );
 
         return (new CampusResource($item))->response()->setStatusCode(201);
     }
@@ -30,7 +34,12 @@ class CampusController extends Controller
     {
         $validated = $request->validated();
 
-        return new CampusResource($campuses->update($campus, $validated['name']));
+        return new CampusResource($campuses->update(
+            $campus,
+            $validated['name'],
+            $this->prefixes($validated['classroom_name_prefixes'] ?? null),
+            $this->digits($validated['classroom_name_digits'] ?? null),
+        ));
     }
 
     public function destroy(string $campus, CampusRecords $campuses): Response
@@ -38,5 +47,18 @@ class CampusController extends Controller
         $campuses->delete($campus);
 
         return response()->noContent();
+    }
+
+    /**
+     * @return array<int, string>|null
+     */
+    private function prefixes(mixed $value): ?array
+    {
+        return is_array($value) ? $value : null;
+    }
+
+    private function digits(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int) $value : null;
     }
 }

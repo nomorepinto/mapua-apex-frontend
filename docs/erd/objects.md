@@ -205,11 +205,14 @@ dropdown read the list.
 | `PK` | string | `CAMPUS#uuid` |
 | `SK` | string | `CAMPUS#uuid` (same as PK) |
 | `name` | string | Display name |
+| `classroom_name_prefixes` | list | **Optional.** Allowed classroom-name prefix tokens (1–10 letters each, up to 30; normalized uppercase + deduped). Stored only when paired with `classroom_name_digits` |
+| `classroom_name_digits` | number | **Optional.** Required digit count (1–4). With the prefix list it defines how this campus's classroom rooms are named (e.g. `MPO` + 3 → `MPO123`) |
 
 List scans `PK` begins `CAMPUS#` AND `PK = SK`. Delete is guarded: **409** if any
 RESERVABLE still lives under `PK = CAMPUS#id`. Rename in place (PUT) to keep the
 same uuid so RESERVABLE children and stored booking `campus_id` snapshots stay
-valid.
+valid. The classroom format is authored on the osaar `/campus` Add/Edit page; a
+campus without it cannot host classroom rooms.
 
 ---
 
@@ -227,10 +230,15 @@ doubles as the BOOKING partition key.
 | `schedule` | object | Recurring weekly template: `monday`..`saturday`, each exactly 12 booleans (one per 07:00–21:00 / 70-min slot; `true` = available). Sunday is never reservable; an absent day is all-unavailable |
 | `min_participants` | number | **Room-only, optional.** Lower bound on the expected headcount a room can hold. Omitted/unset = no lower limit; never stored for `equipment` |
 | `max_participants` | number | **Room-only, optional.** Upper bound on the expected headcount a room can hold. Omitted/unset = no upper limit; never stored for `equipment` |
+| `is_classroom` | boolean | **Room-only, optional.** True marks the room as a classroom whose `name` must match the owning campus's classroom format. Stored only when `type` is `room` and the flag is true; read back as false otherwise |
 
 Added/edited by cdm on the `/reservables` page (CSV for name+type, a grid for the
 schedule; participant bounds are room-only inputs, disabled and dropped for
-equipment). On SAAF submit the activity's `expected_participants` is checked
+equipment). The `is_classroom` toggle is room-only and shown-but-disabled until
+the selected campus defines a classroom format; when enabled the room `name` is
+validated against `<one prefix><exactly N digits>` at create/update (**422** on
+the name if it misses, or **422** on `is_classroom` if the campus has no format).
+On SAAF submit the activity's `expected_participants` is checked
 against each picked room's bounds (`BookingRecords::assertAvailable`); an
 out-of-range headcount aborts with **422** before any BOOKING is written.
 Delete is guarded: **409** if any BOOKING still occupies

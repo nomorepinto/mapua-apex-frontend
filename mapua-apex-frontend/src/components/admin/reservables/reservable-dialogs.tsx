@@ -3,6 +3,8 @@ import { CircleAlertIcon } from "lucide-react"
 
 import { ReservableCapacityFieldsForm } from "@/components/admin/reservables/reservable-capacity-fields"
 import { participantBoundPayload, participantBoundsFromValues, stripCapacityForType, validateParticipantBounds, type ParticipantBound } from "@/lib/reservable-capacity-form"
+import { ReservableClassroomField } from "@/components/admin/reservables/reservable-classroom-field"
+import { campusHasClassroomFormat, classroomFormatHint, matchesClassroomName } from "@/lib/campus-classroom-format"
 import { ReservableTypeField } from "@/components/admin/reservables/reservables-fields"
 import { ScheduleGrid } from "@/components/admin/reservables/schedule-grid"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -36,7 +38,7 @@ import {
   toggleScheduleDay,
   toggleScheduleSlot,
 } from "@/lib/schedule-slots"
-import type { ApiReservable, ReservableSchedule, ReservableType } from "@/lib/types"
+import type { ApiCampus, ApiReservable, ReservableSchedule, ReservableType } from "@/lib/types"
 
 export interface ReservableDraft {
   name: string
@@ -44,6 +46,7 @@ export interface ReservableDraft {
   schedule: ReservableSchedule
   min_participants: number | null
   max_participants: number | null
+  is_classroom: boolean
 }
 
 /**
@@ -53,6 +56,7 @@ export interface ReservableDraft {
  */
 export function EditReservableDialog({
   reservable,
+  campus,
   campusName,
   reservables,
   onClose,
@@ -63,6 +67,7 @@ export function EditReservableDialog({
   error,
 }: {
   reservable: ApiReservable
+  campus: ApiCampus | null
   campusName: string
   reservables: ApiReservable[]
   onClose: () => void
@@ -83,8 +88,14 @@ export function EditReservableDialog({
   const [bounds, setBounds] = useState<ParticipantBound>(() =>
     participantBoundsFromValues(reservable.min_participants, reservable.max_participants)
   )
+  const [isClassroom, setIsClassroom] = useState(() => reservable.is_classroom === true)
   const [localError, setLocalError] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
+
+  const hasClassroomFormat = campusHasClassroomFormat(campus)
+  const classroomHint = hasClassroomFormat
+    ? classroomFormatHint(campus?.classroom_name_prefixes, campus?.classroom_name_digits)
+    : null
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -114,6 +125,11 @@ export function EditReservableDialog({
       setLocalError(capacityError)
       return
     }
+    const classroom = type === "room" && isClassroom && hasClassroomFormat
+    if (classroom && !matchesClassroomName(campus?.classroom_name_prefixes, campus?.classroom_name_digits, trimmed)) {
+      setLocalError(`A classroom room must be named ${classroomHint ?? "to the campus format"}.`)
+      return
+    }
 
     setLocalError("")
     await onSave({
@@ -121,6 +137,7 @@ export function EditReservableDialog({
       type,
       schedule,
       ...participantBoundPayload(stripCapacityForType(type, bounds)),
+      is_classroom: classroom,
     })
   }
 
@@ -163,6 +180,7 @@ export function EditReservableDialog({
                 onChange={(next) => {
                   setType(next)
                   setBounds((current) => stripCapacityForType(next, current))
+                  if (next !== "room") setIsClassroom(false)
                   if (localError) setLocalError("")
                 }}
                 value={type}
@@ -173,6 +191,18 @@ export function EditReservableDialog({
                 idPrefix="edit-reservable"
                 onChange={(next) => {
                   setBounds(next)
+                  if (localError) setLocalError("")
+                }}
+                type={type}
+              />
+              <ReservableClassroomField
+                checked={isClassroom}
+                disabled={savePending}
+                formatHint={classroomHint}
+                hasCampusFormat={hasClassroomFormat}
+                id="edit-reservable-classroom"
+                onChange={(next) => {
+                  setIsClassroom(next)
                   if (localError) setLocalError("")
                 }}
                 type={type}
