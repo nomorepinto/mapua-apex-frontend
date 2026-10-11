@@ -298,7 +298,8 @@ export function useSaafForm() {
         issues.push(
           ...getReservationStepIssues(
             withReservationDefaults(useOrgStore.getState().reservationDraft),
-            draft.activityVenue
+            draft.activityVenue,
+            draft.expectedParticipants
           )
         )
       }
@@ -335,7 +336,8 @@ export function useSaafForm() {
       const reservationIssues = includeReservation
         ? getReservationStepIssues(
             withReservationDefaults(useOrgStore.getState().reservationDraft),
-            draft.activityVenue
+            draft.activityVenue,
+            draft.expectedParticipants
           )
         : []
       const allIssues = [...issues, ...reservationIssues]

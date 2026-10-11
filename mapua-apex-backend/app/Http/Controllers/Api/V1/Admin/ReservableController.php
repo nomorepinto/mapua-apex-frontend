@@ -30,6 +30,8 @@ class ReservableController extends Controller
             $validated['name'],
             $validated['type'],
             $validated['schedule'] ?? [],
+            $this->participantBound($validated['min_participants'] ?? null),
+            $this->participantBound($validated['max_participants'] ?? null),
         );
 
         return (new ReservableResource($item))->response()->setStatusCode(201);
@@ -49,6 +51,8 @@ class ReservableController extends Controller
             $validated['name'],
             $validated['type'],
             $validated['schedule'] ?? [],
+            $this->participantBound($validated['min_participants'] ?? null),
+            $this->participantBound($validated['max_participants'] ?? null),
         ));
     }
 
@@ -57,5 +61,13 @@ class ReservableController extends Controller
         $reservables->delete($campus, $reservable);
 
         return response()->noContent();
+    }
+
+    /**
+     * Normalise a participant bound to int|null (validation already gated the shape).
+     */
+    private function participantBound(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int) $value : null;
     }
 }

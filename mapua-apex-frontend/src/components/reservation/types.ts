@@ -1,4 +1,8 @@
-import type { ReservableType, SlotSelection } from "@/lib/types"
+import type {
+  ReservableCapacityFields,
+  ReservableType,
+  SlotSelection,
+} from "@/lib/types"
 
 /**
  * One reservable picked in the SAAF reservation step, together with the concrete
@@ -6,7 +10,7 @@ import type { ReservableType, SlotSelection } from "@/lib/types"
  * audiovisual / equipment rows: every pick maps to a RESERVABLE record owned by
  * a campus, and its `selections` become BOOKING `schedule_selected` entries.
  */
-export interface ReservationPick {
+export interface ReservationPick extends ReservableCapacityFields {
   /** Client-only row key used for list rendering; never persisted. */
   id: string
   reservable_id: string

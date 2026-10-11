@@ -22,6 +22,10 @@ import type {
 import type { Proponent, SaafDraft } from "@/components/submission/types"
 import type { ReservationDraft } from "@/components/reservation/types"
 import {
+  capacityIssue,
+  withinCapacity,
+} from "@/lib/reservable-capacity"
+import {
   EVENT_DATE_TOO_SOON_MESSAGE,
   minEventDateKey,
 } from "@/lib/date-key"
@@ -429,9 +433,23 @@ export function isSaafDraftComplete(draft: SaafDraft, includeReservation: boolea
 const RESERVATION_EMPTY_MESSAGE =
   "Select at least one room or equipment to reserve."
 
+/** Headcount as a number, or null when blank/invalid (unknown = allowed). */
+function expectedParticipantsValue(
+  expectedParticipants?: string | number | null
+): number | null {
+  if (expectedParticipants === null || expectedParticipants === undefined) {
+    return null
+  }
+  const trimmed = String(expectedParticipants).trim()
+  if (trimmed === "") return null
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : null
+}
+
 export function getReservationStepIssue(
   draft: ReservationDraft,
-  campus: string
+  campus: string,
+  expectedParticipants?: string | number | null
 ): string | null {
   const picks = Array.isArray(draft?.picks) ? draft.picks : []
   if (isBlank(campus)) {
@@ -450,6 +468,28 @@ export function getReservationStepIssue(
     return "Select at least one time slot for each chosen date."
   }
 
+  // Room participant bounds are enforced against the expected headcount here so
+  // an out-of-range selection is blocked before submit instead of a 422 from the
+  // API (which mirrors this same check in BookingRecords::assertAvailable).
+  const headcount = expectedParticipantsValue(expectedParticipants)
+  if (headcount !== null) {
+    const overCapacity = picks.find(
+      (pick) =>
+        pick.type === "room" &&
+        !withinCapacity(
+          { min: pick.min_participants, max: pick.max_participants },
+          headcount
+        )
+    )
+    if (overCapacity) {
+      return capacityIssue(
+        overCapacity.name,
+        { min: overCapacity.min_participants, max: overCapacity.max_participants },
+        headcount
+      )
+    }
+  }
+
   return null
 }
 
@@ -457,17 +497,19 @@ export function getReservationStepIssue(
 // SAAF draft; label them the same way the field warnings are labelled.
 export function getReservationStepIssues(
   draft: ReservationDraft,
-  campus: string
+  campus: string,
+  expectedParticipants?: string | number | null
 ): string[] {
-  const issue = getReservationStepIssue(draft, campus)
+  const issue = getReservationStepIssue(draft, campus, expectedParticipants)
   return issue ? [`Rooms and equipment: ${issue}`] : []
 }
 
 export function isReservationStepComplete(
   draft: ReservationDraft,
-  campus: string
+  campus: string,
+  expectedParticipants?: string | number | null
 ): boolean {
-  return getReservationStepIssue(draft, campus) === null
+  return getReservationStepIssue(draft, campus, expectedParticipants) === null
 }
 
 /**
@@ -493,7 +535,11 @@ export function firstIncompleteWizardStep(
     if (
       includeReservation &&
       step === 2 &&
-      !isReservationStepComplete(reservationDraft, draft.activityVenue)
+      !isReservationStepComplete(
+        reservationDraft,
+        draft.activityVenue,
+        draft.expectedParticipants
+      )
     ) {
       return 2 as WizardStepIndex
     }

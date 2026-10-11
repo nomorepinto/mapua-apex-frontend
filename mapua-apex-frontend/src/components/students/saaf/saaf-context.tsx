@@ -108,7 +108,7 @@ function earnedStepFromDraft(
 
   for (const index of stepsToCheck) {
     if (includeReservation && index === 2) {
-      if (!isReservationStepComplete(reservationDraft, draft.activityVenue) ||
+      if (!isReservationStepComplete(reservationDraft, draft.activityVenue, draft.expectedParticipants) ||
         !isSaafStepComplete(2, draft, true)) {
         break
       }
@@ -171,7 +171,13 @@ export function SaafProvider({ children }: { children: ReactNode }) {
       includeReservation
     )
     if (includeReservation && targetStep === 2) {
-      issues.push(...getReservationStepIssues(reservationDraft, draft.activityVenue))
+      issues.push(
+        ...getReservationStepIssues(
+          reservationDraft,
+          draft.activityVenue,
+          draft.expectedParticipants
+        )
+      )
     }
     // A browser-level rule (required / minLength / pattern) that no field
     // warning covers has no label to name, so say what happened instead.
@@ -215,13 +221,14 @@ export function SaafProvider({ children }: { children: ReactNode }) {
   // Step 2 is Reservation when includeReservation is true
   const currentStepComplete =
     includeReservation && step === 2
-      ? isReservationStepComplete(reservationDraft, draft.activityVenue) &&
+      ? isReservationStepComplete(reservationDraft, draft.activityVenue, draft.expectedParticipants) &&
       isSaafStepComplete(2, draft, true)
       : isSaafStepComplete(step as SaafStepIndex, draft, includeReservation)
 
   const formComplete =
     isSaafDraftComplete(draft, includeReservation) &&
-    (!includeReservation || isReservationStepComplete(reservationDraft, draft.activityVenue))
+    (!includeReservation ||
+      isReservationStepComplete(reservationDraft, draft.activityVenue, draft.expectedParticipants))
 
   const canClear =
     includeReservation && step === 2

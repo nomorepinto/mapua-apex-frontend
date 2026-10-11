@@ -225,9 +225,15 @@ doubles as the BOOKING partition key.
 | `name` | string | |
 | `type` | string | `room` \| `equipment` |
 | `schedule` | object | Recurring weekly template: `monday`..`saturday`, each exactly 12 booleans (one per 07:00–21:00 / 70-min slot; `true` = available). Sunday is never reservable; an absent day is all-unavailable |
+| `min_participants` | number | **Room-only, optional.** Lower bound on the expected headcount a room can hold. Omitted/unset = no lower limit; never stored for `equipment` |
+| `max_participants` | number | **Room-only, optional.** Upper bound on the expected headcount a room can hold. Omitted/unset = no upper limit; never stored for `equipment` |
 
 Added/edited by cdm on the `/reservables` page (CSV for name+type, a grid for the
-schedule). Delete is guarded: **409** if any BOOKING still occupies
+schedule; participant bounds are room-only inputs, disabled and dropped for
+equipment). On SAAF submit the activity's `expected_participants` is checked
+against each picked room's bounds (`BookingRecords::assertAvailable`); an
+out-of-range headcount aborts with **422** before any BOOKING is written.
+Delete is guarded: **409** if any BOOKING still occupies
 `PK = RESERVABLE#id`.
 
 ---

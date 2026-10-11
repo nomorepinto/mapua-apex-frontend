@@ -9,6 +9,7 @@ import { useReservablesPage } from "@/components/admin/reservables/reservables-c
 import {
   AvailabilityLegend,
   DaySlotGrid,
+  availabilityDayModifiers,
   dayAvailabilityState,
 } from "@/components/admin/reservables/schedule-grid"
 import { Calendar } from "@/components/ui/calendar"
@@ -37,9 +38,6 @@ import {
 } from "@/lib/date-key"
 import { dayKeyForDate } from "@/lib/schedule-slots"
 import { cn } from "@/lib/utils"
-
-const DAY_DOT =
-  "relative after:content-[''] after:absolute after:bottom-[4px] after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full"
 
 export function ViewReservableSection() {
   const { state, actions } = useReservablesPage()
@@ -72,17 +70,8 @@ export function ViewReservableSection() {
   const selectedDateKey = selectedDate ? getDateKey(selectedDate) : null
   const selectedIsSunday = selectedDateKey ? dayKeyForDate(selectedDateKey) === null : false
 
-  const modifiers = useMemo(
-    () => ({
-      availOpen: (date: Date) =>
-        dayAvailabilityState(availability, getDateKey(date)) === "open",
-      availPartial: (date: Date) =>
-        dayAvailabilityState(availability, getDateKey(date)) === "partial",
-      availFull: (date: Date) =>
-        dayAvailabilityState(availability, getDateKey(date)) === "full",
-      availClosed: (date: Date) =>
-        dayAvailabilityState(availability, getDateKey(date)) === "closed",
-    }),
+  const { modifiers, modifiersClassNames } = useMemo(
+    () => availabilityDayModifiers(availability),
     [availability]
   )
 
@@ -159,12 +148,7 @@ export function ViewReservableSection() {
                 <div className="grid min-w-0 grid-cols-1 gap-6 md:grid-cols-[auto_minmax(0,1fr)]">
                   <Calendar
                     modifiers={modifiers}
-                    modifiersClassNames={{
-                      availOpen: cn(DAY_DOT, "after:bg-emerald-500"),
-                      availPartial: cn(DAY_DOT, "after:bg-amber-500"),
-                      availFull: cn(DAY_DOT, "after:bg-rose-500"),
-                      availClosed: "text-neutral-300 line-through",
-                    }}
+                    modifiersClassNames={modifiersClassNames}
                     month={month}
                     onMonthChange={setMonth}
                     onSelect={(date: Date | undefined) => {

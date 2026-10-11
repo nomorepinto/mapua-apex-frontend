@@ -118,6 +118,10 @@ export function useReservationForm() {
             campus_id: reservable.campus_id,
             name: reservable.name,
             type: reservable.type,
+            // Room participant bounds travel with the pick so the step can
+            // validate the expected headcount without another API read.
+            min_participants: reservable.min_participants ?? null,
+            max_participants: reservable.max_participants ?? null,
             selections: [],
             remarks: "",
           },

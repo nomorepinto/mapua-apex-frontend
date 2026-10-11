@@ -8,6 +8,7 @@ import {
   isValidSlot,
   slotLabel,
 } from "@/lib/schedule-slots"
+import { getDateKey } from "@/lib/date-key"
 import type {
   ApiAvailability,
   ReservableDay,
@@ -51,6 +52,42 @@ export function dayAvailabilityState(
   if (free === 0) return "full"
   if (booked > 0) return "partial"
   return "open"
+}
+
+/**
+ * Dot indicator applied to the day cell of an availability calendar. The dot
+ * is drawn via an `after:` pseudo-element so it never shifts the day number.
+ */
+const DAY_DOT =
+  "relative after:content-[''] after:absolute after:bottom-[4px] after:left-1/2 after:-translate-x-1/2 after:size-1.5 after:rounded-full"
+
+/**
+ * `Calendar` modifiers + class names that paint a per-date availability dot
+ * (open / partial / full / closed). Shared by the CDM View and Reserve
+ * calendars and the student SAAF date picker so all three stay consistent.
+ * Dates outside the loaded availability window render no dot (state `unknown`).
+ */
+export function availabilityDayModifiers(
+  availability: ApiAvailability | undefined | null
+) {
+  return {
+    modifiers: {
+      availOpen: (date: Date) =>
+        dayAvailabilityState(availability, getDateKey(date)) === "open",
+      availPartial: (date: Date) =>
+        dayAvailabilityState(availability, getDateKey(date)) === "partial",
+      availFull: (date: Date) =>
+        dayAvailabilityState(availability, getDateKey(date)) === "full",
+      availClosed: (date: Date) =>
+        dayAvailabilityState(availability, getDateKey(date)) === "closed",
+    },
+    modifiersClassNames: {
+      availOpen: cn(DAY_DOT, "after:bg-emerald-500"),
+      availPartial: cn(DAY_DOT, "after:bg-amber-500"),
+      availFull: cn(DAY_DOT, "after:bg-rose-500"),
+      availClosed: "text-neutral-300 line-through",
+    },
+  }
 }
 
 /* -------------------------------------------------------------------------- */

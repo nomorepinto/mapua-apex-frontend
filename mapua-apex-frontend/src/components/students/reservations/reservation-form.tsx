@@ -2,8 +2,10 @@ import { useMemo, useState, type ReactNode } from "react"
 import { BoxesIcon, CalendarDaysIcon, Trash2Icon } from "lucide-react"
 
 import {
+  AvailabilityLegend,
   DaySlotGrid,
   SlotLegend,
+  availabilityDayModifiers,
 } from "@/components/admin/reservables/schedule-grid"
 import { FieldWarning } from "@/components/forms/field-warning"
 import { useReservationFormContext } from "@/components/students/reservations/reservation-context"
@@ -32,6 +34,7 @@ import {
   parseDateKey,
 } from "@/lib/date-key"
 import { slotLabel } from "@/lib/schedule-slots"
+import { capacityRangeLabel, withinCapacity } from "@/lib/reservable-capacity"
 import type { ApiReservable } from "@/lib/types"
 import type { ReservationPick } from "@/components/reservation/types"
 import { cn } from "@/lib/utils"
@@ -78,6 +81,10 @@ export function ReservationFields() {
           </label>
           <Select
             value={campusId || null}
+            // Provide the value→label map so the trigger shows the campus name
+            // even before the popup mounts (the campus id is restored from the
+            // persisted draft, so Base UI would otherwise stringify the UUID).
+            items={campuses.map((campus) => ({ value: campus.campus_id, label: campus.name }))}
             onValueChange={(value: string | null) => {
               const campus = campuses.find((c) => c.campus_id === value)
               if (campus) actions.handleSelectCampus(campus.campus_id, campus.name)
@@ -145,6 +152,7 @@ export function ReservationFields() {
           {picks.map((pick) => (
             <PickCard
               campusId={campusId}
+              expectedParticipants={saafDraft.expectedParticipants}
               key={pick.id}
               onRemove={actions.handleRemovePick}
               onToggleSlot={actions.handleToggleSlot}
@@ -305,12 +313,14 @@ function ReservableGroup({
 function PickCard({
   pick,
   campusId,
+  expectedParticipants,
   onToggleSlot,
   onUpdateRemarks,
   onRemove,
 }: {
   pick: ReservationPick
   campusId: string
+  expectedParticipants: string
   onToggleSlot: (pickId: string, date: string, slot: number) => void
   onUpdateRemarks: (pickId: string, remarks: string) => void
   onRemove: (pickId: string) => void
@@ -330,11 +340,28 @@ function PickCard({
   )
   const availability = availabilityQuery.data ?? null
 
+  const { modifiers, modifiersClassNames } = useMemo(
+    () => availabilityDayModifiers(availability),
+    [availability]
+  )
+
   const selectedForDate = pick.selections.find((s) => s.date === date)?.slots ?? []
   const totalSlots = pick.selections.reduce(
     (sum, selection) => sum + selection.slots.length,
     0
   )
+
+  // Room participant bounds: show the range, and flag when the expected
+  // headcount falls outside it (the same rule the API enforces on submit).
+  const bounds = { min: pick.min_participants, max: pick.max_participants }
+  const range = pick.type === "room" ? capacityRangeLabel(bounds) : ""
+  const headcount =
+    expectedParticipants.trim() === "" ? null : Number(expectedParticipants)
+  const capacityViolated =
+    range !== "" &&
+    headcount !== null &&
+    Number.isFinite(headcount) &&
+    !withinCapacity(bounds, headcount)
 
   return (
     <div className="rounded-xl border border-neutral-200 bg-white p-4 shadow-xs">
@@ -344,6 +371,19 @@ function PickCard({
             {pick.name}
           </h4>
           <p className="text-[11px] text-neutral-500 capitalize">{pick.type}</p>
+          {range ? (
+            <p
+              className={cn(
+                "text-[11px]",
+                capacityViolated ? "font-semibold text-red-600" : "text-neutral-500"
+              )}
+            >
+              Capacity: {range} participants
+              {capacityViolated
+                ? ` · expected ${expectedParticipants} is outside this range`
+                : ""}
+            </p>
+          ) : null}
         </div>
         <Button
           aria-label={`Remove ${pick.name}`}
@@ -364,6 +404,9 @@ function PickCard({
             minDate={minEventDate()}
             onChange={setDate}
             value={date}
+            modifiers={modifiers}
+            modifiersClassNames={modifiersClassNames}
+            legend={<AvailabilityLegend />}
           />
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold text-neutral-600">

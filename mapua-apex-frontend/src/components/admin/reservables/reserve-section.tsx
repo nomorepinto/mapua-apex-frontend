@@ -10,7 +10,12 @@ import {
   ReservableSelect,
 } from "@/components/admin/reservables/reservables-fields"
 import { useReservablesPage } from "@/components/admin/reservables/reservables-context"
-import { DaySlotGrid, SlotLegend } from "@/components/admin/reservables/schedule-grid"
+import {
+  AvailabilityLegend,
+  DaySlotGrid,
+  SlotLegend,
+  availabilityDayModifiers,
+} from "@/components/admin/reservables/schedule-grid"
 import { Button } from "@/components/ui/button"
 import {
   Card,
@@ -62,12 +67,25 @@ export function ReserveSection() {
   const [selectedSlots, setSelectedSlots] = useState<number[]>([])
   const [reason, setReason] = useState("")
 
+  // Fetch availability across the whole reservable window (today → ~6 months)
+  // so the date picker's calendar can paint per-date availability dots, while
+  // the DaySlotGrid below still reads the concrete reserveDate from the same set.
+  const availabilityWindow = useMemo(() => {
+    const start = startOfLocalDay()
+    const end = new Date(start)
+    end.setDate(end.getDate() + 180)
+    return { start: getDateKey(start), end: getDateKey(end) }
+  }, [])
   const availabilityQuery = useAdminAvailabilityQuery(
     campusId,
     selectedReservableId,
-    reserveDate ? { start: reserveDate, end: reserveDate } : undefined
+    availabilityWindow
   )
   const availability = availabilityQuery.data ?? null
+  const { modifiers, modifiersClassNames } = useMemo(
+    () => availabilityDayModifiers(availability),
+    [availability]
+  )
 
   const bookingsWindow = useMemo(() => {
     const start = startOfLocalDay()
@@ -205,6 +223,9 @@ export function ReserveSection() {
               minDate={startOfLocalDay()}
               onChange={changeDate}
               value={reserveDate}
+              modifiers={modifiers}
+              modifiersClassNames={modifiersClassNames}
+              legend={<AvailabilityLegend />}
             />
           </Field>
           <Field>

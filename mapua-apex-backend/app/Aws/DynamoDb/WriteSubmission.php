@@ -285,6 +285,7 @@ final class WriteSubmission
                 'organization_id' => $organizationId,
                 'event_id' => $eventId,
                 'submission_id' => $submissionId,
+                'expected_participants' => data_get($payload, 'activity_details.expected_participants'),
             ],
             $reservations,
             $oldRefs,

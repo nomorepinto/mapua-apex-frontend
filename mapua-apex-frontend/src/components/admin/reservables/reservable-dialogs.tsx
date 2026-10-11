@@ -1,6 +1,8 @@
 import { useState } from "react"
 import { CircleAlertIcon } from "lucide-react"
 
+import { ReservableCapacityFieldsForm } from "@/components/admin/reservables/reservable-capacity-fields"
+import { participantBoundPayload, participantBoundsFromValues, stripCapacityForType, validateParticipantBounds, type ParticipantBound } from "@/lib/reservable-capacity-form"
 import { ReservableTypeField } from "@/components/admin/reservables/reservables-fields"
 import { ScheduleGrid } from "@/components/admin/reservables/schedule-grid"
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
@@ -40,6 +42,8 @@ export interface ReservableDraft {
   name: string
   type: ReservableType
   schedule: ReservableSchedule
+  min_participants: number | null
+  max_participants: number | null
 }
 
 /**
@@ -76,6 +80,9 @@ export function EditReservableDialog({
   const [schedule, setSchedule] = useState<ReservableSchedule>(() =>
     normalizeSchedule(reservable.schedule)
   )
+  const [bounds, setBounds] = useState<ParticipantBound>(() =>
+    participantBoundsFromValues(reservable.min_participants, reservable.max_participants)
+  )
   const [localError, setLocalError] = useState("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
@@ -100,9 +107,21 @@ export function EditReservableDialog({
       setLocalError("Select at least one available slot in the weekly template.")
       return
     }
+    const capacityError = validateParticipantBounds(
+      stripCapacityForType(type, bounds)
+    )
+    if (capacityError) {
+      setLocalError(capacityError)
+      return
+    }
 
     setLocalError("")
-    await onSave({ name: trimmed, type, schedule })
+    await onSave({
+      name: trimmed,
+      type,
+      schedule,
+      ...participantBoundPayload(stripCapacityForType(type, bounds)),
+    })
   }
 
   const shownError = localError || error
@@ -143,9 +162,20 @@ export function EditReservableDialog({
                 id="edit-reservable-type"
                 onChange={(next) => {
                   setType(next)
+                  setBounds((current) => stripCapacityForType(next, current))
                   if (localError) setLocalError("")
                 }}
                 value={type}
+              />
+              <ReservableCapacityFieldsForm
+                bounds={bounds}
+                disabled={savePending}
+                idPrefix="edit-reservable"
+                onChange={(next) => {
+                  setBounds(next)
+                  if (localError) setLocalError("")
+                }}
+                type={type}
               />
               <div className="flex flex-col gap-2">
                 <span className="inline-flex items-center gap-2 text-base/4.5 font-medium text-foreground sm:text-sm/4">Weekly availability</span>

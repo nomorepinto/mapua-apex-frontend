@@ -140,6 +140,63 @@ final class ReservableSchedule
         return (bool) ($row[$slot] ?? false);
     }
 
+    /**
+     * Participant bounds (min_participants / max_participants) apply to rooms
+     * only and are optional: equipment and rooms without stated bounds are
+     * always within capacity. Bounds may be stored as int or string (DynamoDB N).
+     *
+     * @param  array<string, mixed>  $reservable
+     */
+    public static function withinCapacity(array $reservable, ?int $expectedParticipants): bool
+    {
+        if ($expectedParticipants === null || ($reservable['type'] ?? null) !== 'room') {
+            return true;
+        }
+
+        $min = self::capacityBound($reservable['min_participants'] ?? null);
+        $max = self::capacityBound($reservable['max_participants'] ?? null);
+
+        if ($min !== null && $expectedParticipants < $min) {
+            return false;
+        }
+
+        if ($max !== null && $expectedParticipants > $max) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Human-readable capacity note for a reservable name, or null when unstated.
+     *
+     * @param  array<string, mixed>  $reservable
+     */
+    public static function capacityLabel(array $reservable): ?string
+    {
+        $min = self::capacityBound($reservable['min_participants'] ?? null);
+        $max = self::capacityBound($reservable['max_participants'] ?? null);
+
+        if ($min !== null && $max !== null) {
+            return "between {$min} and {$max} participants";
+        }
+
+        if ($max !== null) {
+            return "up to {$max} participants";
+        }
+
+        if ($min !== null) {
+            return "at least {$min} participants";
+        }
+
+        return null;
+    }
+
+    private static function capacityBound(mixed $value): ?int
+    {
+        return is_numeric($value) ? (int) $value : null;
+    }
+
     private static function formatMinutes(int $minutes): string
     {
         return sprintf('%02d:%02d', intdiv($minutes, 60), $minutes % 60);

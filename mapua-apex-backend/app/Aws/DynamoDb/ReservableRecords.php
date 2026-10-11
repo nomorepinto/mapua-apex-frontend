@@ -53,22 +53,22 @@ final class ReservableRecords
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    public function create(string $campusId, string $name, string $type, array $schedule): array
+    public function create(string $campusId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null): array
     {
-        return $this->write($campusId, (string) Str::uuid(), $name, $type, $schedule);
+        return $this->write($campusId, (string) Str::uuid(), $name, $type, $schedule, $minParticipants, $maxParticipants);
     }
 
     /**
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    public function update(string $campusId, string $reservableId, string $name, string $type, array $schedule): array
+    public function update(string $campusId, string $reservableId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null): array
     {
         if ($this->get($campusId, $reservableId) === null) {
             abort(404);
         }
 
-        return $this->write($campusId, $reservableId, $name, $type, $schedule);
+        return $this->write($campusId, $reservableId, $name, $type, $schedule, $minParticipants, $maxParticipants);
     }
 
     /**
@@ -105,18 +105,29 @@ final class ReservableRecords
     }
 
     /**
+     * Persist one reservable. Participant bounds are room-only: they are stored
+     * solely when at least one is given, so equipment (and rooms without a
+     * stated capacity) keep no attributes and stay unlimited.
+     *
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    private function write(string $campusId, string $id, string $name, string $type, array $schedule): array
+    private function write(string $campusId, string $id, string $name, string $type, array $schedule, ?int $minParticipants, ?int $maxParticipants): array
     {
+        $type = Str::lower($type);
+
         $item = [
             'PK' => DynamoKeys::campus($campusId),
             'SK' => DynamoKeys::reservable($id),
             'name' => $name,
-            'type' => Str::lower($type),
+            'type' => $type,
             'schedule' => ReservableSchedule::normalize($schedule),
         ];
+
+        if ($type === 'room' && ($minParticipants !== null || $maxParticipants !== null)) {
+            $item['min_participants'] = $minParticipants;
+            $item['max_participants'] = $maxParticipants;
+        }
 
         $this->items->put($item);
 

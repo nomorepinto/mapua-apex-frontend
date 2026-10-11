@@ -88,6 +88,64 @@ class SubmissionBookingTest extends TestCase
         $this->assertCount(1, $this->itemsWithSkPrefix($db, 'BOOKING#'));
     }
 
+    public function test_room_participant_bounds_reject_an_oversized_headcount(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        $this->seedCatalog($db);
+        // Default payload expects 60 participants; the room holds 50 at most.
+        DynamoFixtures::reservable($db, 'c001', 'r002', 'Small Room', 'room', null, ['min' => 20, 'max' => 50]);
+
+        $payload = SaafPayload::valid([
+            'venue_reservation' => [
+                'has_reservation' => true,
+                'reservations' => [
+                    SaafPayload::reservation('c001', 'r002', self::DATE, [0], 'room', 'Small Room'),
+                ],
+            ],
+        ]);
+
+        $this->withStudentAuth()->postJson('/api/v1/students/submissions', $payload)
+            ->assertUnprocessable()
+            ->assertJsonPath('message', fn (string $message): bool => str_contains($message, 'Small Room'));
+
+        // Nothing persisted: capacity is validated before any write.
+        $this->assertCount(0, $this->itemsWithSkPrefix($db, 'SUBMISSION#'));
+        $this->assertCount(0, $this->itemsWithSkPrefix($db, 'BOOKING#'));
+    }
+
+    public function test_room_participant_bounds_reject_an_undersized_headcount(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        $this->seedCatalog($db);
+        DynamoFixtures::reservable($db, 'c001', 'r002', 'Big Hall', 'room', null, ['min' => 200, 'max' => 500]);
+
+        $payload = SaafPayload::valid([
+            'activity_details' => ['expected_participants' => 60],
+            'venue_reservation' => [
+                'has_reservation' => true,
+                'reservations' => [
+                    SaafPayload::reservation('c001', 'r002', self::DATE, [0], 'room', 'Big Hall'),
+                ],
+            ],
+        ]);
+
+        $this->withStudentAuth()->postJson('/api/v1/students/submissions', $payload)
+            ->assertUnprocessable();
+
+        $this->assertCount(0, $this->itemsWithSkPrefix($db, 'SUBMISSION#'));
+    }
+
+    public function test_equipment_ignores_participant_bounds(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        $this->seedCatalog($db);
+        // Bounds are room-only; seeded rooms carry none, so the 60-participant
+        // payload books r001 unimpeded.
+        $this->withStudentAuth()
+            ->postJson('/api/v1/students/submissions', $this->payloadWithReservation([0]))
+            ->assertCreated();
+    }
+
     public function test_denying_a_submission_releases_its_bookings(): void
     {
         $db = InMemoryDynamoDb::bind($this);

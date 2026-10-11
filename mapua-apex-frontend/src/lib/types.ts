@@ -125,12 +125,21 @@ export interface ApiCampus {
   name: string
 }
 
-export interface ApiReservable {
+/** Participant bounds carried on a pick so the SAAF step can enforce them offline. */
+export interface ReservableCapacityFields {
+  /** Room-only participant bounds; null when unstated (equipment is always null). */
+  min_participants?: number | null
+  max_participants?: number | null
+}
+
+export interface ApiReservable extends ReservableCapacityFields {
   reservable_id: string
   campus_id: string
   name: string
   type: ReservableType
   schedule: ReservableSchedule
+  /** Pre-formatted capacity note from the API (e.g. "between 50 and 100 participants"). */
+  capacity_label?: string | null
 }
 
 /** Per-date availability for one reservable, as returned by the availability endpoint. */
@@ -170,7 +179,7 @@ export interface ApiBooking {
 }
 
 /** A reservable picked in the SAAF venue reservation, with its date+slot selections. */
-export interface VenueReservationPick {
+export interface VenueReservationPick extends ReservableCapacityFields {
   reservable_id: string
   campus_id: string
   name: string
@@ -188,7 +197,7 @@ export type CreateCampusPayload = {
   name: string
 }
 
-export type CreateReservablePayload = {
+export type CreateReservablePayload = ReservableCapacityFields & {
   name: string
   type: ReservableType
   schedule: ReservableSchedule

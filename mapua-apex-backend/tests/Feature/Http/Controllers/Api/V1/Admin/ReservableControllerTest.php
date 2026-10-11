@@ -68,6 +68,65 @@ class ReservableControllerTest extends TestCase
         ])->assertUnprocessable()->assertJsonValidationErrors(['type']);
     }
 
+    public function test_creates_a_room_with_participant_bounds(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001');
+
+        $response = $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'AV Room',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'min_participants' => 50,
+            'max_participants' => 100,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.min_participants', 50)
+            ->assertJsonPath('data.max_participants', 100)
+            ->assertJsonPath('data.capacity_label', 'between 50 and 100 participants');
+
+        $stored = $db->find('CAMPUS#c001', 'RESERVABLE#'.$response->json('data.reservable_id'));
+        $this->assertSame(50, $stored['min_participants'] ?? null);
+        $this->assertSame(100, $stored['max_participants'] ?? null);
+    }
+
+    public function test_participant_bounds_are_dropped_for_equipment(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001');
+
+        $response = $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'Projector',
+            'type' => 'equipment',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'min_participants' => 50,
+            'max_participants' => 100,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.min_participants', null)
+            ->assertJsonPath('data.max_participants', null);
+
+        $stored = $db->find('CAMPUS#c001', 'RESERVABLE#'.$response->json('data.reservable_id'));
+        $this->assertArrayNotHasKey('min_participants', $stored);
+        $this->assertArrayNotHasKey('max_participants', $stored);
+    }
+
+    public function test_returns_422_when_the_minimum_exceeds_the_maximum(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+        DynamoFixtures::campus($db, 'c001');
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses/c001/reservables', [
+            'name' => 'AV Room',
+            'type' => 'room',
+            'schedule' => ['monday' => array_fill(0, 12, true)],
+            'min_participants' => 200,
+            'max_participants' => 50,
+        ])->assertUnprocessable()->assertJsonValidationErrors(['min_participants']);
+    }
+
     public function test_updates_a_reservable(): void
     {
         $db = InMemoryDynamoDb::bind($this);

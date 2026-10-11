@@ -238,6 +238,8 @@ schedule: {
   friday:    [bool x12]
   saturday:  [bool x12]
 }
+min_participants: number   (room-only; N attribute, optional = no lower limit)
+max_participants: number   (room-only; N attribute, optional = no upper limit)
 
 The recurring weekly availability template. Days run monday..saturday (Sunday
 is never reservable and is not stored); each present day is exactly 12
@@ -249,6 +251,14 @@ PK = CAMPUS#id, SK begins_with RESERVABLE#. DELETE
 occupies PK = RESERVABLE#id (release those first). Canonical slot math lives in
 App\Aws\DynamoDb\ReservableSchedule (backend) and lib/schedule-slots.ts
 (frontend) so indices/times never drift.
+
+min_participants/max_participants bound the headcount a room can hold. They are
+persisted ONLY when type is "room" and at least one bound is supplied (the API
+silently drops them for equipment, and a room with neither attribute is treated
+as unlimited). On a SAAF submit the activity's expected_participants is checked
+against each picked room's bounds in BookingRecords::assertAvailable; an
+out-of-range headcount aborts with 422 before any BOOKING is written. The human
+"capacity_label" in the API response is derived, not stored.
 
 BOOKING (a concrete hold on a reservable's slots for specific dates)
 PK: RESERVABLE#uuid

@@ -16,6 +16,15 @@ import {
 } from "@/components/admin/reservables/reservable-dialogs"
 import { RESERVABLE_CSV_TEMPLATE } from "@/components/admin/reservables/reservable-options"
 import {
+  ReservableCapacityFieldsForm,
+} from "@/components/admin/reservables/reservable-capacity-fields"
+import {
+  participantBoundPayload,
+  stripCapacityForType,
+  validateParticipantBounds,
+  type ParticipantBound,
+} from "@/lib/reservable-capacity-form"
+import {
   CampusSelect,
   ReservableTypeField,
 } from "@/components/admin/reservables/reservables-fields"
@@ -83,6 +92,8 @@ export function AddReservableSection() {
 
   const [name, setName] = useState("")
   const [type, setType] = useState<ReservableType>("room")
+  // Room-only participant bounds; dropped whenever the type flips to equipment.
+  const [bounds, setBounds] = useState<ParticipantBound>({ min: "", max: "" })
   const [schedule, setSchedule] = useState(() => allAvailableSchedule())
   const [formError, setFormError] = useState("")
   const [search, setSearch] = useState("")
@@ -120,6 +131,8 @@ export function AddReservableSection() {
       payloads.push({
         name: trimmed,
         type: row.type,
+        // CSV rows carry no capacity; set it on the room afterwards.
+        ...participantBoundPayload({ min: "", max: "" }),
         // Imported rows start all-available Mon-Sat, then edited on the grid.
         schedule: allAvailableSchedule(),
       })
@@ -153,16 +166,25 @@ export function AddReservableSection() {
       setFormError("Select at least one available slot in the weekly template.")
       return
     }
+    const capacityError = validateParticipantBounds(
+      stripCapacityForType(type, bounds)
+    )
+    if (capacityError) {
+      setFormError(capacityError)
+      return
+    }
 
     try {
       await createReservable.mutateAsync({
         campusId,
         name: trimmed,
         type,
+        ...participantBoundPayload(stripCapacityForType(type, bounds)),
         schedule,
       })
       setName("")
       setType("room")
+      setBounds({ min: "", max: "" })
       setSchedule(allAvailableSchedule())
       setFormError("")
       toastManager.add({
@@ -298,9 +320,20 @@ export function AddReservableSection() {
                   id="add-reservable-type"
                   onChange={(next) => {
                     setType(next)
+                    setBounds((current) => stripCapacityForType(next, current))
                     if (formError) setFormError("")
                   }}
                   value={type}
+                />
+                <ReservableCapacityFieldsForm
+                  bounds={bounds}
+                  disabled={createReservable.isPending}
+                  idPrefix="add-reservable"
+                  onChange={(next) => {
+                    setBounds(next)
+                    if (formError) setFormError("")
+                  }}
+                  type={type}
                 />
                 <div className="flex flex-col gap-2">
                   <div className="flex items-center justify-between gap-2">

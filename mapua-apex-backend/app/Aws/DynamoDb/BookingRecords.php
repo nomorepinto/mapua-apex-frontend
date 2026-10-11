@@ -96,17 +96,24 @@ final class BookingRecords
     }
 
     /**
-     * Validate selections against the weekly template + existing bookings. Aborts
-     * 409 on the first conflict, before anything is written.
+     * Validate selections against the weekly template + existing bookings, plus
+     * the room's participant bounds against the expected headcount when one is
+     * known. Aborts 409 on the first conflict, before anything is written.
      *
      * @param  array<string, mixed>  $reservable
      * @param  list<array{date: string, slots: list<int>}>  $selections
      * @param  list<string>  $excludeSks  booking sort keys to ignore (this submission's own holds)
      */
-    public function assertAvailable(array $reservable, array $selections, array $excludeSks = []): void
+    public function assertAvailable(array $reservable, array $selections, array $excludeSks = [], ?int $expectedParticipants = null): void
     {
         $schedule = ReservableSchedule::normalize($reservable['schedule'] ?? []);
         $name = (string) ($reservable['name'] ?? 'This reservable');
+
+        if (! ReservableSchedule::withinCapacity($reservable, $expectedParticipants)) {
+            $label = ReservableSchedule::capacityLabel($reservable);
+            abort(422, "{$name} holds {$label}; the expected participants ({$expectedParticipants}) fall outside it.");
+        }
+
         $reservableId = DynamoKeys::strip($reservable['SK'] ?? null, 'RESERVABLE#') ?? '';
         $occupied = $this->occupiedSlots($reservableId, $excludeSks);
 
@@ -135,7 +142,7 @@ final class BookingRecords
      * persist on the submission. Nothing is written here, so a conflict aborts
      * before the submission is put.
      *
-     * @param  array{organization_id: string, event_id: string, submission_id: string}  $context
+     * @param  array{organization_id: string, event_id: string, submission_id: string, expected_participants?: int|null}  $context
      * @param  list<array<string, mixed>>  $reservations
      * @param  list<array<string, mixed>>  $oldRefs
      * @return array{refs: list<array{pk: string, sk: string}>, items: list<array<string, mixed>>}
@@ -143,6 +150,9 @@ final class BookingRecords
     public function planForSubmission(array $context, array $reservations, array $oldRefs = []): array
     {
         $excludeSks = $this->refSortKeys($oldRefs);
+        $expectedParticipants = isset($context['expected_participants']) && is_numeric($context['expected_participants'])
+            ? (int) $context['expected_participants']
+            : null;
         $planned = [];
 
         foreach ($reservations as $reservation) {
@@ -169,7 +179,7 @@ final class BookingRecords
                 abort(422, 'Select at least one date and time slot for each reserved room or equipment.');
             }
 
-            $this->assertAvailable($reservable, $selections, $excludeSks);
+            $this->assertAvailable($reservable, $selections, $excludeSks, $expectedParticipants);
 
             $planned[] = ['reservable' => $reservable, 'reservation' => $reservation, 'selections' => $selections];
         }

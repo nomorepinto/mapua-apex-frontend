@@ -43,7 +43,7 @@ Index summary:
 | 20 | Reservables under a campus | Query | `PK = CAMPUS#id`, `SK` begins `RESERVABLE#` | Base |
 | 21 | Reservable availability (template + per-date free/booked slots) | Query | `PK = RESERVABLE#id`, `SK` begins `BOOKING#`; overlay bookings on the weekly template across the window | Base |
 | 22 | CDM View/Reserve calendar (raw bookings, both sources) | Query | `PK = RESERVABLE#id`, `SK` begins `BOOKING#` (filtered to dates in window) | Base |
-| 23 | Create booking (submission hold or CDM manual) | Query → PutItem | validate selections vs template + existing bookings (**409** on conflict), then PutItem `PK = RESERVABLE#id`, `SK = BOOKING#id` | Base |
+| 23 | Create booking (submission hold or CDM manual) | Query → PutItem | validate selections vs template + existing bookings (**409** on conflict) and, on submission, expected headcount vs each room's `min/max_participants` (**422** out of range), then PutItem `PK = RESERVABLE#id`, `SK = BOOKING#id` | Base |
 | 24 | Release holds on deny / return / re-edit | DeleteItem | delete each `booking_refs[]` `{pk, sk}` (submission holds) | Base |
 | 25 | Delete a manual booking (CDM) | GetItem → DeleteItem | **409** if `source` is `submission`; else DeleteItem `PK = RESERVABLE#id`, `SK = BOOKING#id` | Base |
 | 26 | Admin: delete campus / reservable (guarded) | Query → DeleteItem | block (**409**) if a campus owns any RESERVABLE, or a reservable owns any BOOKING; else DeleteItem | Base |

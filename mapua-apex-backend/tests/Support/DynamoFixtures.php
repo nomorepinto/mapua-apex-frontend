@@ -47,6 +47,7 @@ final class DynamoFixtures
 
     /**
      * @param  array<string, list<bool>>|null  $schedule  defaults to all-available Mon-Sat
+     * @param  array{min?: int, max?: int}|null  $capacity  room-only participant bounds
      */
     public static function reservable(
         InMemoryDynamoDb $db,
@@ -55,14 +56,22 @@ final class DynamoFixtures
         string $name = 'Room 1',
         string $type = 'room',
         ?array $schedule = null,
+        ?array $capacity = null,
     ): void {
-        $db->seed([
+        $item = [
             'PK' => 'CAMPUS#'.$campusId,
             'SK' => 'RESERVABLE#'.$id,
             'name' => $name,
             'type' => $type,
             'schedule' => $schedule ?? self::fullSchedule(),
-        ]);
+        ];
+
+        if ($capacity !== null) {
+            $item['min_participants'] = $capacity['min'] ?? null;
+            $item['max_participants'] = $capacity['max'] ?? null;
+        }
+
+        $db->seed($item);
     }
 
     /**
