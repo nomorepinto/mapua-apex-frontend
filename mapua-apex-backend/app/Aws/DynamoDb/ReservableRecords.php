@@ -53,22 +53,22 @@ final class ReservableRecords
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    public function create(string $campusId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null): array
+    public function create(string $campusId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null, bool $isClassroom = false): array
     {
-        return $this->write($campusId, (string) Str::uuid(), $name, $type, $schedule, $minParticipants, $maxParticipants);
+        return $this->write($campusId, (string) Str::uuid(), $name, $type, $schedule, $minParticipants, $maxParticipants, $isClassroom);
     }
 
     /**
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    public function update(string $campusId, string $reservableId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null): array
+    public function update(string $campusId, string $reservableId, string $name, string $type, array $schedule, ?int $minParticipants = null, ?int $maxParticipants = null, bool $isClassroom = false): array
     {
         if ($this->get($campusId, $reservableId) === null) {
             abort(404);
         }
 
-        return $this->write($campusId, $reservableId, $name, $type, $schedule, $minParticipants, $maxParticipants);
+        return $this->write($campusId, $reservableId, $name, $type, $schedule, $minParticipants, $maxParticipants, $isClassroom);
     }
 
     /**
@@ -105,14 +105,14 @@ final class ReservableRecords
     }
 
     /**
-     * Persist one reservable. Participant bounds are room-only: they are stored
-     * solely when at least one is given, so equipment (and rooms without a
-     * stated capacity) keep no attributes and stay unlimited.
+     * Persist one reservable. Participant bounds and the classroom flag are
+     * room-only: they are stored solely when they apply, so equipment (and rooms
+     * without a stated capacity) keep no attributes and stay unlimited/plain.
      *
      * @param  array<string, mixed>  $schedule
      * @return array<string, mixed>
      */
-    private function write(string $campusId, string $id, string $name, string $type, array $schedule, ?int $minParticipants, ?int $maxParticipants): array
+    private function write(string $campusId, string $id, string $name, string $type, array $schedule, ?int $minParticipants, ?int $maxParticipants, bool $isClassroom): array
     {
         $type = Str::lower($type);
 
@@ -127,6 +127,10 @@ final class ReservableRecords
         if ($type === 'room' && ($minParticipants !== null || $maxParticipants !== null)) {
             $item['min_participants'] = $minParticipants;
             $item['max_participants'] = $maxParticipants;
+        }
+
+        if ($type === 'room' && $isClassroom) {
+            $item['is_classroom'] = true;
         }
 
         $this->items->put($item);

@@ -47,6 +47,7 @@ Index summary:
 | 24 | Release holds on deny / return / re-edit | DeleteItem | delete each `booking_refs[]` `{pk, sk}` (submission holds) | Base |
 | 25 | Delete a manual booking (CDM) | GetItem → DeleteItem | **409** if `source` is `submission`; else DeleteItem `PK = RESERVABLE#id`, `SK = BOOKING#id` | Base |
 | 26 | Admin: delete campus / reservable (guarded) | Query → DeleteItem | block (**409**) if a campus owns any RESERVABLE, or a reservable owns any BOOKING; else DeleteItem | Base |
+| 27 | Create / edit reservable (CDM Add/Edit) | GetItem → PutItem | for a `room` flagged `is_classroom`, GetItem the owning CAMPUS and enforce it defines a classroom format (**422** on `is_classroom` if not) and the `name` matches `<prefix><N digits>` (**422** on `name`), then PutItem `PK = CAMPUS#id`, `SK = RESERVABLE#id`; room-only `min/max_participants` + `is_classroom` dropped for `equipment` | Base |
 
 ---
 
@@ -63,5 +64,5 @@ Index summary:
 | Admin → Organizations | ORGANIZATION, SIGNATORY | 11, 12, 17 |
 | Admin → Signatories | SIGNATORY, ORGANIZATION (desk guard) | 8, 18 |
 | osaar → Campus | CAMPUS, RESERVABLE (delete guard) | 19, 20, 26 |
-| cdm → Reservables (Add/View/Reserve) | CAMPUS, RESERVABLE, BOOKING | 20, 21, 22, 23, 25, 26 |
+| cdm → Reservables (Add/View/Reserve) | CAMPUS, RESERVABLE, BOOKING | 20, 21, 22, 23, 25, 26, 27 |
 | About / Announcements | ANNOUNCEMENT | 13, 14 |

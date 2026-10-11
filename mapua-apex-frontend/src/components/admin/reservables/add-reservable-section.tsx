@@ -25,6 +25,14 @@ import {
   type ParticipantBound,
 } from "@/lib/reservable-capacity-form"
 import {
+  ReservableClassroomField,
+} from "@/components/admin/reservables/reservable-classroom-field"
+import {
+  campusHasClassroomFormat,
+  classroomFormatHint,
+  matchesClassroomName,
+} from "@/lib/campus-classroom-format"
+import {
   CampusSelect,
   ReservableTypeField,
 } from "@/components/admin/reservables/reservables-fields"
@@ -94,6 +102,8 @@ export function AddReservableSection() {
   const [type, setType] = useState<ReservableType>("room")
   // Room-only participant bounds; dropped whenever the type flips to equipment.
   const [bounds, setBounds] = useState<ParticipantBound>({ min: "", max: "" })
+  // Room-only classroom flag; dropped on equipment and when the campus has no format.
+  const [isClassroom, setIsClassroom] = useState(false)
   const [schedule, setSchedule] = useState(() => allAvailableSchedule())
   const [formError, setFormError] = useState("")
   const [search, setSearch] = useState("")
@@ -108,6 +118,15 @@ export function AddReservableSection() {
 
   const campusName =
     campuses.find((campus) => campus.campus_id === campusId)?.name ?? ""
+
+  const selectedCampus = campuses.find((campus) => campus.campus_id === campusId) ?? null
+  const hasClassroomFormat = campusHasClassroomFormat(selectedCampus)
+  const classroomHint = hasClassroomFormat
+    ? classroomFormatHint(
+        selectedCampus?.classroom_name_prefixes,
+        selectedCampus?.classroom_name_digits
+      )
+    : null
 
   const existingNames = useMemo(
     () => new Set(reservables.map((item) => item.name.trim().toLowerCase())),
@@ -173,6 +192,11 @@ export function AddReservableSection() {
       setFormError(capacityError)
       return
     }
+    const classroom = type === "room" && isClassroom && hasClassroomFormat
+    if (classroom && !matchesClassroomName(selectedCampus?.classroom_name_prefixes, selectedCampus?.classroom_name_digits, trimmed)) {
+      setFormError(`A classroom room must be named ${classroomHint ?? "to the campus format"}.`)
+      return
+    }
 
     try {
       await createReservable.mutateAsync({
@@ -180,11 +204,13 @@ export function AddReservableSection() {
         name: trimmed,
         type,
         ...participantBoundPayload(stripCapacityForType(type, bounds)),
+        is_classroom: classroom,
         schedule,
       })
       setName("")
       setType("room")
       setBounds({ min: "", max: "" })
+      setIsClassroom(false)
       setSchedule(allAvailableSchedule())
       setFormError("")
       toastManager.add({
@@ -321,6 +347,7 @@ export function AddReservableSection() {
                   onChange={(next) => {
                     setType(next)
                     setBounds((current) => stripCapacityForType(next, current))
+                    if (next !== "room") setIsClassroom(false)
                     if (formError) setFormError("")
                   }}
                   value={type}
@@ -331,6 +358,18 @@ export function AddReservableSection() {
                   idPrefix="add-reservable"
                   onChange={(next) => {
                     setBounds(next)
+                    if (formError) setFormError("")
+                  }}
+                  type={type}
+                />
+                <ReservableClassroomField
+                  checked={isClassroom}
+                  disabled={createReservable.isPending}
+                  formatHint={classroomHint}
+                  hasCampusFormat={hasClassroomFormat}
+                  id="add-reservable-classroom"
+                  onChange={(next) => {
+                    setIsClassroom(next)
                     if (formError) setFormError("")
                   }}
                   type={type}
@@ -476,6 +515,9 @@ export function AddReservableSection() {
 
       {editing ? (
         <EditReservableDialog
+          campus={
+            campuses.find((campus) => campus.campus_id === editing.campus_id) ?? null
+          }
           campusName={
             campuses.find((campus) => campus.campus_id === editing.campus_id)
               ?.name ?? ""

@@ -32,6 +32,7 @@ class ReservableController extends Controller
             $validated['schedule'] ?? [],
             $this->participantBound($validated['min_participants'] ?? null),
             $this->participantBound($validated['max_participants'] ?? null),
+            $request->boolean('is_classroom'),
         );
 
         return (new ReservableResource($item))->response()->setStatusCode(201);
@@ -53,6 +54,7 @@ class ReservableController extends Controller
             $validated['schedule'] ?? [],
             $this->participantBound($validated['min_participants'] ?? null),
             $this->participantBound($validated['max_participants'] ?? null),
+            $request->boolean('is_classroom'),
         ));
     }
 

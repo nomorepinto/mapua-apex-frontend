@@ -28,6 +28,8 @@ class ReservableResource extends JsonResource
             'min_participants' => $min,
             'max_participants' => $max,
             'capacity_label' => $min !== null || $max !== null ? ReservableSchedule::capacityLabel($item) : null,
+            // Room-only classroom flag (equipment is always false).
+            'is_classroom' => ($item['type'] ?? null) === 'room' && (bool) ($item['is_classroom'] ?? false),
         ];
     }
 }

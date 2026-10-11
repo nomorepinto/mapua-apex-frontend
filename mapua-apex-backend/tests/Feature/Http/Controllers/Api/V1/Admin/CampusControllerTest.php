@@ -66,6 +66,51 @@ class CampusControllerTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_creates_a_campus_with_a_classroom_format(): void
+    {
+        $db = InMemoryDynamoDb::bind($this);
+
+        $response = $this->withAdminAuth()->postJson('/api/v1/admins/campuses', [
+            'name' => 'Makati',
+            'classroom_name_prefixes' => ['MPO', 'nw', 'N'],
+            'classroom_name_digits' => 3,
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.classroom_name_prefixes', ['MPO', 'NW', 'N'])
+            ->assertJsonPath('data.classroom_name_digits', 3);
+
+        $id = $response->json('data.campus_id');
+        $stored = $db->find('CAMPUS#'.$id, 'CAMPUS#'.$id);
+        $this->assertSame(['MPO', 'NW', 'N'], $stored['classroom_name_prefixes'] ?? null);
+        $this->assertSame(3, $stored['classroom_name_digits'] ?? null);
+    }
+
+    public function test_returns_422_when_classroom_prefixes_have_no_digit_count(): void
+    {
+        InMemoryDynamoDb::bind($this);
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses', [
+            'name' => 'Makati',
+            'classroom_name_prefixes' => ['MPO'],
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['classroom_name_digits']);
+    }
+
+    public function test_returns_422_on_an_invalid_classroom_prefix_or_digit_count(): void
+    {
+        InMemoryDynamoDb::bind($this);
+
+        $this->withAdminAuth()->postJson('/api/v1/admins/campuses', [
+            'name' => 'Makati',
+            'classroom_name_prefixes' => ['MPO123'],
+            'classroom_name_digits' => 9,
+        ])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['classroom_name_prefixes.0', 'classroom_name_digits']);
+    }
+
     public function test_deletes_a_campus_without_reservables(): void
     {
         $db = InMemoryDynamoDb::bind($this);

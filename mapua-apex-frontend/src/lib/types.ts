@@ -123,6 +123,12 @@ export interface SlotSelection {
 export interface ApiCampus {
   campus_id: string
   name: string
+  /** Allowed classroom-name prefix tokens; [] when the campus defines no naming rule. */
+  classroom_name_prefixes?: string[]
+  /** Required digit count for classroom names; null when no naming rule. */
+  classroom_name_digits?: number | null
+  /** Pre-formatted naming note from the API (e.g. "MPO / NW / N followed by exactly 3 digits"). */
+  classroom_name_hint?: string | null
 }
 
 /** Participant bounds carried on a pick so the SAAF step can enforce them offline. */
@@ -140,6 +146,8 @@ export interface ApiReservable extends ReservableCapacityFields {
   schedule: ReservableSchedule
   /** Pre-formatted capacity note from the API (e.g. "between 50 and 100 participants"). */
   capacity_label?: string | null
+  /** Room-only flag; true when the room must match the campus classroom name format. */
+  is_classroom?: boolean
 }
 
 /** Per-date availability for one reservable, as returned by the availability endpoint. */
@@ -195,12 +203,15 @@ export interface VenueReservation {
 
 export type CreateCampusPayload = {
   name: string
+  classroom_name_prefixes?: string[]
+  classroom_name_digits?: number | null
 }
 
 export type CreateReservablePayload = ReservableCapacityFields & {
   name: string
   type: ReservableType
   schedule: ReservableSchedule
+  is_classroom?: boolean
 }
 
 export type CreateBookingPayload = {
