@@ -185,6 +185,94 @@ class LoggingTest extends TestCase
             ]);
     }
 
+    public function test_02c_stale_session_closes_as_timed_out_on_login_from_another_device(): void
+    {
+        $sub = 'usr-123';
+        $authTime = 1700000000;
+        $baseId = hash('sha256', "{$sub}:{$authTime}");
+        $suffix2Id = "{$baseId}#2";
+        $loginTime = gmdate('Y-m-d\TH:i:s\Z', time() - 5 * 3600); // 5 hours ago (e.g. 12pm)
+        $staleHeartbeat = gmdate('Y-m-d\TH:i:s\Z', time() - 4 * 3600); // 4 hours ago (e.g. 5am, inactive for 4h)
+
+        // 1. Pointer lookup -> pointer points to baseId on device-1
+        $this->dynamoDbMock->shouldReceive('getItem')
+            ->with(Mockery::on(fn($args) => ($args['Key']['PK']['S'] ?? '') === "USER#{$sub}"))
+            ->once()
+            ->andReturn(new \Aws\Result([
+                'Item' => [
+                    'session_id' => ['S' => $baseId],
+                    'device_id' => ['S' => 'dev-1'],
+                    'status' => ['S' => 'active'],
+                ],
+            ]));
+
+        // 2. Fetch old session -> active but stale (> 15m)
+        $this->dynamoDbMock->shouldReceive('getItem')
+            ->with(Mockery::on(fn($args) => ($args['Key']['PK']['S'] ?? '') === "SESSION#{$baseId}"))
+            ->twice() // once for staleness check in Branch 3, once for findAvailableSessionId candidate 0
+            ->andReturn(new \Aws\Result([
+                'Item' => [
+                    'session_id' => ['S' => $baseId],
+                    'sub' => ['S' => $sub],
+                    'status' => ['S' => 'active'],
+                    'login_time' => ['S' => $loginTime],
+                    'last_heartbeat' => ['S' => $staleHeartbeat],
+                    'TTL' => ['N' => (string)(time() + 86400)],
+                ],
+            ]));
+
+        // 3. Stale session is closed with timed_out, logout_time = last_heartbeat, duration computed up to last_heartbeat
+        $this->dynamoDbMock->shouldReceive('updateItem')
+            ->with(Mockery::on(function ($args) use ($baseId, $staleHeartbeat) {
+                if (($args['Key']['PK']['S'] ?? '') !== "SESSION#{$baseId}") {
+                    return false;
+                }
+                $sVals = array_column($args['ExpressionAttributeValues'] ?? [], 'S');
+                $nVals = array_map('intval', array_column($args['ExpressionAttributeValues'] ?? [], 'N'));
+
+                $isTimedOut = in_array('timed_out', $sVals, true);
+                $isCorrectLogout = in_array($staleHeartbeat, $sVals, true);
+                $isCorrectDuration = in_array(3600, $nVals, true);
+
+                return $isTimedOut && $isCorrectLogout && $isCorrectDuration;
+            }))
+            ->once()
+            ->andReturn(new \Aws\Result([]));
+
+        // 4. Stale active pointer is cleared
+        $this->dynamoDbMock->shouldReceive('deleteItem')
+            ->with(Mockery::on(fn($args) => ($args['Key']['PK']['S'] ?? '') === "USER#{$sub}"))
+            ->once()
+            ->andReturn(new \Aws\Result([]));
+
+        // 5. Candidate 1 lookup -> suffix2Id is available
+        $this->dynamoDbMock->shouldReceive('getItem')
+            ->with(Mockery::on(fn($args) => ($args['Key']['PK']['S'] ?? '') === "SESSION#{$suffix2Id}"))
+            ->once()
+            ->andReturn(new \Aws\Result(['Item' => null]));
+
+        // 6. Branch 2 creates the new session and pointer atomically
+        $this->dynamoDbMock->shouldReceive('transactWriteItems')
+            ->once()
+            ->andReturn(new \Aws\Result([]));
+
+        // Call from device-2 (Device B at 9am) -> starts cleanly without displacement
+        $response = $this->withStudentAuth([
+            'sub' => $sub,
+            'auth_time' => $authTime,
+        ])->postJson('/api/v1/sessions/start', [
+            'deviceId' => 'dev-2',
+        ]);
+
+        $response->assertStatus(200)
+            ->assertJson([
+                'sessionId' => $suffix2Id,
+                'status' => 'active',
+                'isNewSession' => true,
+                'displacedPreviousSession' => false,
+            ]);
+    }
+
     public function test_03_session_start_creates_suffix_2_when_base_is_ended(): void
     {
         $sub = 'usr-123';

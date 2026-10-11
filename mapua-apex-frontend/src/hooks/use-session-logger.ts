@@ -5,9 +5,10 @@ import { getPageName } from "../lib/page-names";
 import type { PageVisit } from "../types/logs";
 
 const HEARTBEAT_INTERVAL_MS = 90 * 1000;
-const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
+const IDLE_TIMEOUT_MS = 12 * 60 * 1000;
 const SESSION_STORAGE_KEY = "apex_session_id";
 const DEVICE_STORAGE_KEY = "apex_device_id";
+const LAST_ACTIVE_STORAGE_KEY = "apex_last_active_at";
 
 export function getOrCreateDeviceId(): string {
   try {
@@ -49,6 +50,23 @@ function clearStoredSessionId(): void {
   }
 }
 
+function getStoredLastActive(): number {
+  try {
+    const raw = localStorage.getItem(LAST_ACTIVE_STORAGE_KEY);
+    return raw ? parseInt(raw, 10) || Date.now() : Date.now();
+  } catch {
+    return Date.now();
+  }
+}
+
+function setStoredLastActive(ts: number): void {
+  try {
+    localStorage.setItem(LAST_ACTIVE_STORAGE_KEY, ts.toString());
+  } catch {
+    // ignore
+  }
+}
+
 interface SessionResponse {
   sessionId: string;
   status: string;
@@ -60,12 +78,15 @@ export function useSessionLogger() {
   const location = useLocation();
   const sessionIdRef = useRef<string | null>(getStoredSessionId());
   const pendingPagesRef = useRef<PageVisit[]>([]);
-  const lastActiveTimestampRef = useRef<number>(0);
+  const lastActiveTimestampRef = useRef<number>(getStoredLastActive());
+  const lastStorageWriteRef = useRef<number>(0);
   const isOpeningRef = useRef<boolean>(false);
   const isTerminatedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    lastActiveTimestampRef.current = Date.now();
+    const now = Date.now();
+    lastActiveTimestampRef.current = now;
+    setStoredLastActive(now);
   }, []);
 
   useEffect(() => {
@@ -91,7 +112,12 @@ export function useSessionLogger() {
 
   useEffect(() => {
     const handleUserActivity = () => {
-      lastActiveTimestampRef.current = Date.now();
+      const now = Date.now();
+      lastActiveTimestampRef.current = now;
+      if (now - lastStorageWriteRef.current > 5000) {
+        lastStorageWriteRef.current = now;
+        setStoredLastActive(now);
+      }
     };
 
     window.addEventListener("mousemove", handleUserActivity, { passive: true });
@@ -151,9 +177,11 @@ export function useSessionLogger() {
         return;
       }
 
-      const idleTime = Date.now() - lastActiveTimestampRef.current;
+      const storedLastActive = getStoredLastActive();
+      const lastActive = Math.max(lastActiveTimestampRef.current, storedLastActive);
+      const idleTime = Date.now() - lastActive;
       if (idleTime > IDLE_TIMEOUT_MS) {
-        console.warn("useSessionLogger: User idle for 10+ min, skipping heartbeat");
+        console.warn("useSessionLogger: User idle for 12+ min, skipping heartbeat");
         return;
       }
 
@@ -173,18 +201,14 @@ export function useSessionLogger() {
           console.warn("useSessionLogger: Session displaced by login on another device.");
           isTerminatedRef.current = true;
           if (intervalId) clearInterval(intervalId);
-          sessionIdRef.current = null;
-          clearStoredSessionId();
           window.dispatchEvent(new CustomEvent("apex:session_displaced"));
-          return;
+          return; // keep the stored ID so other tabs get their own 409 and modal
         }
 
         if (code === "SESSION_REVOKED") {
           console.warn("useSessionLogger: Session revoked by administrator.");
           isTerminatedRef.current = true;
           if (intervalId) clearInterval(intervalId);
-          sessionIdRef.current = null;
-          clearStoredSessionId();
           window.dispatchEvent(new CustomEvent("apex:session_revoked"));
           return;
         }
@@ -202,8 +226,14 @@ export function useSessionLogger() {
 
     // Keep all tabs in this browser synced in real-time when localStorage changes
     const onStorage = (e: StorageEvent) => {
-      if (e.key === SESSION_STORAGE_KEY) {
+      if (e.key === SESSION_STORAGE_KEY && e.newValue) {
         sessionIdRef.current = e.newValue;
+      }
+      if (e.key === LAST_ACTIVE_STORAGE_KEY && e.newValue) {
+        const parsed = parseInt(e.newValue, 10);
+        if (parsed) {
+          lastActiveTimestampRef.current = Math.max(lastActiveTimestampRef.current, parsed);
+        }
       }
     };
     window.addEventListener("storage", onStorage);

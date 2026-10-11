@@ -160,104 +160,114 @@ final class SessionLogWriter
         // Branch 3: Pointer exists and device_id differs (displace the old session with one TransactWriteItems)
         if ($pointer !== null && ! empty($pointer['session_id'])) {
             $oldSessionId = (string) $pointer['session_id'];
-            $newId = $this->findAvailableSessionId($base, $table);
-            $newSessionItem = $this->buildSessionItem(
-                $newId, $base, $sub, $userName, $userEmail, $userRole,
-                $ipAddress, $userAgent, $pagesVisited, $deviceId, $now, $ttl
-            );
 
             // Fetch old session to check if still active
             $oldItem = $this->db->get($table, DynamoKeys::session($oldSessionId), self::SK);
-            $oldIsActive = ($oldItem !== null && ($oldItem['status'] ?? '') === 'active');
 
-            $transactItems = [];
+            // If the old session is stale (last_heartbeat > STALE_MINUTES ago), close it as timed_out
+            // and clear the pointer rather than displacing it as a concurrent login.
+            if ($oldItem !== null && ($oldItem['status'] ?? '') === 'active' && $this->isStale($oldItem)) {
+                $this->closeSession($oldSessionId, $oldItem, 'timed_out');
+                $this->db->clearActiveSessionPointerIfMatches($sub, $oldSessionId);
+                $pointer = null;
+            } else {
+                $newId = $this->findAvailableSessionId($base, $table);
+                $newSessionItem = $this->buildSessionItem(
+                    $newId, $base, $sub, $userName, $userEmail, $userRole,
+                    $ipAddress, $userAgent, $pagesVisited, $deviceId, $now, $ttl
+                );
 
-            // 1. Update the pointer to the new session_id and device_id, condition: session_id = :oldSessionId
-            $pointerUpdateNames = [
-                '#sid' => 'session_id',
-                '#status' => 'status',
-                '#login' => 'login_time',
-                '#hb' => 'last_heartbeat',
-                '#ttl' => 'TTL',
-            ];
-            $pointerUpdateValues = [
-                ':newSid' => $newId,
-                ':status' => 'active',
-                ':now' => $now,
-                ':ttl' => $ttl,
-                ':oldSid' => $oldSessionId,
-            ];
-            $pointerSet = '#sid = :newSid, #status = :status, #login = :now, #hb = :now, #ttl = :ttl';
-            if ($deviceId !== null && trim($deviceId) !== '') {
-                $pointerUpdateNames['#did'] = 'device_id';
-                $pointerUpdateValues[':did'] = trim($deviceId);
-                $pointerSet .= ', #did = :did';
-            }
+                $oldIsActive = ($oldItem !== null && ($oldItem['status'] ?? '') === 'active');
 
-            $transactItems[] = $this->db->makeTransactUpdate(
-                $table,
-                DynamoKeys::user($sub),
-                DynamoKeys::activeSessionSk(),
-                'SET '.$pointerSet,
-                $pointerUpdateNames,
-                $pointerUpdateValues,
-                '#sid = :oldSid'
-            );
+                $transactItems = [];
 
-            // 2. Create the new SESSION#{newId} item with status = active
-            $transactItems[] = $this->db->makeTransactPut(
-                $table,
-                $newSessionItem,
-                'attribute_not_exists(PK)'
-            );
-
-            // 3. Update SESSION#{oldId} with status = completed, end_reason = concurrent_login, condition: status = active
-            $displaced = false;
-            if ($oldIsActive) {
-                $oldLoginTime = (string) ($oldItem['login_time'] ?? $now);
-                $durationSeconds = max(0, strtotime($now) - strtotime($oldLoginTime));
+                // 1. Update the pointer to the new session_id and device_id, condition: session_id = :oldSessionId
+                $pointerUpdateNames = [
+                    '#sid' => 'session_id',
+                    '#status' => 'status',
+                    '#login' => 'login_time',
+                    '#hb' => 'last_heartbeat',
+                    '#ttl' => 'TTL',
+                ];
+                $pointerUpdateValues = [
+                    ':newSid' => $newId,
+                    ':status' => 'active',
+                    ':now' => $now,
+                    ':ttl' => $ttl,
+                    ':oldSid' => $oldSessionId,
+                ];
+                $pointerSet = '#sid = :newSid, #status = :status, #login = :now, #hb = :now, #ttl = :ttl';
+                if ($deviceId !== null && trim($deviceId) !== '') {
+                    $pointerUpdateNames['#did'] = 'device_id';
+                    $pointerUpdateValues[':did'] = trim($deviceId);
+                    $pointerSet .= ', #did = :did';
+                }
 
                 $transactItems[] = $this->db->makeTransactUpdate(
                     $table,
-                    DynamoKeys::session($oldSessionId),
-                    self::SK,
-                    'SET #status = :status, end_reason = :reason, logout_time = :logout, duration_seconds = :dur, GSI3PK = :gsi3pk, GSI3SK = :logout',
-                    ['#status' => 'status'],
-                    [
-                        ':status' => 'completed',
-                        ':reason' => 'concurrent_login',
-                        ':logout' => $now,
-                        ':dur' => $durationSeconds,
-                        ':gsi3pk' => 'STATUS#completed',
-                        ':active' => 'active',
-                    ],
-                    '#status = :active'
+                    DynamoKeys::user($sub),
+                    DynamoKeys::activeSessionSk(),
+                    'SET '.$pointerSet,
+                    $pointerUpdateNames,
+                    $pointerUpdateValues,
+                    '#sid = :oldSid'
                 );
-                $displaced = true;
-            }
 
-            try {
-                $this->db->transactWrite($transactItems);
+                // 2. Create the new SESSION#{newId} item with status = active
+                $transactItems[] = $this->db->makeTransactPut(
+                    $table,
+                    $newSessionItem,
+                    'attribute_not_exists(PK)'
+                );
 
-                return [
-                    'sessionId' => $newId,
-                    'login_time' => $now,
-                    'status' => 'active',
-                    'isNewSession' => true,
-                    'displacedPreviousSession' => $displaced,
-                ];
-            } catch (DynamoDbException $e) {
-                if ($e->getAwsErrorCode() === 'TransactionCanceledException' && $retryCount === 0) {
-                    Log::info('SessionLogWriter: TransactionCanceledException on displace, retrying once', [
-                        'sub' => $sub,
-                    ]);
+                // 3. Update SESSION#{oldId} with status = completed, end_reason = concurrent_login, condition: status = active
+                $displaced = false;
+                if ($oldIsActive) {
+                    $oldLoginTime = (string) ($oldItem['login_time'] ?? $now);
+                    $durationSeconds = max(0, strtotime($now) - strtotime($oldLoginTime));
 
-                    return $this->startSession(
-                        $sub, $authTime, $userName, $userEmail, $userRole,
-                        $ipAddress, $userAgent, $pagesVisited, $existingSessionId, $deviceId, $retryCount + 1
+                    $transactItems[] = $this->db->makeTransactUpdate(
+                        $table,
+                        DynamoKeys::session($oldSessionId),
+                        self::SK,
+                        'SET #status = :status, end_reason = :reason, logout_time = :logout, duration_seconds = :dur, GSI3PK = :gsi3pk, GSI3SK = :logout',
+                        ['#status' => 'status'],
+                        [
+                            ':status' => 'completed',
+                            ':reason' => 'concurrent_login',
+                            ':logout' => $now,
+                            ':dur' => $durationSeconds,
+                            ':gsi3pk' => 'STATUS#completed',
+                            ':active' => 'active',
+                        ],
+                        '#status = :active'
                     );
+                    $displaced = true;
                 }
-                throw $e;
+
+                try {
+                    $this->db->transactWrite($transactItems);
+
+                    return [
+                        'sessionId' => $newId,
+                        'login_time' => $now,
+                        'status' => 'active',
+                        'isNewSession' => true,
+                        'displacedPreviousSession' => $displaced,
+                    ];
+                } catch (DynamoDbException $e) {
+                    if ($e->getAwsErrorCode() === 'TransactionCanceledException' && $retryCount === 0) {
+                        Log::info('SessionLogWriter: TransactionCanceledException on displace, retrying once', [
+                            'sub' => $sub,
+                        ]);
+
+                        return $this->startSession(
+                            $sub, $authTime, $userName, $userEmail, $userRole,
+                            $ipAddress, $userAgent, $pagesVisited, $existingSessionId, $deviceId, $retryCount + 1
+                        );
+                    }
+                    throw $e;
+                }
             }
         }
 
@@ -335,17 +345,27 @@ final class SessionLogWriter
         // Check if user's active pointer has already been claimed by another session
         $pointer = $this->db->getActiveSessionPointer($sub);
         if ($pointer !== null && ($pointer['session_id'] ?? '') !== $sessionId) {
-            if (($item['status'] ?? '') === 'active') {
-                $this->closeSession($sessionId, $item, 'concurrent_login');
-            }
-            if (($item['end_reason'] ?? '') === 'admin_revoked') {
-                return 'revoked';
-            }
+            $pointerHeartbeat = (string) ($pointer['last_heartbeat'] ?? '');
+            $isPointerFresh = $pointerHeartbeat !== '' && ! $this->isStaleTimestamp($pointerHeartbeat);
 
-            return 'displaced';
+            $itemDeviceId = isset($item['device_id']) && is_string($item['device_id']) ? $item['device_id'] : null;
+            $pointerDeviceId = isset($pointer['device_id']) && is_string($pointer['device_id']) ? $pointer['device_id'] : null;
+            $isSameDevice = ($itemDeviceId !== null && $pointerDeviceId !== null && $itemDeviceId === $pointerDeviceId);
+
+            // If another device holds a fresh active pointer, this session is displaced
+            if ($isPointerFresh && ! $isSameDevice) {
+                if (($item['status'] ?? '') === 'active') {
+                    $this->closeSession($sessionId, $item, 'concurrent_login');
+                }
+                if (($item['end_reason'] ?? '') === 'admin_revoked') {
+                    return 'revoked';
+                }
+
+                return 'displaced';
+            }
         }
 
-        // Stale-active check
+        // Stale-active check: if session is stale (and no other device holds a fresh pointer), return expired
         if (($item['status'] ?? '') === 'active' && $this->isStale($item)) {
             $this->closeSession($sessionId, $item, 'timed_out');
             $this->db->clearActiveSessionPointerIfMatches($sub, $sessionId);
@@ -418,8 +438,8 @@ final class SessionLogWriter
             return ['forbidden'];
         }
 
-        if (($item['status'] ?? '') === 'completed') {
-            return ['ok']; // idempotent
+        if (($item['status'] ?? '') !== 'active') {
+            return ['ok']; // idempotent, already ended (completed, timed_out, or revoked)
         }
 
         $this->closeSession($sessionId, $item, $reason);
@@ -441,6 +461,15 @@ final class SessionLogWriter
 
         if (! $item) {
             return null;
+        }
+
+        if (($item['status'] ?? '') !== 'active') {
+            return [
+                'sessionId' => $sessionId,
+                'status' => (string) ($item['status'] ?? 'completed'),
+                'logout_time' => (string) ($item['logout_time'] ?? $this->now()),
+                'endReason' => (string) ($item['end_reason'] ?? $endReason),
+            ];
         }
 
         $this->closeSession($sessionId, $item, $endReason);
@@ -477,6 +506,8 @@ final class SessionLogWriter
                 'logout_time' => $now,
                 'end_reason' => 'admin_revoked',
                 'revocation_reason' => $reason,
+                'GSI3PK' => 'STATUS#revoked',
+                'GSI3SK' => $now,
             ]);
             if (isset($item['sub']) && is_string($item['sub'])) {
                 $this->db->clearActiveSessionPointerIfMatches($item['sub'], $sessionId);
